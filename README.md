@@ -1,6 +1,6 @@
 # ⚡️ 벼락수룡
 
-수룡이가 벼락치기를 도와주는 시험 계힉 관리 앱입니다!
+수룡이가 벼락치기를 도와주는 시험 계획 관리 앱입니다!
 
 React Native + Expo + Spring Boot를 기반으로 제작된 앱 프로젝트입니다.
 
@@ -20,7 +20,7 @@ React Native + Expo + Spring Boot를 기반으로 제작된 앱 프로젝트입�
 
 ```
 # Thunder-Suryong/src/main/
-.
+..
 ├── frontend/                         # 프론트엔드
 │   ├── app/                            # 페이지 컴포넌트들 (index, login, signup 등)
 │   ├── assets/                         # 이미지, 폰트 등 정적 자산
