@@ -1,7 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { addDays, format, subDays } from "date-fns";
+import Checkbox from "expo-checkbox";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Animated,
   Image,
   Modal,
   ScrollView,
@@ -10,17 +14,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { Calendar } from "react-native-calendars";
 
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 
 import { Platform } from "react-native";
-import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("홈");
+  const [date, setDate] = useState(new Date());
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [sheetHeight] = useState(new Animated.Value(380));
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const tabs = [
     { name: "홈", label: "홈" },
@@ -28,7 +37,44 @@ export default function HomeScreen() {
     { name: "퀴즈", label: "퀴즈" },
     { name: "마이페이지", label: "마이페이지" },
   ];
-  const [modalVisible, setModalVisible] = useState(false); // BottomSheet 대신 Modal
+
+  const [plans, setPlans] = useState([
+      {
+        id: 1,
+        title: "추천시스템",
+        isExpanded: false,
+        checked: false,
+        todos: [
+          { id: "1-1", title: "하이퍼파라미터 튜닝", checked: false },
+          { id: "1-2", title: "논문 읽기", checked: false },
+        ],
+      },
+      {
+        id: 2,
+        title: "고급기계학습",
+        isExpanded: false,
+        checked: false,
+        todos: [{ id: "2-1", title: "과제 3번 제출", checked: false }],
+      },
+    ]);
+
+    const toggleExpand = (id) => {
+      setPlans((prev) =>
+        prev.map((plan) =>
+          plan.id === id ? { ...plan, isExpanded: !plan.isExpanded } : plan
+        )
+      );
+    };
+
+    const toggleSheet = () => {
+      const toValue = isExpanded ? 380 : 800;
+      Animated.timing(sheetHeight, {
+        toValue,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+      setIsExpanded(!isExpanded);
+    };
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -66,10 +112,7 @@ export default function HomeScreen() {
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
-          <LinearGradient
-            colors={["#F4EDFF", "#FFFFFF"]}
-            style={styles.gradient}
-          >
+          <LinearGradient colors={["#F4EDFF", "#FFFFFF"]} style={styles.gradient}>
             <View style={styles.contentWrapper}>
               {/* 상단 제목 */}
 
@@ -103,53 +146,99 @@ export default function HomeScreen() {
               </View>
             </View>
           </LinearGradient>
-
-          {/* 캘린더 */}
-          <Calendar
-            style={styles.calendar}
-            theme={{
-              selectedDayBackgroundColor: "#B491DD",
-              todayTextColor: "#B491DD",
-              arrowColor: "#B491DD",
-              monthTextColor: "#333",
-            }}
-          />
         </ScrollView>
-      </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.sheetContent}>
-            <Text
-              style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}
-            >
-              오늘 할 일!
-            </Text>
-            <Text>- 데이터 분석 복습</Text>
-            <Text>- 알고리즘 연습</Text>
-            <Text>- 앱 개발 마무리</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text
-                style={{ marginTop: 20, color: "#B491DD", fontWeight: "bold" }}
-              >
-                닫기
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
+                <TouchableOpacity onPress={toggleSheet}>
+                  <View style={styles.handleBar} />
+                </TouchableOpacity>
 
-      {/* 하단 네비게이션 */}
+                <View style={styles.header}>
+                  <TouchableOpacity onPress={() => setDate(subDays(date, 1))}>
+                    <Ionicons name="chevron-back" size={20} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setCalendarVisible(true)}>
+                    <Text style={styles.dateText}>
+                      {format(date, "yyyy년 M월 d일")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setDate(addDays(date, 1))}>
+                    <Ionicons name="chevron-forward" size={20} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.card}>
+                  <Text style={styles.toDoTitle}>오늘의 계획</Text>
+                  {plans.map((plan) => (
+                    <View key={plan.id}>
+                      <View style={styles.planItem}>
+                        <Text style={styles.planText}>{plan.title}</Text>
+                        <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
+                          <Ionicons
+                            name={plan.isExpanded ? "chevron-back" : "chevron-down"}
+                            size={16}
+                            color="#555"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      {plan.isExpanded && (
+                        <View style={styles.subTodoContainer}>
+                          {plan.todos.map((todo) => (
+                            <View key={todo.id} style={styles.subTodoItem}>
+                              <Checkbox value={todo.checked} />
+                              <Text style={styles.subTodoText}>{todo.title}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                  <TouchableOpacity style={styles.addButton}>
+                    <Text style={styles.addButtonText}>+ 과목</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Modal visible={calendarVisible} transparent animationType="slide">
+                  <View style={styles.modalBackground}>
+                    <View style={styles.calendarContainer}>
+                      <Calendar
+                        onDayPress={(day) => {
+                          setDate(new Date(day.dateString));
+                          setCalendarVisible(false);
+                        }}
+                        markedDates={{
+                          [format(date, "yyyy-MM-dd")]: {
+                            selected: true,
+                            selectedColor: "#B491DD",
+                          },
+                        }}
+                      />
+                      <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                        <Text
+                          style={{
+                            marginTop: 10,
+                            color: "#B491DD",
+                            textAlign: "center",
+                          }}
+                        >
+                          닫기
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              </Animated.View>
+      </View>
       <View style={styles.bottomNav}>
         {tabs.map((tab, index) => (
           <TouchableOpacity
             key={index}
             style={styles.navItem}
-            onPress={() => setActiveTab(tab.name)}
+            onPress={() => {
+              setActiveTab(tab.name);
+              if (tab.name === "노트") router.push("/note");
+              else if (tab.name === "퀴즈") router.push("/quiz");
+              else if (tab.name === "마이페이지") router.push("/mypage");
+            }}
           >
             <View
               style={[
@@ -178,6 +267,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     alignItems: "center",
+    flex: 1,
   },
   title: {
     fontSize: 25,
@@ -217,8 +307,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   character: {
-    width: 300,
-    height: 300,
+    width: 250,
+    height: 250,
     marginTop: 20,
   },
   timerText: {
@@ -226,12 +316,111 @@ const styles = StyleSheet.create({
     color: "#B491DD",
     fontWeight: "500",
   },
-  calendar: {
+  gradient: {
     width: "100%",
-    borderRadius: 15,
-    padding: 10,
-    backgroundColor: "#fff",
-    marginBottom: 20,
+  },
+  contentWrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 30,
+  },
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#f4edff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+  },
+  handleBar: {
+    width: 40,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#D0D4DB",
+    marginBottom: 12,
+    alignSelf: "center",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#6c4ed5",
+  },
+  card: {
+    backgroundColor: "#f5f0ff",
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  toDoTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+  planItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    backgroundColor: "#faf5ff",
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  planText: {
+    marginLeft: 8,
+    fontSize: 16,
+    flex: 1,
+  },
+  subTodoContainer: {
+    marginLeft: 32,
+    marginTop: 4,
+  },
+  subTodoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  subTodoText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#333",
+  },
+  addButton: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    backgroundColor: "#e5ddff",
+  },
+  addButtonText: {
+    color: "#6c4ed5",
+    fontWeight: "bold",
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "#00000088",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  calendarContainer: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    width: "90%",
+    alignItems: "center",
   },
   bottomNav: {
     flexDirection: "row",
@@ -241,6 +430,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: "#eee",
     paddingBottom: 30,
+  },
+  navItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  navText: {
+    fontSize: 12,
+  },
+  navTextInactive: {
+    color: "#ccc",
+  },
+  navTextActive: {
+    color: "#000",
+    fontWeight: "bold",
   },
   dot: {
     width: 12,
@@ -253,40 +457,5 @@ const styles = StyleSheet.create({
   },
   dotInactive: {
     backgroundColor: "#ccc",
-  },
-  navText: {
-    fontSize: 12,
-  },
-  navItem: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-  },
-  navTextInactive: {
-    color: "#ccc",
-  },
-  navTextActive: {
-    color: "#000",
-    fontWeight: "bold",
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0)",
-  },
-  sheetContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  gradient: {
-    width: "100%", // 전체 너비
-    // padding 제거함!!
-  },
-
-  contentWrapper: {
-    paddingHorizontal: 20,
-    paddingTop: 30,
   },
 });

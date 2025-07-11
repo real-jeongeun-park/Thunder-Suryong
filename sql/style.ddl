@@ -5,6 +5,6 @@ create table style (
   nickname varchar(30),
   study_time int,
   study_subject int,
-  study_style varchar(30),
+  study_style varchar(1000),
   primary key (id)
 );

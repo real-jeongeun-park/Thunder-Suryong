@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import axios from 'axios';
+
 import {
   Animated,
   Image,
@@ -10,15 +11,12 @@ import {
   View,
 } from "react-native";
 
-import axis from "axios";
 export default function Home() {
   const router = useRouter();
 
   const fadeHello = useRef(new Animated.Value(0)).current;
   const fadeSubtitle = useRef(new Animated.Value(0)).current;
   const fadeButtons = useRef(new Animated.Value(0)).current;
-
-  const [hello, setHello] = useState('');
 
   useEffect(() => {
     // 순차 페이드인 애니메이션
@@ -41,16 +39,8 @@ export default function Home() {
     ]).start();
   }, []);
 
-  /* useEffect(() => {
-    axios.get("http://localhost:8080/api/hello")
-    .then(response => setHello(response.data))
-    .catch(error => console.log(error))
-  }, []); */
-
   return (
     <View style={styles.container}>
-      {/* <Text> 백엔드에서 가져온 데이터 {hello} </Text> */}
-
       {/* 수룡이 이미지 */}
       <Image
         source={require("../assets/images/index.png")}
