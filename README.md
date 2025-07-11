@@ -45,7 +45,7 @@ React Native + Expo + Spring Boot를 기반으로 제작된 앱 프로젝트입�
 
 ## 🚀 실행 방법
 
-**레포지토리를 clone 또는 pull**
+**0. 레포지토리를 clone 또는 pull**
 
 ### 🖼️ 프론트엔드 실행 방법
    1. 패키지 설치
@@ -70,7 +70,7 @@ React Native + Expo + Spring Boot를 기반으로 제작된 앱 프로젝트입�
    2. [H2 DB 설치](https://www.h2database.com/html/download.html) 및 [테이블 생성](https://github.com/real-jeongeun-park/Thunder-Suryong/tree/master/sql)
 
 
-   3. 다음의 파일을 빌드 및 실행 
+   3. 디렉터리 내 다음 경로의 파일을 빌드 및 실행 
       ```
       ./src/main/java/com/byearaksuryong/ByeraksuryongApplicaiton
       ```
