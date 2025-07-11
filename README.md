@@ -90,7 +90,14 @@ React Native + Expo + Spring Boot를 기반으로 제작된 앱 프로젝트입�
 
 ## ✅ 작업자
 
-- **추가해야해용**
+- **🖼️ 프론트엔드**
+    - [@hee5k](https://github.com/hee5k)
+    - [@doridori](https://github.com/doridori)
+    - [@sojungpark7525](https://github.com/sojungpark7525)
+
+- **🌐️ 백엔드**
+    - [@real-jeongeun-park](https://github.com/real-jeongeun-park)
+    - [@hyejin-23](https://github.com/hyejin-23)
 
 ---
 
