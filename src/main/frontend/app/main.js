@@ -17,8 +17,8 @@ import {
 
 import { Calendar } from "react-native-calendars";
 
-import * as SecureStore from 'expo-secure-store';
-import axios from 'axios';
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
 
 import { Platform } from "react-native";
 
@@ -39,70 +39,70 @@ export default function HomeScreen() {
   ];
 
   const [plans, setPlans] = useState([
-      {
-        id: 1,
-        title: "추천시스템",
-        isExpanded: false,
-        checked: false,
-        todos: [
-          { id: "1-1", title: "하이퍼파라미터 튜닝", checked: false },
-          { id: "1-2", title: "논문 읽기", checked: false },
-        ],
-      },
-      {
-        id: 2,
-        title: "고급기계학습",
-        isExpanded: false,
-        checked: false,
-        todos: [{ id: "2-1", title: "과제 3번 제출", checked: false }],
-      },
-    ]);
+    {
+      id: 1,
+      title: "추천시스템",
+      isExpanded: false,
+      checked: false,
+      todos: [
+        { id: "1-1", title: "하이퍼파라미터 튜닝", checked: false },
+        { id: "1-2", title: "논문 읽기", checked: false },
+      ],
+    },
+    {
+      id: 2,
+      title: "고급기계학습",
+      isExpanded: false,
+      checked: false,
+      todos: [{ id: "2-1", title: "과제 3번 제출", checked: false }],
+    },
+  ]);
 
-    const toggleExpand = (id) => {
-      setPlans((prev) =>
-        prev.map((plan) =>
-          plan.id === id ? { ...plan, isExpanded: !plan.isExpanded } : plan
-        )
-      );
-    };
+  const toggleExpand = (id) => {
+    setPlans((prev) =>
+      prev.map((plan) =>
+        plan.id === id ? { ...plan, isExpanded: !plan.isExpanded } : plan
+      )
+    );
+  };
 
-    const toggleSheet = () => {
-      const toValue = isExpanded ? 380 : 800;
-      Animated.timing(sheetHeight, {
-        toValue,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-      setIsExpanded(!isExpanded);
-    };
+  const toggleSheet = () => {
+    const toValue = isExpanded ? 380 : 800;
+    Animated.timing(sheetHeight, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    setIsExpanded(!isExpanded);
+  };
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-     async function checkLogin() {
-        try{
-            let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-            if(Platform.OS === 'web'){
-                token = localStorage.getItem("accessToken");
-            } else{
-                token = await SecureStore.getItemAsync("accessToken");
-            }
-
-            if(!token) throw new Error("Token not found");
-            const res = await axios.get("http://localhost:8080/api/validation", {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            setUserInfo(res.data);
-        } catch(err){
-            console.log(err);
-            setUserInfo(null);
-            router.push("/");
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
         }
+
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get("http://localhost:8080/api/validation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
     }
 
     checkLogin();
@@ -112,11 +112,18 @@ export default function HomeScreen() {
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
-          <LinearGradient colors={["#F4EDFF", "#FFFFFF"]} style={styles.gradient}>
+          <LinearGradient
+            colors={["#F4EDFF", "#FFFFFF"]}
+            style={styles.gradient}
+          >
             <View style={styles.contentWrapper}>
               {/* 상단 제목 */}
 
-              {userInfo && <Text style={styles.title}>{userInfo.nickname}님, 어서오세요!</Text>}
+              {userInfo && (
+                <Text style={styles.title}>
+                  {userInfo.nickname}님, 어서오세요!
+                </Text>
+              )}
 
               {/* 상단 버튼 2개 */}
               <View style={styles.topButtons}>
@@ -126,7 +133,12 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.buttonText}>일정 불러오기</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => {
+                    router.push("/exam_schedule");
+                  }}
+                >
                   <Text style={styles.buttonText}>새로운 일정 생성</Text>
                 </TouchableOpacity>
               </View>
@@ -148,85 +160,85 @@ export default function HomeScreen() {
           </LinearGradient>
         </ScrollView>
         <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
-                <TouchableOpacity onPress={toggleSheet}>
-                  <View style={styles.handleBar} />
-                </TouchableOpacity>
+          <TouchableOpacity onPress={toggleSheet}>
+            <View style={styles.handleBar} />
+          </TouchableOpacity>
 
-                <View style={styles.header}>
-                  <TouchableOpacity onPress={() => setDate(subDays(date, 1))}>
-                    <Ionicons name="chevron-back" size={20} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setCalendarVisible(true)}>
-                    <Text style={styles.dateText}>
-                      {format(date, "yyyy년 M월 d일")}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setDate(addDays(date, 1))}>
-                    <Ionicons name="chevron-forward" size={20} />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => setDate(subDays(date, 1))}>
+              <Ionicons name="chevron-back" size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setCalendarVisible(true)}>
+              <Text style={styles.dateText}>
+                {format(date, "yyyy년 M월 d일")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setDate(addDays(date, 1))}>
+              <Ionicons name="chevron-forward" size={20} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.toDoTitle}>오늘의 계획</Text>
+            {plans.map((plan) => (
+              <View key={plan.id}>
+                <View style={styles.planItem}>
+                  <Text style={styles.planText}>{plan.title}</Text>
+                  <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
+                    <Ionicons
+                      name={plan.isExpanded ? "chevron-back" : "chevron-down"}
+                      size={16}
+                      color="#555"
+                    />
                   </TouchableOpacity>
                 </View>
-
-                <View style={styles.card}>
-                  <Text style={styles.toDoTitle}>오늘의 계획</Text>
-                  {plans.map((plan) => (
-                    <View key={plan.id}>
-                      <View style={styles.planItem}>
-                        <Text style={styles.planText}>{plan.title}</Text>
-                        <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
-                          <Ionicons
-                            name={plan.isExpanded ? "chevron-back" : "chevron-down"}
-                            size={16}
-                            color="#555"
-                          />
-                        </TouchableOpacity>
+                {plan.isExpanded && (
+                  <View style={styles.subTodoContainer}>
+                    {plan.todos.map((todo) => (
+                      <View key={todo.id} style={styles.subTodoItem}>
+                        <Checkbox value={todo.checked} />
+                        <Text style={styles.subTodoText}>{todo.title}</Text>
                       </View>
-                      {plan.isExpanded && (
-                        <View style={styles.subTodoContainer}>
-                          {plan.todos.map((todo) => (
-                            <View key={todo.id} style={styles.subTodoItem}>
-                              <Checkbox value={todo.checked} />
-                              <Text style={styles.subTodoText}>{todo.title}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                  <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>+ 과목</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Modal visible={calendarVisible} transparent animationType="slide">
-                  <View style={styles.modalBackground}>
-                    <View style={styles.calendarContainer}>
-                      <Calendar
-                        onDayPress={(day) => {
-                          setDate(new Date(day.dateString));
-                          setCalendarVisible(false);
-                        }}
-                        markedDates={{
-                          [format(date, "yyyy-MM-dd")]: {
-                            selected: true,
-                            selectedColor: "#B491DD",
-                          },
-                        }}
-                      />
-                      <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                        <Text
-                          style={{
-                            marginTop: 10,
-                            color: "#B491DD",
-                            textAlign: "center",
-                          }}
-                        >
-                          닫기
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                    ))}
                   </View>
-                </Modal>
-              </Animated.View>
+                )}
+              </View>
+            ))}
+            <TouchableOpacity style={styles.addButton}>
+              <Text style={styles.addButtonText}>+ 과목</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Modal visible={calendarVisible} transparent animationType="slide">
+            <View style={styles.modalBackground}>
+              <View style={styles.calendarContainer}>
+                <Calendar
+                  onDayPress={(day) => {
+                    setDate(new Date(day.dateString));
+                    setCalendarVisible(false);
+                  }}
+                  markedDates={{
+                    [format(date, "yyyy-MM-dd")]: {
+                      selected: true,
+                      selectedColor: "#B491DD",
+                    },
+                  }}
+                />
+                <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                  <Text
+                    style={{
+                      marginTop: 10,
+                      color: "#B491DD",
+                      textAlign: "center",
+                    }}
+                  >
+                    닫기
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </Animated.View>
       </View>
       <View style={styles.bottomNav}>
         {tabs.map((tab, index) => (
