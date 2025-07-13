@@ -155,7 +155,7 @@ export default function ExamDatePicker() {
       <View style={styles.backButtonContainer}>
         <TouchableOpacity
           onPress={() => {
-            router.push("/main");
+            router.back();
           }}
         >
           <Ionicons name="chevron-back" size={32} color="#535353" />
@@ -195,7 +195,15 @@ export default function ExamDatePicker() {
         style={styles.monthList}
         //showsVerticalScrollIndicator={false}
       />
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => {
+          router.push({
+            pathname: "/exam_schedule2",
+            params: { startDate, endDate },
+          });
+        }}
+      >
         <Text style={styles.buttonText}>입력 완료</Text>
       </TouchableOpacity>
     </View>
