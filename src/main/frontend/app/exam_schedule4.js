@@ -27,7 +27,6 @@ export default function ExamInfoInput() {
   } catch (e) {
     subjectList = [];
   }
-
   const examPeriod = `${startDate}~${endDate}`;
 
   // 입력 상태
@@ -64,120 +63,25 @@ export default function ExamInfoInput() {
         </View>
         {/* 상단 날짜 및 안내 */}
         <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>분량을 입력해주세요.</Text>
-          <Text style={styles.periodText}>{examPeriod}</Text>
-          <FlatList
-            data={[examName, ...subjectList]}
-            horizontal
-            keyExtractor={(item, idx) => item + idx}
-            renderItem={({ item }) => (
-              <View style={styles.subjectBadge}>
-                <Text style={styles.subjectBadgeText}>{item}</Text>
-              </View>
-            )}
-            style={{ maxHeight: 40 }}
-            contentContainerStyle={{ alignItems: "center" }}
-          />
+          <Text style={styles.headerTitle}>계획을 등록해주세요.</Text>
+          <Text style={styles.subHeaderText}>
+            생성된 계획을 확인하고 등록해주세요!
+          </Text>
         </View>
         <View style={styles.inputContainer}>
           <View style={styles.formBox}>
-            <Text style={styles.inputText}>과목</Text>
-            {/* 드롭다운(과목 선택) + 사진 추가 버튼 */}
-            <View style={styles.dropdownRow}>
-              <View style={styles.dropdown}>
-                <Menu
-                  visible={menuVisible}
-                  onDismiss={() => setMenuVisible(false)}
-                  anchor={
-                    <Button
-                      onPress={() => setMenuVisible(true)}
-                      labelStyle={{ color: "#717171" }}
-                      style={{ borderColor: "#F4F1F5", borderRadius: 5 }}
-                    >
-                      {selectedSubject || "과목 선택"}
-                    </Button>
-                  }
-                  contentStyle={{ backgroundColor: "#FAF8FD" }}
-                >
-                  {subjectList.map((subject) => (
-                    <Menu.Item
-                      key={subject}
-                      onPress={() => {
-                        setSelectedSubject(subject);
-                        setMenuVisible(false);
-                      }}
-                      title={subject}
-                      titleStyle={{ color: "#555555ff", fontSize: 16 }}
-                    />
-                  ))}
-                </Menu>
-              </View>
-              <TouchableOpacity
-                style={styles.photoAddBtn}
-                onPress={() => {
-                  /* 사진 추가 기능 */
-                }}
-              >
-                <Text style={styles.photoAddBtnText}>사진으로 추가하기</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* 주차/단원 입력 */}
-            <Text style={styles.inputText}>주차/단원</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ex) 1주차"
-              placeholderTextColor="#717171"
-              value={week}
-              onChangeText={setWeek}
-            />
-            {/* 내용/분량 입력 */}
-            <Text style={styles.inputText}>내용/분량</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ex) 7주차 강의자료"
-              placeholderTextColor="#717171"
-              value={content}
-              onChangeText={setContent}
-            />
-            {/* 안내/추가 버튼 */}
-            <View style={styles.directAddGuide}>
-              <Text style={styles.directAddGuideText}>
-                분량을 직접 추가해주세요!
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.directAddBtn}
-              onPress={handleAddSubjectInfo}
-            >
-              <Text style={styles.directAddBtnText}>추가</Text>
-            </TouchableOpacity>
-
-            {/* 저장된 데이터 확인용(디버깅) */}
-            <ScrollView style={{ marginTop: 20, maxHeight: 120 }}>
-              {subjectInfos.map((info, idx) => (
-                <Text key={idx} style={{ color: "#616161", marginTop: 5 }}>
-                  {JSON.stringify(info)}
-                </Text>
-              ))}
-            </ScrollView>
+            {/* 기간 */}
+            <Text style={styles.inputText}>기간</Text>
+            <Text style={styles.periodText}>{examPeriod}</Text>
+            {/* 시험명 */}
+            <Text style={styles.inputText}>시험명</Text>
+            <Text style={styles.periodText}>{examName}</Text>
+            {/* 일정 */}
+            <Text style={styles.inputText}>일정</Text>
           </View>
         </View>
         {/* 입력 완료 버튼 */}
-        <TouchableOpacity
-          style={styles.submitBtn}
-          onPress={() => {
-            router.push({
-              pathname: "/exam_schedule4",
-              params: {
-                examName,
-                startDate,
-                endDate,
-                subjects: JSON.stringify(subjects),
-              },
-            });
-          }}
-        >
+        <TouchableOpacity style={styles.submitBtn}>
           <Text style={styles.submitBtnText}>입력 완료</Text>
         </TouchableOpacity>
       </View>
@@ -209,11 +113,19 @@ const styles = StyleSheet.create({
     color: "#535353",
     paddingBottom: 10,
   },
-  periodText: {
+  subHeaderText: {
     fontSize: 18,
     color: "#535353",
     fontWeight: "500",
     marginBottom: 20,
+  },
+  periodText: {
+    fontSize: 16,
+    color: "#535353",
+    fontWeight: "450",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   subjectBadge: {
     backgroundColor: "#E5DFF5",
@@ -284,6 +196,7 @@ const styles = StyleSheet.create({
     color: "#535353",
     fontWeight: "bold",
     marginTop: 15,
+    paddingHorizontal: 10,
   },
   directAddGuide: {
     width: 200,
