@@ -263,7 +263,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  // 수정: 모달 내부 하얀 박스 스타일 (원래 folderSelectModal을 modalContent로 바꿈)
   modalContent: {
     backgroundColor: "#fff",
     borderRadius: 10,
