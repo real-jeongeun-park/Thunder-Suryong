@@ -277,16 +277,6 @@ export default function WriteNote() {
           </TouchableOpacity>
         </View>
 
-        {/* 💡 툴팁 (시트 닫힘 상태일 때만 보이는 아이콘) */}
-        {!isSheetOpen && (
-            <TouchableOpacity
-                onPress={toggleChatSheet}
-                style={styles.minimizedChatIcon}
-            >
-                <Feather name="message-square" size={24} color="#fff" />
-            </TouchableOpacity>
-        )}
-
         <View style={styles.contentContainerChatbot}>
           {/* 챗봇 메시지 표시 영역 */}
           <ScrollView style={styles.chatMessagesContainer} contentContainerStyle={{paddingBottom: 10}}>
@@ -537,23 +527,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  // 💡 시트가 닫혀있을 때 보이는 툴팁 아이콘
-  minimizedChatIcon: {
-    position: 'absolute',
-    top: 15, // 시트 상단으로부터의 거리 (이전 핸들바 높이 고려)
-    left: 20, // 시트 왼쪽으로부터의 거리
-    backgroundColor: '#A18CD1',
-    borderRadius: 25,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    zIndex: 11, // 시트 본문 위에 보이도록
   },
 });
