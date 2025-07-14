@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Modal,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
@@ -15,6 +16,7 @@ export default function ExamInfoInput() {
   const [examName, setExamName] = useState("");
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
+  const [showModal, setShowModal] = useState(false);
   // 시험 날짜
   const { startDate, endDate } = useLocalSearchParams();
   const examPeriod = `${startDate}~${endDate}`;
@@ -88,7 +90,9 @@ export default function ExamInfoInput() {
             <TouchableOpacity
               style={styles.addScheduleBtn}
               onPress={() => {
-                setSubjects([]);
+                if (subjects.length > 0) {
+                  setShowModal(true);
+                }
               }}
             >
               <Text style={styles.addScheduleBtnText}>초기화</Text>
@@ -127,6 +131,37 @@ export default function ExamInfoInput() {
       >
         <Text style={styles.submitBtnText}>입력 완료</Text>
       </TouchableOpacity>
+      {/* 초기화 모달 */}
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>초기화하시겠습니까?</Text>
+            <Text style={styles.modalDesc}>과목 목록이 모두 삭제됩니다.</Text>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#e0e0e0" }]}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={{ color: "#535353" }}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#B491DD" }]}
+                onPress={() => {
+                  setSubjects([]);
+                  setShowModal(false);
+                }}
+              >
+                <Text style={{ color: "#fff" }}>초기화</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -277,5 +312,43 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: 300,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginVertical: 6,
+    color: "#222",
+    textAlign: "center",
+  },
+  modalDesc: {
+    fontSize: 15,
+    color: "#444",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalBtnRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
   },
 });

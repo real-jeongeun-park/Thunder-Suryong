@@ -173,7 +173,8 @@ export default function ExamInfoInput() {
                 examName,
                 startDate,
                 endDate,
-                subjects: JSON.stringify(subjects),
+                subjects,
+                subjectInfos: JSON.stringify(subjectInfos),
               },
             });
           }}

@@ -38,8 +38,6 @@ export default function ExamDatePicker() {
   };
 
   const getMarkedDates = () => {
-    if (!startDate && !endDate) return {};
-
     // 1. 현재 달(혹은 표시되는 달들)의 모든 날짜를 구함
     const getAllDates = (months) => {
       let dates = [];
@@ -137,7 +135,8 @@ export default function ExamDatePicker() {
           markingType={"period"}
           markedDates={getMarkedDates()}
           theme={{
-            todayTextColor: "#00adf5",
+            todayTextColor: "#000000ff",
+            //todayButtonFontWeight: "normal",
             arrowColor: "#000",
             textSectionTitleColor: "#000",
             monthTextColor: "#000",
@@ -193,11 +192,15 @@ export default function ExamDatePicker() {
         onEndReachedThreshold={0.8}
         onScrollBeginDrag={() => loadMoreMonths("prev")}
         style={styles.monthList}
-        //showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
       />
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
+          if (!startDate || !endDate) {
+            alert("시작일과 종료일을 모두 선택해주세요.");
+            return;
+          }
           router.push({
             pathname: "/exam_schedule2",
             params: { startDate, endDate },
