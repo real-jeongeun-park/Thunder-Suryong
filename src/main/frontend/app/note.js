@@ -83,6 +83,7 @@ export default function NoteScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="폴더 이름을 입력하세요"
+                placeholderTextColor="#717171"
                 value={folderName}
                 onChangeText={setFolderName}
                 autoFocus
