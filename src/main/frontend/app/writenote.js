@@ -1,5 +1,6 @@
 // WriteNote.js
 import { Feather } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -52,6 +53,9 @@ export default function WriteNote() {
   ]);
   const [isBotTyping, setIsBotTyping] = useState(false);
 
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedTexts, setSelectedTexts] = useState([]);
+
   const dotOpacity1 = useRef(new Animated.Value(0)).current;
   const dotOpacity2 = useRef(new Animated.Value(0)).current;
   const dotOpacity3 = useRef(new Animated.Value(0)).current;
@@ -89,13 +93,35 @@ export default function WriteNote() {
 
   const handleSendMessage = () => {
     if (chatInput.trim()) {
-      setChatMessages((prev) => [...prev, { type: "user", text: chatInput.trim() }]);
+      setChatMessages((prev) => [
+        ...prev,
+        selectedTexts.length > 0
+          ? { type: "user", text: `→ 오늘 내가 공부한 내용은 ${selectedTexts.join(" / ")} ...\n${chatInput}` }
+          : { type: "user", text: chatInput },
+      ]);
+      setSelectedTexts([]);
       setChatInput("");
       setIsBotTyping(true);
       setTimeout(() => {
         setIsBotTyping(false);
-        setChatMessages((prev) => [...prev, { type: "bot", text: "질문하신 내용에 대해 알려드릴게요!\n(gpt 답변 내용)." }]);
+        setChatMessages((prev) => [
+          ...prev,
+          { type: "bot", text: "질문하신 내용에 대해 알려드릴게요!\n(gpt 답변 내용)." },
+        ]);
       }, 2000);
+    }
+  };
+
+  const handleSelectContent = () => {
+    if (selection.start !== selection.end) {
+      const selected = noteContent.substring(selection.start, selection.end);
+      setSelectedTexts((prev) => [...prev, selected]);
+      setIsSelecting(false);
+      Animated.timing(sheetTranslateY, {
+        toValue: 30,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setIsSheetOpen(true));
     }
   };
 
@@ -103,8 +129,9 @@ export default function WriteNote() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ flex: 1 }}>
+          {/* 헤더 */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8 }}>
+            <TouchableOpacity onPress={() => router.back("/notefolder")} style={{ marginRight: 8 }}>
               <Feather name="chevron-left" size={24} color="#717171" />
             </TouchableOpacity>
             <Feather name="file" size={24} color="#717171" />
@@ -118,6 +145,7 @@ export default function WriteNote() {
             />
           </View>
 
+          {/* 노트 내용 */}
           <ScrollView
             ref={scrollRef}
             style={styles.contentContainer}
@@ -149,10 +177,19 @@ export default function WriteNote() {
             />
           </ScrollView>
 
-          <TouchableOpacity style={styles.floatingButton} onPress={toggleChatSheet}>
-            <Image source={require("../assets/images/chatsu.png")} style={styles.floatingButtonImage} />
+          {/* 플로팅 버튼 */}
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={isSelecting ? handleSelectContent : toggleChatSheet}
+          >
+            {isSelecting ? (
+              <MaterialIcons name="done" size={32} color="#BA94CC" />
+            ) : (
+              <Image source={require("../assets/images/chatsu.png")} style={styles.floatingButtonImage} />
+            )}
           </TouchableOpacity>
 
+          {/* 챗봇 시트 */}
           <Animated.View style={[styles.chatSheet, { transform: [{ translateY: sheetTranslateY }] }]}>
             <View style={styles.chatSheetHeader}>
               <Text style={styles.chatbotTitle}>AI 수룡이 챗봇</Text>
@@ -164,7 +201,10 @@ export default function WriteNote() {
             <View style={styles.contentContainerChatbot}>
               <ScrollView style={styles.chatMessagesContainer} contentContainerStyle={{ paddingBottom: 10 }}>
                 {chatMessages.map((msg, i) => (
-                  <View key={i} style={[styles.chatMessageRow, msg.type === 'user' ? styles.userMessageRow : styles.botMessageRow]}>
+                  <View
+                    key={i}
+                    style={[styles.chatMessageRow, msg.type === 'user' ? styles.userMessageRow : styles.botMessageRow]}
+                  >
                     {msg.type === 'bot' && (
                       <Image source={require("../assets/images/chatsu.png")} style={styles.chatsuAvatar} />
                     )}
@@ -186,6 +226,28 @@ export default function WriteNote() {
                   </View>
                 )}
               </ScrollView>
+
+              <View style={{ paddingBottom: 5 }}>
+                {selectedTexts.length > 0 && (
+                  <View style={{ marginBottom: 6 }}>
+                    {selectedTexts.map((text, index) => (
+                      <Text key={index} style={{ fontSize: 12, color: "#555", marginBottom: 2 }}>
+                        {text}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+                <TouchableOpacity
+                  onPress={() => {
+                    toggleChatSheet(); // 시트 닫기
+                    setIsSelecting(true); // 드래그 모드 진입
+                  }}
+                  style={{ alignSelf: "flex-end", marginBottom: 4 }}
+                >
+                  <Text style={{ color: "#BA94CC", fontSize: 12 }}>내용 불러오기</Text>
+                </TouchableOpacity>
+              </View>
+
 
               <View style={styles.chatInputContainer}>
                 <TextInput
