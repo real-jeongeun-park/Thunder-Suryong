@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/login", "/api/signup", "/api/nickname", "/api/email", "api/style").permitAll()
+                        .requestMatchers("/api/login", "/api/signup", "/api/nickname", "/api/email", "/api/style", "/api/ocr", "/api/ocr/base64", "/api/ocr/ai").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),

@@ -7,22 +7,35 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Platform,
+  Image,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useData } from "@/context/DataContext";
+import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ExamInfoInput() {
   const router = useRouter();
   const [examName, setExamName] = useState("");
+  const [emptyExamName, setEmptyExamName] = useState(false);
+
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
-  // 시험 날짜
-  const { startDate, endDate } = useLocalSearchParams();
-  const examPeriod = `${startDate}~${endDate}`;
+  const [emptySubjects, setEmptySubjects] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  const { data, setData } = useData();
+
+  const startDate = data.startDate;
+  const endDate = data.endDate;
 
   const handleAddSubject = () => {
-    if (subject.trim() && subjects.length < 20) {
+    if (subject.trim() && subjects.length < 30) {
       setSubjects([...subjects, subject.trim()]);
       setSubject("");
+      setEmptySubjects(false);
     }
   };
 
@@ -30,8 +43,127 @@ export default function ExamInfoInput() {
     setSubjects(subjects.filter((_, idx) => idx !== removeIdx));
   };
 
+  const pickImage = async () => {
+    if(Platform.OS === 'web'){
+        // 웹일 경우. file:/// 사용 안됨 -> base64 사용
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            base64: true, // 웹용
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if(!result.canceled && result.assets.length > 0){
+            const pickedImage = result.assets[0];
+            uploadBase64Image(pickedImage.base64);
+        }
+
+    } else{
+        // 앱일 경우
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            base64: false, // 앱용
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if(!result.canceled && result.assets.length > 0){
+            const pickedImage = result.assets[0];
+            uploadImage(pickedImage.uri);
+        }
+    }
+
+  };
+
+const uploadBase64Image = async (base64) => {
+    // 웹용
+    setLoading(true);
+
+    try{
+        const res = await axios.post("http://localhost:8080/api/ocr/base64", {
+            base64: base64,
+        });
+
+        console.log(res.data);
+        useAi(res.data);
+
+    } catch(err){
+        console.log(err);
+    } finally{
+        setLoading(false);
+    }
+};
+
+const uploadImage = async(uri: string) => {
+    // 앱용
+    setLoading(true);
+
+    const formData = new FormData();
+    let fileType = 'image/jpeg';
+
+    if(uri.endsWith('.png')){
+        fileType = 'image/png';
+    }
+
+    const file = {
+        uri,
+        type: fileType,
+        name: `upload.${fileType.split('/')[1]}`,
+    };
+
+    formData.append('image', file);
+
+    try{
+        const res = await axios.post("http://localhost:8080/api/ocr", formData);
+        console.log(res.data);
+        useAi(res.data);
+    } catch(e){
+        console.log(e);
+    } finally{
+        setLoading(false);
+    }
+};
+
+const useAi = async (request) => {
+    if(request.trim()){
+        // 과목 뽑아오기
+        try{
+            const res = await axios.post("http://localhost:8080/api/ocr/ai", {
+                request: request,
+            });
+
+            setSubjects(prev => [...prev, ...res.data]);
+        } catch(err){
+            console.log(err);
+        }
+    }
+};
+
+const handleSubmit = () => {
+    if(!examName.trim()){
+        setEmptyExamName(true);
+    }
+
+    let newSubjects = [...subjects];
+
+    if(newSubjects.length === 0){
+       setEmptySubjects(true);
+    }
+
+    if(examName.trim() && newSubjects.length !== 0){
+        // data 존재
+        setData((prev) => ({...prev, examName: examName, subjects: JSON.stringify(subjects)}));
+        router.push("/exam_schedule3");
+    }
+};
+
   return (
     <View style={styles.container}>
+      {loading && <View style={styles.loadingOverlay}>
+        <Image source={require("../assets/images/main.png")} style={styles.character} resizeMode="contain"/>
+        <Text style={styles.loadingText}>로딩 중입니다....</Text>
+      </View>}
+
       {/* 뒤로가기 버튼 */}
       <View style={styles.backButtonContainer}>
         <TouchableOpacity
@@ -45,7 +177,7 @@ export default function ExamInfoInput() {
       {/* 상단 날짜 및 안내 */}
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>시험 정보를 입력해주세요.</Text>
-        <Text style={styles.periodText}>{examPeriod}</Text>
+        <Text style={styles.periodText}>{startDate} ~ {endDate}</Text>
       </View>
       <View style={styles.inputContainer}>
         {/* 시험명 입력 */}
@@ -53,12 +185,16 @@ export default function ExamInfoInput() {
           <Text style={styles.label}>시험명</Text>
           <TextInput
             style={styles.textInput}
-            placeholder="ex) 2025년 1학기 중간고사"
-            maxLength={20}
+            placeholder="2025년 1학기 중간고사"
+            maxLength={30}
             value={examName}
-            onChangeText={setExamName}
+            onChangeText={(text) => {
+                setExamName(text);
+                setEmptyExamName(false);
+            }}
           />
-          <Text style={styles.counter1}>{examName.length}/20</Text>
+          <Text style={styles.counter1}>{examName.length}/30</Text>
+          {emptyExamName && <Text style={{color: "red"}}>시험명을 입력해 주세요.</Text>}
         </View>
         {/* 과목 입력 */}
         <View style={styles.inputBox}>
@@ -67,7 +203,7 @@ export default function ExamInfoInput() {
             <TextInput
               style={[styles.textInput, { flex: 1 }]}
               placeholder="과목명을 입력해주세요."
-              maxLength={20}
+              maxLength={30}
               value={subject}
               onChangeText={setSubject}
             />
@@ -79,11 +215,9 @@ export default function ExamInfoInput() {
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.addScheduleBtn}
-              onPress={() => {
-                //갤러리에서 시간표 이미지 불러오기
-              }}
+              onPress={pickImage}
             >
-              <Text style={styles.addScheduleBtnText}>시간표 불러오기</Text>
+              <Text style={styles.addScheduleBtnText}>에타 시간표 불러오기</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addScheduleBtn}
@@ -93,8 +227,9 @@ export default function ExamInfoInput() {
             >
               <Text style={styles.addScheduleBtnText}>초기화</Text>
             </TouchableOpacity>
-            <Text style={styles.counter2}>{subject.length}/20</Text>
+            <Text style={styles.counter2}>{subject.length}/30</Text>
           </View>
+          {emptySubjects && <Text style={{color: "red"}}>과목을 하나 이상 추가해 주세요.</Text>}
           {/* 과목 리스트 */}
           <FlatList
             data={subjects}
@@ -113,17 +248,7 @@ export default function ExamInfoInput() {
       {/* 입력 완료 버튼 */}
       <TouchableOpacity
         style={styles.submitBtn}
-        onPress={() => {
-          router.push({
-            pathname: "/exam_schedule3",
-            params: {
-              examName,
-              startDate,
-              endDate,
-              subjects: JSON.stringify(subjects),
-            },
-          });
-        }}
+        onPress={handleSubmit}
       >
         <Text style={styles.submitBtnText}>입력 완료</Text>
       </TouchableOpacity>
@@ -137,6 +262,28 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     zIndex: 10,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  character: {
+    width: 170,
+    height: 170,
+    marginBottom: 20,
+    marginRight: 40,
   },
   container: {
     flex: 1,

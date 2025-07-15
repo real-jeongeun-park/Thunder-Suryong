@@ -31,6 +31,10 @@ dependencies {
 
 	compileOnly 'org.projectlombok:lombok:1.18.32'
 	annotationProcessor 'org.projectlombok:lombok:1.18.32'
+
+	implementation 'com.google.cloud:google-cloud-vision:3.61.0'
+	// Multipart 파일 처리 관련 필요
+	implementation 'commons-io:commons-io:2.11.0'
 }
 
 tasks.named('test') {

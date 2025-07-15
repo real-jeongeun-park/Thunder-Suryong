@@ -11,12 +11,16 @@ import { format, addMonths, subMonths, startOfMonth } from "date-fns";
 import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+import { useData } from "@/context/DataContext"
+
 export default function ExamDatePicker() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(null);
   const [monthList, setMonthList] = useState([startOfMonth(new Date())]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  const { setData } = useData();
 
   const handleDateSelect = (dateString) => {
     setSelectedDate(dateString);
@@ -198,10 +202,12 @@ export default function ExamDatePicker() {
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
-          router.push({
-            pathname: "/exam_schedule2",
-            params: { startDate, endDate },
-          });
+            // 입력 완료 버튼 눌림
+
+          if(startDate && endDate){
+            setData((prev)=> ({...prev, startDate: startDate, endDate: endDate}));
+            router.push("/exam_schedule2");
+          }
         }}
       >
         <Text style={styles.buttonText}>입력 완료</Text>
@@ -209,6 +215,7 @@ export default function ExamDatePicker() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   backButtonContainer: {

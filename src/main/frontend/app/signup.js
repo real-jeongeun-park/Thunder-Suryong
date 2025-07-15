@@ -47,7 +47,7 @@ export default function Signup() {
   `;
 
   function emailValidate(email){
-    const email_regex = /^[a-zA-z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i;
+    const email_regex = /^[a-zA-Zx0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i;
     return email_regex.test(email)
   }
 

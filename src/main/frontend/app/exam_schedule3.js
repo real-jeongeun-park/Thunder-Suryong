@@ -9,15 +9,25 @@ import {
   FlatList,
   Dimensions,
   ScrollView,
+  Image,
+  Platform
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
+import * as ImagePicker from 'expo-image-picker';
+import axios from "axios";
+
+import { useData } from "@/context/DataContext";
 
 const { width } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
-  const { examName, startDate, endDate, subjects } = useLocalSearchParams();
+  const { data, setData } = useData();
+
+  const { examName, startDate, endDate, subjects } = data;
+  // const examName = data.examName; const startDate = data.startDate; ...와 같음
+
   let subjectList = [];
   try {
     subjectList = JSON.parse(subjects);
@@ -25,10 +35,11 @@ export default function ExamInfoInput() {
       subjectList = [];
     }
   } catch (e) {
+    console.log(e);
     subjectList = [];
   }
 
-  const examPeriod = `${startDate}~${endDate}`;
+  const examPeriod = `${startDate} ~ ${endDate}`;
 
   // 입력 상태
   const [selectedSubject, setSelectedSubject] = useState(subjectList[0] || "");
@@ -52,6 +63,51 @@ export default function ExamInfoInput() {
     setWeek("");
     setContent("");
   };
+
+  const pickImage = async () => {
+    if(Platform.OS === 'web'){
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            base64: true, // 웹용
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if(!result.canceled && result.assets.length > 0){
+            const pickedImage = result.assets[0];
+            uploadBase64Image(pickedImage.base64);
+        }
+    } else{
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            base64: false, // 앱용
+            allowsEditing: false,
+            quality: 1,
+        });
+
+        if(!result.canceled && result.assets.length > 0){
+            const pickedImages = result.assets[0];
+            uploadImage(pickedImage.uri); // uri을 보냄
+        }
+    }
+  };
+
+  const uploadBase64Image = async (base64) => {
+    setLoading(true);
+
+    try{
+        const response = await axios.post("http://localhost:8080/api/ocr/base64", {
+            base64: base64,
+        });
+
+        console.log(response.data);
+        useAi(response.data);
+    } catch(err){
+        console.log(err);
+    } finally{
+        setLoading(false);
+    }
+  }
 
   return (
     <PaperProvider>
@@ -114,11 +170,9 @@ export default function ExamInfoInput() {
               </View>
               <TouchableOpacity
                 style={styles.photoAddBtn}
-                onPress={() => {
-                  /* 사진 추가 기능 */
-                }}
+                onPress={pickImage}
               >
-                <Text style={styles.photoAddBtnText}>사진으로 추가하기</Text>
+                <Text style={styles.photoAddBtnText}>강의계획서로 추가하기</Text>
               </TouchableOpacity>
             </View>
 
@@ -126,7 +180,7 @@ export default function ExamInfoInput() {
             <Text style={styles.inputText}>주차/단원</Text>
             <TextInput
               style={styles.input}
-              placeholder="ex) 1주차"
+              placeholder="1주차"
               placeholderTextColor="#717171"
               value={week}
               onChangeText={setWeek}
@@ -135,22 +189,17 @@ export default function ExamInfoInput() {
             <Text style={styles.inputText}>내용/분량</Text>
             <TextInput
               style={styles.input}
-              placeholder="ex) 7주차 강의자료"
+              placeholder="7주차 강의자료"
               placeholderTextColor="#717171"
               value={content}
               onChangeText={setContent}
             />
             {/* 안내/추가 버튼 */}
-            <View style={styles.directAddGuide}>
-              <Text style={styles.directAddGuideText}>
-                분량을 직접 추가해주세요!
-              </Text>
-            </View>
             <TouchableOpacity
               style={styles.directAddBtn}
               onPress={handleAddSubjectInfo}
             >
-              <Text style={styles.directAddBtnText}>추가</Text>
+              <Text style={styles.directAddBtnText}>직접 추가하기</Text>
             </TouchableOpacity>
 
             {/* 저장된 데이터 확인용(디버깅) */}
@@ -285,31 +334,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 15,
   },
-  directAddGuide: {
-    width: 200,
-    backgroundColor: "#c0c0c0ff",
-    marginTop: 10,
-    marginBottom: 5,
-    alignItems: "center",
-    borderRadius: 5,
-  },
-  directAddGuideText: {
-    color: "#616161ff",
-    fontSize: 14,
-  },
   directAddBtn: {
-    width: 100,
-    height: 40,
+    width: 120,
+    height: 35,
     backgroundColor: "#c0c0c0ff",
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 15,
     alignSelf: "flex-end",
   },
   directAddBtnText: {
     color: "#616161ff",
-    fontSize: 12,
+    fontSize: 14,
   },
   submitBtn: {
     position: "absolute",
