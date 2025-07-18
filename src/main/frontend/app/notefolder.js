@@ -14,15 +14,15 @@ import {
 } from "react-native";
 
 export default function NoteFolder() {
-  const { folderName, openAddNote, // 새로 전달받을 파라미터들을 여기서 가져옵니다.
+  const {
+    folderName,
+    openAddNote,
     updatedNoteTitle,
     updatedNoteContent,
-    originalNoteId // 노트를 식별할 고유 ID (제목 대신 사용 권장)
+    originalNoteId,
   } = useLocalSearchParams();
   const router = useRouter();
 
-  // notes 상태를 객체 배열로 변경하여 제목과 내용을 함께 저장
-  // 각 노트에 고유한 id를 추가하여 식별합니다 (매우 중요!).
   const [notes, setNotes] = useState([]);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [newNoteName, setNewNoteName] = useState("");
@@ -34,31 +34,37 @@ export default function NoteFolder() {
   }, [openAddNote]);
 
   useEffect(() => {
-    // console.log("NoteFolder params changed:", { updatedNoteTitle, updatedNoteContent, originalNoteId });
-    if (originalNoteId && updatedNoteTitle !== undefined && updatedNoteContent !== undefined) {
+    if (
+      originalNoteId &&
+      updatedNoteTitle !== undefined &&
+      updatedNoteContent !== undefined
+    ) {
       setNotes((prevNotes) =>
         prevNotes.map((note) =>
-          note.id === originalNoteId // 고유 ID로 노트를 찾습니다.
+          note.id === originalNoteId
             ? { ...note, title: updatedNoteTitle, content: updatedNoteContent }
             : note
         )
       );
     }
-  }, [updatedNoteTitle, updatedNoteContent, originalNoteId]); 
+  }, [updatedNoteTitle, updatedNoteContent, originalNoteId]);
 
-  // 노트 추가 핸들러
   const handleAddNote = () => {
     if (newNoteName.trim()) {
-      const newId = Date.now().toString(); // 고유 ID 생성
-      const newNote = { id: newId, title: newNoteName.trim(), content: "" }; // 초기 내용은 비어있음
-      setNotes((prevNotes) => [...prevNotes, newNote]); // 기존 노트 유지하면서 새 노트 추가
+      const newId = Date.now().toString();
+      const newNote = {
+        id: newId,
+        title: newNoteName.trim(),
+        content: "",
+      };
+      setNotes((prevNotes) => [...prevNotes, newNote]);
 
       router.push({
         pathname: "/writenote",
         params: {
           initialNoteTitle: newNote.title,
           initialNoteContent: newNote.content,
-          noteId: newNote.id, // 새로 생성된 노트의 ID 전달
+          noteId: newNote.id,
         },
       });
     }
@@ -71,7 +77,20 @@ export default function NoteFolder() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <Text style={styles.title}>{folderName}</Text>
+        {/* 뒤로가기 버튼 + 폴더명 */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 40,
+            marginTop: 15,
+          }}
+        >
+          <TouchableOpacity onPress={() => router.back()}>
+            <Feather name="arrow-left" size={24} color="black" />
+          </TouchableOpacity>
+          <Text style={[styles.title, { marginLeft: 10 }]}>{folderName}</Text>
+        </View>
 
         <View style={styles.folderCard}>
           <Feather name="folder" size={20} color="#A18CD1" />
@@ -81,7 +100,7 @@ export default function NoteFolder() {
 
         <FlatList
           data={notes}
-          keyExtractor={(item) => item.id} // keyExtractor를 item.id로 변경
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() =>
@@ -90,7 +109,7 @@ export default function NoteFolder() {
                   params: {
                     initialNoteTitle: item.title,
                     initialNoteContent: item.content,
-                    noteId: item.id, // 노트 ID 전달
+                    noteId: item.id,
                   },
                 })
               }
@@ -107,7 +126,8 @@ export default function NoteFolder() {
                 <Feather name="file" size={20} color="#A18CD1" />
                 <TextInput
                   style={styles.noteText}
-                  placeholder="노트명 입력"
+                  placeholder="노트명을 입력해주세요."
+                  placeholderTextColor="#717171"
                   value={newNoteName}
                   onChangeText={setNewNoteName}
                   autoFocus
@@ -140,8 +160,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 40,
-    marginTop: 15,
   },
   folderCard: {
     flexDirection: "row",

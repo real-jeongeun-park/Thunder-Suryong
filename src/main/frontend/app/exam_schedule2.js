@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   View,
@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   Image,
+  Modal
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useData } from "@/context/DataContext";
@@ -17,19 +18,52 @@ import * as ImagePicker from 'expo-image-picker';
 
 export default function ExamInfoInput() {
   const router = useRouter();
+
   const [examName, setExamName] = useState("");
   const [emptyExamName, setEmptyExamName] = useState(false);
-
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [emptySubjects, setEmptySubjects] = useState(false);
-
   const [loading, setLoading] = useState(false);
 
   const { data, setData } = useData();
 
   const startDate = data.startDate;
   const endDate = data.endDate;
+
+  const [showModal, setShowModal] = useState(false);
+
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+      const checkLogin = async () => {
+        try{
+          let token;
+
+          if(Platform.OS === 'web'){
+              token = localStorage.getItem("accessToken");
+          } else{
+             // 앱
+             token = await SecureStore.getItemAsync("accessToken");
+          }
+
+          if(!token) throw new Error("Token not found");
+
+          const res = await axios.get("http://localhost:8080/api/validation", {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+        } catch(e){
+          console.log(e);
+          setUserInfo(null);
+          router.push("/"); // 처음으로 돌아감
+        }
+      };
+
+      checkLogin();
+  }, [])
 
   const handleAddSubject = () => {
     if (subject.trim() && subjects.length < 30) {
@@ -80,7 +114,7 @@ const uploadBase64Image = async (base64) => {
     setLoading(true);
 
     try{
-        const res = await axios.post("http://localhost:8080/api/ocr/base64", {
+        const res = await axios.post("http://localhost:8080/api/ocr/web", {
             base64: base64,
         });
 
@@ -114,7 +148,7 @@ const uploadImage = async(uri: string) => {
     formData.append('image', file);
 
     try{
-        const res = await axios.post("http://localhost:8080/api/ocr", formData);
+        const res = await axios.post("http://localhost:8080/api/ocr/app", formData);
         console.log(res.data);
         useAi(res.data);
     } catch(e){
@@ -128,7 +162,7 @@ const useAi = async (request) => {
     if(request.trim()){
         // 과목 뽑아오기
         try{
-            const res = await axios.post("http://localhost:8080/api/ocr/ai", {
+            const res = await axios.post("http://localhost:8080/api/ai/schedule", {
                 request: request,
             });
 
@@ -139,7 +173,7 @@ const useAi = async (request) => {
     }
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
     if(!examName.trim()){
         setEmptyExamName(true);
     }
@@ -185,7 +219,7 @@ const handleSubmit = () => {
           <Text style={styles.label}>시험명</Text>
           <TextInput
             style={styles.textInput}
-            placeholder="2025년 1학기 중간고사"
+            placeholder="예시: 2025년 1학기 중간고사"
             maxLength={30}
             value={examName}
             onChangeText={(text) => {
@@ -222,7 +256,9 @@ const handleSubmit = () => {
             <TouchableOpacity
               style={styles.addScheduleBtn}
               onPress={() => {
-                setSubjects([]);
+                if (subjects.length > 0) {
+                  setShowModal(true);
+                }
               }}
             >
               <Text style={styles.addScheduleBtnText}>초기화</Text>
@@ -252,6 +288,37 @@ const handleSubmit = () => {
       >
         <Text style={styles.submitBtnText}>입력 완료</Text>
       </TouchableOpacity>
+      {/* 초기화 모달 */}
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>초기화하시겠습니까?</Text>
+            <Text style={styles.modalDesc}>과목 목록이 모두 삭제됩니다.</Text>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#e0e0e0" }]}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={{ color: "#535353" }}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#B491DD" }]}
+                onPress={() => {
+                  setSubjects([]);
+                  setShowModal(false);
+                }}
+              >
+                <Text style={{ color: "#fff" }}>초기화</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -277,7 +344,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: 'white',
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 300,
   },
   character: {
     width: 170,
@@ -424,5 +491,43 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: 300,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginVertical: 6,
+    color: "#222",
+    textAlign: "center",
+  },
+  modalDesc: {
+    fontSize: 15,
+    color: "#444",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalBtnRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
   },
 });

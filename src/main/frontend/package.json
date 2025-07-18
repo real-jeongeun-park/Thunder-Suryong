@@ -54,7 +54,8 @@
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
-    "expo-image-picker": "~16.1.4"
+    "expo-image-picker": "~16.1.4",
+    "@shopify/react-native-skia": "v2.0.0-next.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -66,14 +67,14 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rhkrdori/IT-Challenge-Dream-to-Reality.git"
+    "url": "git+https://github.com/real-jeongeun-park/Thunder-Suryong.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/rhkrdori/IT-Challenge-Dream-to-Reality/issues"
+    "url": "https://github.com/real-jeongeun-park/Thunder-Suryong/issues"
   },
-  "homepage": "https://github.com/rhkrdori/IT-Challenge-Dream-to-Reality#readme",
+  "homepage": "https://github.com/real-jeongeun-park/Thunder-Suryong#readme",
   "description": ""
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import {
   View,
@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Platform,
 } from "react-native";
 import { format, addMonths, subMonths, startOfMonth } from "date-fns";
 import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
-import { useData } from "@/context/DataContext"
+import axios from "axios";
+import { useData } from "@/context/DataContext";
 
 export default function ExamDatePicker() {
   const router = useRouter();
@@ -22,28 +24,54 @@ export default function ExamDatePicker() {
 
   const { setData } = useData();
 
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+      const checkLogin = async () => {
+        try{
+          let token;
+
+          if(Platform.OS === 'web'){
+              token = localStorage.getItem("accessToken");
+          } else{
+             // 앱
+             token = await SecureStore.getItemAsync("accessToken");
+          }
+
+          if(!token) throw new Error("Token not found");
+
+          const res = await axios.get("http://localhost:8080/api/validation", {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+        } catch(e){
+          console.log(e);
+          setUserInfo(null);
+          router.push("/"); // 처음으로 돌아감
+        }
+      };
+
+      checkLogin();
+    }, [])
+
   const handleDateSelect = (dateString) => {
     setSelectedDate(dateString);
-    console.log("날짜 선택됨:", dateString);
 
     if (!startDate || (startDate && endDate)) {
       setStartDate(dateString);
       setEndDate(null);
-      console.log("시작일 설정됨:", dateString);
     } else {
       if (new Date(dateString) < new Date(startDate)) {
         setStartDate(dateString);
-        console.log("시작일 갱신:", dateString);
       } else {
         setEndDate(dateString);
-        console.log("종료일 설정됨:", dateString);
       }
     }
   };
 
   const getMarkedDates = () => {
-    if (!startDate && !endDate) return {};
-
     // 1. 현재 달(혹은 표시되는 달들)의 모든 날짜를 구함
     const getAllDates = (months) => {
       let dates = [];
@@ -141,7 +169,8 @@ export default function ExamDatePicker() {
           markingType={"period"}
           markedDates={getMarkedDates()}
           theme={{
-            todayTextColor: "#00adf5",
+            todayTextColor: "#000000ff",
+            //todayButtonFontWeight: "normal",
             arrowColor: "#000",
             textSectionTitleColor: "#000",
             monthTextColor: "#000",
@@ -169,10 +198,10 @@ export default function ExamDatePicker() {
         <View style={styles.headerRow}>
           <Text style={styles.header}>
             {!startDate
-              ? "시험 시작 일자를\n선택해주세요."
+              ? "공부 시작 일자를\n선택해 주세요."
               : !endDate
-              ? "시험 종료 일자를\n선택해주세요."
-              : "시험기간이\n맞나요?\n"}
+              ? "공부 종료 일자를\n선택해 주세요."
+              : "시험 기간이\n맞나요?\n"}
           </Text>
           {startDate && (
             <Text style={styles.selectedDateText}>
@@ -197,14 +226,16 @@ export default function ExamDatePicker() {
         onEndReachedThreshold={0.8}
         onScrollBeginDrag={() => loadMoreMonths("prev")}
         style={styles.monthList}
-        //showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
       />
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
-            // 입력 완료 버튼 눌림
-
-          if(startDate && endDate){
+          if (!startDate || !endDate) {
+            alert("시작일과 종료일을 모두 선택해주세요.");
+            return;
+          }
+          else{
             setData((prev)=> ({...prev, startDate: startDate, endDate: endDate}));
             router.push("/exam_schedule2");
           }
@@ -216,7 +247,6 @@ export default function ExamDatePicker() {
   );
 }
 
-
 const styles = StyleSheet.create({
   backButtonContainer: {
     position: "absolute",
@@ -224,7 +254,6 @@ const styles = StyleSheet.create({
     left: 10,
     zIndex: 10,
   },
-
   container: {
     flex: 1,
     backgroundColor: "#EFE5FF",

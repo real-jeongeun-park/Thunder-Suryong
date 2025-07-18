@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Dimensions,
   ScrollView,
   Image,
-  Platform
+  Platform,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
@@ -49,6 +49,39 @@ export default function ExamInfoInput() {
 
   // 저장 배열
   const [subjectInfos, setSubjectInfos] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+      const checkLogin = async () => {
+        try{
+          let token;
+
+          if(Platform.OS === 'web'){
+              token = localStorage.getItem("accessToken");
+          } else{
+             // 앱
+             token = await SecureStore.getItemAsync("accessToken");
+          }
+
+          if(!token) throw new Error("Token not found");
+
+          const res = await axios.get("http://localhost:8080/api/validation", {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+        } catch(e){
+          console.log(e);
+          setUserInfo(null);
+          router.push("/"); // 처음으로 돌아감
+        }
+      };
+
+      checkLogin();
+  }, [])
 
   // 추가 버튼 핸들러
   const handleAddSubjectInfo = () => {
@@ -93,14 +126,14 @@ export default function ExamInfoInput() {
   };
 
   const uploadBase64Image = async (base64) => {
+  // 웹용
     setLoading(true);
 
     try{
-        const response = await axios.post("http://localhost:8080/api/ocr/base64", {
+        const response = await axios.post("http://localhost:8080/api/ocr/web", {
             base64: base64,
         });
 
-        console.log(response.data);
         useAi(response.data);
     } catch(err){
         console.log(err);
@@ -109,9 +142,77 @@ export default function ExamInfoInput() {
     }
   }
 
+  const uploadImage = async (uri: string) => {
+    // 앱용
+    setLoading(true);
+    const formData = new FormData();
+    let fileType = 'image/jpeg';
+
+    if(uri.endsWith('png')){
+        fileType = 'image/png';
+    }
+
+    const file = {
+        uri,
+        type: fileType,
+        name: `upload.${fileType.split('/')[1]}`,
+    };
+
+    formData.append('image', file);
+
+    try{
+        const response = await axios.post("http://localhost:8080/api/ocr/app", formData);
+        useAi(response.data);
+    } catch(e){
+        console.log(e);
+    } finally{
+        setLoading(false);
+    }
+  };
+
+  const useAi = async (request) => {
+    if(request.trim()){
+        // 있어야만 실행
+        try{
+            const response = await axios.post("http://localhost:8080/api/ai/syllabus",{
+                request: request,
+            });
+
+            console.log(response.data);
+
+            const { weekList, contentList } = response.data;
+
+            const newSubjectInfosList = weekList.map((week, index) => ({
+                subject: selectedSubject,
+                week,
+                content: contentList[index],
+            }));
+
+            setSubjectInfos([...subjectInfos, ...newSubjectInfosList]);
+        } catch(e){
+            console.log(e);
+        }
+    }
+  };
+
+  const handleSubmit = () => {
+    if(subjectInfos.length === 0){
+        alert("하나 이상의 공부 분량을 추가하세요.");
+        return;
+    }
+
+    setData((prev) => ({...prev, subjectInfos: JSON.stringify(subjectInfos)}));
+    router.push("/exam_schedule4");
+  };
+
   return (
     <PaperProvider>
       <View style={styles.container}>
+        {loading && <View style={styles.loadingOverlay}>
+          <Image source={require("../assets/images/main.png")} style={styles.character} resizeMode="contain"/>
+          <Text style={styles.loadingText}>로딩 중입니다....</Text>
+        </View>}
+
         {/* 뒤로가기 버튼 */}
         <View style={styles.backButtonContainer}>
           <TouchableOpacity onPress={() => router.back()}>
@@ -180,7 +281,7 @@ export default function ExamInfoInput() {
             <Text style={styles.inputText}>주차/단원</Text>
             <TextInput
               style={styles.input}
-              placeholder="1주차"
+              placeholder="예시: 2주차"
               placeholderTextColor="#717171"
               value={week}
               onChangeText={setWeek}
@@ -189,12 +290,13 @@ export default function ExamInfoInput() {
             <Text style={styles.inputText}>내용/분량</Text>
             <TextInput
               style={styles.input}
-              placeholder="7주차 강의자료"
+              placeholder="예시: 클라우드 컨셉 개요"
               placeholderTextColor="#717171"
               value={content}
               onChangeText={setContent}
             />
             {/* 안내/추가 버튼 */}
+
             <TouchableOpacity
               style={styles.directAddBtn}
               onPress={handleAddSubjectInfo}
@@ -205,9 +307,11 @@ export default function ExamInfoInput() {
             {/* 저장된 데이터 확인용(디버깅) */}
             <ScrollView style={{ marginTop: 20, maxHeight: 120 }}>
               {subjectInfos.map((info, idx) => (
-                <Text key={idx} style={{ color: "#616161", marginTop: 5 }}>
-                  {JSON.stringify(info)}
-                </Text>
+                  info.subject === selectedSubject && (
+                  <Text key={idx} style={{ color: "#616161", marginTop: 5}}>
+                    {info.week} {info.content}
+                  </Text>
+                  )
               ))}
             </ScrollView>
           </View>
@@ -215,17 +319,7 @@ export default function ExamInfoInput() {
         {/* 입력 완료 버튼 */}
         <TouchableOpacity
           style={styles.submitBtn}
-          onPress={() => {
-            router.push({
-              pathname: "/exam_schedule4",
-              params: {
-                examName,
-                startDate,
-                endDate,
-                subjects: JSON.stringify(subjects),
-              },
-            });
-          }}
+          onPress={handleSubmit}
         >
           <Text style={styles.submitBtnText}>입력 완료</Text>
         </TouchableOpacity>
@@ -235,6 +329,28 @@ export default function ExamInfoInput() {
 }
 
 const styles = StyleSheet.create({
+loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 300,
+  },
+  character: {
+    width: 170,
+    height: 170,
+    marginBottom: 20,
+    marginRight: 40,
+  },
   container: {
     flex: 1,
     backgroundColor: "#EFE5FF",

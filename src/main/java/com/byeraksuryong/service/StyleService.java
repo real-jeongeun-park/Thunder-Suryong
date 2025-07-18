@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,7 +23,6 @@ public class StyleService {
     public void saveStyleInfo(StyleInfo styleInfo){
         List<String> styleList = styleInfo.getStudyStyle();
         String joinedStyle = String.join(", ", styleList);
-        System.out.println("joinedStyle = " + joinedStyle);
 
         Style style = new Style();
         style.setNickname(styleInfo.getNickname());
