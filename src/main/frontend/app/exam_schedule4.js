@@ -99,24 +99,6 @@ export default function ExamInfoInput() {
     }
   }, [userInfo]); // userInfo가 바뀔 때마다 실행됨
 
-  const [plans, setPlans] = useState([
-    {
-      subject: "수학",
-      date: "2025-07-15",
-      week: "3주차",
-      content: "수학 1단원 복습",
-      plan: "문제집 20~30쪽 풀기",
-    },
-    {
-      subject: "영어",
-      date: "2025-07-16",
-      week: "2주차",
-      content: "영어 단어 암기",
-      plan: "단어장 1~3쪽",
-    },
-    // ...다른 과목 plan 추가
-  ]);
-
   // 입력 상태
   const [selectedSubject, setSelectedSubject] = useState(newSubjectList[0] || "");
 
