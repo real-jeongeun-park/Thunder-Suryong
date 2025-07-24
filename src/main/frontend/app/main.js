@@ -99,7 +99,6 @@ export default function HomeScreen() {
     }
   };
 
-
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
 
@@ -147,11 +146,14 @@ export default function HomeScreen() {
 
         const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
 
-        const res = await axios.get(`http://localhost:8080/api/plans/date?date=${formattedDate}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await axios.get(
+          `http://localhost:8080/api/plans/date?date=${formattedDate}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const result = res.data;
 
@@ -178,8 +180,20 @@ export default function HomeScreen() {
     fetchTodayPlans();
   }, [date]); // date가 변경될 때마다 계획 다시 불러오기
 
-
-
+  // 계획 달성률 계산 함수
+  function getAchievementRate(plans) {
+    let total = 0,
+      checked = 0;
+    plans.forEach((plan) => {
+      plan.todos.forEach((todo) => {
+        total += 1;
+        if (todo.checked) checked += 1;
+      });
+    });
+    if (total === 0) return 0;
+    return Math.round((checked / total) * 100);
+  }
+  const achievementRate = getAchievementRate(plans);
 
   return (
     <View style={{ flex: 1 }}>
@@ -191,29 +205,57 @@ export default function HomeScreen() {
           >
             <View style={styles.contentWrapper}>
               {/* 상단 제목 */}
-
               {userInfo && (
                 <Text style={styles.title}>
                   {userInfo.nickname}님, 어서오세요!
                 </Text>
               )}
 
-              {/* 상단 버튼 2개 */}
+              {/* 상단 버튼 */}
               <View style={styles.topButtons}>
+                {/* 달성률 Touch 영역 */}
                 <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => setModalVisible(true)}
-                >
-                  <Text style={styles.buttonText}>일정 불러오기</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
+                  style={styles.achievementRate}
                   onPress={() => {
-                    router.push("/exam_schedule");
+                    router.push("/progress");
                   }}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.buttonText}>새로운 일정 생성</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text
+                      style={{
+                        color: "#6c4ed5",
+                        fontWeight: "bold",
+                        fontSize: 15,
+                      }}
+                    >
+                      오늘 계획 {achievementRate}% 달성!
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={15}
+                      color="#6c4ed5"
+                      style={{ marginLeft: 4, marginTop: 2 }}
+                    />
+                  </View>
                 </TouchableOpacity>
+                {/* 일정 버튼 */}
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => setModalVisible(true)}
+                  >
+                    <Text style={styles.buttonText}>일정 불러오기</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      router.push("/exam_schedule");
+                    }}
+                  >
+                    <Text style={styles.buttonText}>새로운 일정 생성</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* 타이머 + 캐릭터 나란히 배치 */}
@@ -255,9 +297,13 @@ export default function HomeScreen() {
             <Text style={styles.toDoTitle}>오늘의 계획</Text>
 
             {isLoading ? (
-              <Text style={{ alignSelf: "center", marginTop: 10 }}>불러오는 중...</Text>
+              <Text style={{ alignSelf: "center", marginTop: 10 }}>
+                불러오는 중...
+              </Text>
             ) : plans.length === 0 ? (
-              <Text style={{ alignSelf: "center", marginTop: 10 }}>계획이 없습니다.</Text>
+              <Text style={{ alignSelf: "center", marginTop: 10 }}>
+                계획이 없습니다.
+              </Text>
             ) : (
               plans.map((plan) => (
                 <View key={plan.id}>
@@ -296,7 +342,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <Modal visible={calendarVisible} transparent animationType="slide">
+          <Modal visible={calendarVisible} transparent animationType="none">
             <View style={styles.modalBackground}>
               <View style={styles.calendarContainer}>
                 <Calendar
@@ -377,9 +423,19 @@ const styles = StyleSheet.create({
   },
   topButtons: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
+    width: "100%",
+    //gap: 10,
     marginBottom: 20,
-    alignSelf: "flex-end",
+    //alignSelf: "flex-end",
+  },
+  achievementRate: {
+    //backgroundColor: "#e5ddff",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    //borderRadius: 30,
+    alignSelf: "flex-start",
+    //marginTop: 4,
   },
   actionButton: {
     backgroundColor: "#E7DDF3",
