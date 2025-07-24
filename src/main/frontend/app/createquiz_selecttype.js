@@ -25,9 +25,7 @@ export default function CreateQuizSelectType() {
   const questionTypeOptions = [
     { id: 1, name: "주관식" },
     { id: 2, name: "객관식" },
-    { id: 3, name: "flash card" },
-    { id: 4, name: "O/X 문제" },
-    { id: 5, name: "서술형" },
+    { id: 3, name: "O/X 문제" },
   ];
 
   useEffect(() => {
@@ -51,37 +49,27 @@ export default function CreateQuizSelectType() {
 
   const handleRemoveText = () => setInputText("");
 
-  // 완료 버튼 눌렀을 때 함수
   const onSubmit = () => {
     if (selectedNotes.length === 0 && inputText.trim() === "") {
       setShowModal(true);
       return;
     }
-    // 문제지 이름이 비어있으면 기본값 설정 (선택사항)
     const finalProblemName = problemName.trim() === "" ? "새로운 문제지" : problemName;
-    // 문제 수가 비어있거나 유효하지 않으면 기본값 설정 (선택사항, 예를 들어 5개)
     const finalQuestionCount = parseInt(questionCount) > 0 ? parseInt(questionCount) : 5;
 
-
-    // 여기서 원하는 다음 동작 추가 가능 (예: 문제 생성 API 호출 등)
-    console.log("제출 완료! 문제지 이름:", finalProblemName);
-
-    // 새롭게 만든 createdquiz 화면으로 이동
     router.push({
-      pathname: "/createdquiz", // 새로 생성할 파일명에 맞춰 경로 변경
+      pathname: "/createdquiz",
       params: {
         problemName: finalProblemName,
-        questionCount: finalQuestionCount.toString(), // 숫자를 문자열로 전달
-        selectedTypes: JSON.stringify(selectedTypes), // 배열을 문자열로 변환하여 전달
+        questionCount: finalQuestionCount.toString(),
+        selectedTypes: JSON.stringify(selectedTypes),
+        inputText: inputText.trim(),
       },
     });
   };
 
-  // 모달 닫기 및 이전 화면 이동
   const closeModalAndGoBack = () => {
     setShowModal(false);
-    // 이 부분은 현재 화면(select type)에서 뒤로 가는 것이므로,
-    // 필요에 따라 '/createquiz_selectnote' 대신 router.back()을 사용할 수도 있습니다.
     router.push("/createquiz_selectnote");
   };
 
@@ -165,7 +153,6 @@ export default function CreateQuizSelectType() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* 경고 모달 */}
       <Modal
         transparent
         animationType="fade"
