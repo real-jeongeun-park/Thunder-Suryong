@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Dimensions,
+  Dimensions
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -18,138 +19,199 @@ export default function CreatedQuizScreen() {
   const {
     problemName: initialProblemName,
     questionCount: initialQuestionCount,
+    selectedTypes: selectedTypesParam
   } = useLocalSearchParams();
 
-  // 현재 문제 인덱스
+  const selectedTypes = useMemo(() => {
+    try {
+      return JSON.parse(selectedTypesParam);
+    } catch {
+      return [2];
+    }
+  }, [selectedTypesParam]);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  // 사용자가 선택한 보기
-  const [selectedOption, setSelectedOption] = useState(null);
-  // 제출 여부 (정답 확인 완료)
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [subjectiveAnswer, setSubjectiveAnswer] = useState("");
+  const [subjectiveAnswers, setSubjectiveAnswers] = useState(
+    Array(parseInt(initialQuestionCount)).fill("")
+  );
   const [isSubmitted, setIsSubmitted] = useState(false);
-  // 문제 제목
   const [quizProblemName, setQuizProblemName] = useState(
     initialProblemName || "새로운 문제지"
   );
-  // 총 문제 수
   const [totalQuestions, setTotalQuestions] = useState(
     parseInt(initialQuestionCount) > 0 ? parseInt(initialQuestionCount) : 5
   );
 
-  // 문제별 상태: "correct", "incorrect", null
   const [questionStatuses, setQuestionStatuses] = useState(
     Array(totalQuestions).fill(null)
   );
-  // 문제별 유저 답안
   const [userAnswers, setUserAnswers] = useState(
     Array(totalQuestions).fill(null)
   );
 
-  // 문제 리스트 생성 (옵션과 정답 포함)
   const questions = useMemo(() => {
-    return Array.from({ length: totalQuestions }, (_, i) => {
-      const options = ["보기 1", "보기 2", "보기 3", "보기 4"];
-      const correctIndex = Math.floor(Math.random() * 4);
-      const correctText = `${options[correctIndex]}_정답`;
-      const formattedOptions = options.map((opt, idx) =>
-        idx === correctIndex ? correctText : opt
-      );
-      return {
-        id: i + 1,
-        question: `문제${i + 1}. 문제내용`,
-        options: formattedOptions,
-        correctAnswer: correctText,
-        solution: `해설: 문제 ${i + 1}의 정답은 '${correctText}'입니다.`,
-      };
+    const types = selectedTypes;
+    const mixed = Array.from({ length: totalQuestions }, (_, i) => {
+      const type = types[i % types.length];
+      if (type === 1) {
+        return {
+          id: i + 1,
+          type: "subjective",
+          question: `문제${i + 1}. 주관식 문제내용`,
+          correctAnswer: "정답",
+          solution: `해설: 주관식 문제 ${i + 1}의 정답은 '정답'입니다.`
+        };
+      } else {
+        const options = ["보기 1", "보기 2", "보기 3"];
+        const correctIndex = Math.floor(Math.random() * 3);
+        const correctText = `${options[correctIndex]}`;
+        return {
+          id: i + 1,
+          type: "objective",
+          question: `문제${i + 1}. 어쩌고 저쩌고 기계학습이 블라블라`,
+          options: options,
+          correctAnswer: [correctText],
+          solution: `해설: 객관식 문제 ${i + 1}의 정답은 '${correctText}'입니다.`
+        };
+      }
     });
-  }, [totalQuestions]);
+    return mixed.sort((a, b) => a.id - b.id); // 오름차순 정렬
+  }, [totalQuestions, selectedTypes]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const questionNavScrollViewRef = useRef(null);
+  const inputRef = useRef(null);
 
-  // 문제 번호 스크롤 위치 조절 및 현재 선택 답 복원
   useEffect(() => {
     if (questionNavScrollViewRef.current) {
       const boxWidth = 43 + 10;
-      const offset =
-        currentQuestionIndex * boxWidth - width / 2 + boxWidth / 2;
+      const offset = currentQuestionIndex * boxWidth - width / 2 + boxWidth / 2;
       questionNavScrollViewRef.current.scrollTo({
         x: offset > 0 ? offset : 0,
-        animated: true,
+        animated: true
       });
     }
-    setSelectedOption(userAnswers[currentQuestionIndex]);
-  }, [currentQuestionIndex, userAnswers]);
+    const savedAnswer = userAnswers[currentQuestionIndex];
+    if (currentQuestion.type === "subjective") {
+      setSubjectiveAnswer(subjectiveAnswers[currentQuestionIndex] || "");
+    } else {
+      setSelectedOptions(savedAnswer || []);
+    }
+  }, [currentQuestionIndex]);
 
-  // 보기 선택 시
   const handleOptionPress = (option) => {
-    if (isSubmitted) return; // 제출 후 선택 불가
-    setSelectedOption(option);
+    if (isSubmitted) return;
+    const updated = [...selectedOptions];
+    const index = updated.indexOf(option);
+    if (index > -1) {
+      updated.splice(index, 1);
+    } else {
+      updated.push(option);
+    }
+    setSelectedOptions(updated);
+    const updatedAnswers = [...userAnswers];
+    updatedAnswers[currentQuestionIndex] = updated;
+    setUserAnswers(updatedAnswers);
+  };
+
+  const handleSubjectiveChange = (text) => {
+    setSubjectiveAnswer(text);
+    const newAnswers = [...subjectiveAnswers];
+    newAnswers[currentQuestionIndex] = text;
+    setSubjectiveAnswers(newAnswers);
+
     const updated = [...userAnswers];
-    updated[currentQuestionIndex] = option;
+    updated[currentQuestionIndex] = text;
     setUserAnswers(updated);
   };
 
-  // 다음 문제 or 정답 확인 or 다시 풀기/끝내기 버튼 동작
-  const handleNextOrSubmit = () => {
-    if (!isSubmitted) {
-      // 정답 확인 전: 현재 문제 선택지 저장 및 상태 갱신
-      if (selectedOption !== null) {
-        const updatedStatuses = [...questionStatuses];
-        updatedStatuses[currentQuestionIndex] =
-          selectedOption === currentQuestion.correctAnswer ? "correct" : "incorrect";
-        setQuestionStatuses(updatedStatuses);
-      }
+  const isCorrectAnswer = (answer, correctAnswer) => {
+    if (!Array.isArray(answer) || !Array.isArray(correctAnswer)) return false;
+    if (answer.length !== correctAnswer.length) return false;
+    return [...answer].sort().every((v, i) => v === correctAnswer.sort()[i]);
+  };
 
-      if (currentQuestionIndex < questions.length - 1) {
-        // 다음 문제로 이동
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedOption(userAnswers[currentQuestionIndex + 1]);
-      } else {
-        // 마지막 문제 정답 확인
-        const finalStatuses = questions.map((q, idx) => {
-          const selected = userAnswers[idx];
-          return selected === q.correctAnswer ? "correct" : "incorrect";
-        });
-        setQuestionStatuses(finalStatuses);
-        setIsSubmitted(true);
-      }
+  const handleNextOrSubmit = () => {
+    const updatedAnswers = [...userAnswers];
+    const userAnswer =
+      currentQuestion.type === "subjective"
+        ? subjectiveAnswer
+        : selectedOptions;
+    updatedAnswers[currentQuestionIndex] = userAnswer;
+    setUserAnswers(updatedAnswers);
+
+    const updatedStatuses = [...questionStatuses];
+    updatedStatuses[currentQuestionIndex] =
+      currentQuestion.type === "subjective"
+        ? userAnswer === currentQuestion.correctAnswer
+          ? "correct"
+          : "incorrect"
+        : isCorrectAnswer(userAnswer, currentQuestion.correctAnswer)
+        ? "correct"
+        : "incorrect";
+    setQuestionStatuses(updatedStatuses);
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      const finalStatuses = questions.map((q, idx) => {
+        const answer = updatedAnswers[idx];
+        return q.type === "subjective"
+          ? answer === q.correctAnswer
+            ? "correct"
+            : "incorrect"
+          : isCorrectAnswer(answer, q.correctAnswer)
+          ? "correct"
+          : "incorrect";
+      });
+      setQuestionStatuses(finalStatuses);
+      setIsSubmitted(true);
     }
   };
 
-  // 다시 풀기 버튼 클릭시 초기화
-  const handleRetry = () => {
-    setCurrentQuestionIndex(0);
-    setSelectedOption(null);
-    setIsSubmitted(false);
-    setQuestionStatuses(Array(totalQuestions).fill(null));
-    setUserAnswers(Array(totalQuestions).fill(null));
-  };
+  const renderOptionStyle = (option) => {
+    const isSelected = selectedOptions.includes(option);
+    const isCorrect = isSubmitted && currentQuestion.correctAnswer.includes(option);
+    const isWrong =
+      isSubmitted &&
+      selectedOptions.includes(option) &&
+      !currentQuestion.correctAnswer.includes(option);
 
-  // 끝내기 버튼 클릭시 quiz.js로 이동
-  const handleFinish = () => {
-    router.push("/quiz");
-  };
-
-  // 문제 번호 선택 시 문제 이동
-  const goToQuestion = (idx) => {
-    setCurrentQuestionIndex(idx);
+    return {
+      borderWidth: 0.6,
+      borderColor: isCorrect
+        ? "#72A13F"
+        : isWrong
+        ? "#C95B51"
+        : isSelected && !isSubmitted
+        ? "#7A4EC6"
+        : "#B493C3",
+      backgroundColor: isCorrect
+        ? "#E8F2DF"
+        : isWrong
+        ? "#F4D2CF"
+        : isSelected && !isSubmitted
+        ? "#F4F0FA"
+        : "#FAF8FD",
+      borderRadius: 5,
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+      marginBottom: 10
+    };
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#A9A9A9" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{quizProblemName}</Text>
         </View>
 
-        {/* 문제 번호 영역 */}
         <View style={styles.questionNavWrapper}>
           <ScrollView
             ref={questionNavScrollViewRef}
@@ -157,63 +219,65 @@ export default function CreatedQuizScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.questionNavContainer}
           >
-            {questions.map((_, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[
-                  styles.questionNavBox,
-                  currentQuestionIndex === i && styles.questionNavBoxActive,
-                  isSubmitted &&
-                    questionStatuses[i] === "correct" &&
-                    styles.questionNavBoxCorrect,
-                  isSubmitted &&
-                    questionStatuses[i] === "incorrect" &&
-                    styles.questionNavBoxIncorrect,
-                ]}
-                onPress={() => goToQuestion(i)}
-              >
-                <Text
-                  style={[
-                    styles.questionNavText,
-                    currentQuestionIndex === i && styles.questionNavTextActive,
-                  ]}
+            {questions.map((_, i) => {
+              const status = questionStatuses[i];
+              let bgColor = "#FAF8FD";
+              if (isSubmitted) {
+                if (status === "correct") bgColor = "#E8F2DF";
+                else if (status === "incorrect") bgColor = "#F4D2CF";
+              }
+              return (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => setCurrentQuestionIndex(i)}
+                  style={{
+                    ...styles.questionNavBox,
+                    backgroundColor: bgColor,
+                    borderColor: currentQuestionIndex === i ? "#7A4EC6" : "#B493C3"
+                  }}
                 >
-                  {i + 1}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={{
+                      ...styles.questionNavText,
+                      ...(currentQuestionIndex === i && styles.questionNavTextActive)
+                    }}
+                  >
+                    {i + 1}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
-        {/* 문제 내용 및 보기 */}
-        <ScrollView style={styles.questionContentContainer}>
+        <ScrollView style={styles.questionContentContainer} keyboardShouldPersistTaps="handled">
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
 
-          {currentQuestion.options.map((option, idx) => {
-            const isSelected = selectedOption === option;
-            const isCorrect = isSubmitted && option === currentQuestion.correctAnswer;
-            const isWrong =
-              isSubmitted &&
-              userAnswers[currentQuestionIndex] === option &&
-              option !== currentQuestion.correctAnswer;
-
-            return (
+          {currentQuestion.type === "objective" ? (
+            currentQuestion.options.map((option, idx) => (
               <TouchableOpacity
                 key={idx}
-                style={[
-                  styles.optionBox,
-                  isSelected && !isSubmitted && styles.optionBoxSelected,
-                  isCorrect && styles.optionBoxCorrectView,
-                  isWrong && styles.optionBoxIncorrectView,
-                ]}
                 onPress={() => handleOptionPress(option)}
+                style={renderOptionStyle(option)}
               >
                 <Text style={styles.optionText}>{option}</Text>
               </TouchableOpacity>
-            );
-          })}
+            ))
+          ) : (
+            <TextInput
+              ref={inputRef}
+              style={{
+                ...styles.optionBox,
+                minHeight: 100,
+                textAlignVertical: "top"
+              }}
+              multiline
+              editable={!isSubmitted}
+              value={subjectiveAnswer}
+              onChangeText={handleSubjectiveChange}
+            />
+          )}
 
-          {/* 정답 제출 후 해설 노출 */}
           {isSubmitted && (
             <View style={styles.solutionBox}>
               <Text style={styles.solutionText}>{currentQuestion.solution}</Text>
@@ -223,30 +287,34 @@ export default function CreatedQuizScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* 하단 버튼 영역 */}
         {!isSubmitted ? (
           <TouchableOpacity
-            style={styles.bottomButton}
             onPress={handleNextOrSubmit}
-            disabled={selectedOption === null}
+            style={styles.bottomButton}
           >
             <Text style={styles.bottomButtonText}>
-              {currentQuestionIndex === questions.length - 1
-                ? "정답 확인하기"
-                : "다음"}
+              {currentQuestionIndex === questions.length - 1 ? "정답 확인하기" : "다음"}
             </Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.bottomButtonGroup}>
             <TouchableOpacity
-              style={[styles.bottomButton, { marginRight: 10, flex: 1 }]}
-              onPress={handleFinish}
+              onPress={() => router.push("/quiz")}
+              style={{ ...styles.bottomButton, marginRight: 10, flex: 1 }}
             >
               <Text style={styles.bottomButtonText}>끝내기</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.bottomButton, { flex: 1 }]}
-              onPress={handleRetry}
+              onPress={() => {
+                setIsSubmitted(false);
+                setQuestionStatuses(Array(totalQuestions).fill(null));
+                setUserAnswers(Array(totalQuestions).fill(null));
+                setSubjectiveAnswers(Array(totalQuestions).fill(""));
+                setCurrentQuestionIndex(0);
+                setSelectedOptions([]);
+                setSubjectiveAnswer("");
+              }}
+              style={{ ...styles.bottomButton, flex: 1 }}
             >
               <Text style={styles.bottomButtonText}>다시 풀기</Text>
             </TouchableOpacity>
@@ -260,34 +328,34 @@ export default function CreatedQuizScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#fff"
   },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 20
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-    paddingTop: 10,
+    paddingTop: 10
   },
   backButton: {
-    paddingRight: 10,
+    paddingRight: 10
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "400",
-    color: "#3C3C3C",
+    color: "#3C3C3C"
   },
   questionNavWrapper: {
     height: 53,
-    marginBottom: 10,
+    marginBottom: 10
   },
   questionNavContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 5,
+    paddingVertical: 5
   },
   questionNavBox: {
     width: 43,
@@ -296,38 +364,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 5,
-    backgroundColor: "rgba(170, 150, 204, 0.19)",
+    backgroundColor: "#FAF8FD",
     borderWidth: 0.6,
-    borderColor: "#B493C3",
-  },
-  questionNavBoxActive: {
-    borderColor: "#7A4EC6",
-  },
-  questionNavBoxIncorrect: {
-    backgroundColor: "rgba(197, 18, 0, 0.19)",
-    borderColor: "#C95B51",
-  },
-  questionNavBoxCorrect: {
-    backgroundColor: "rgba(137, 186, 85, 0.19)",
-    borderColor: "#72A13F",
+    borderColor: "#B493C3"
   },
   questionNavText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#3C3C3C",
+    color: "#3C3C3C"
   },
   questionNavTextActive: {
     fontSize: 17,
-    fontWeight: "400",
+    fontWeight: "400"
   },
   questionContentContainer: {
-    flex: 1,
+    flex: 1
   },
   questionText: {
     fontSize: 16,
     fontWeight: "400",
     color: "#3C3C3C",
-    marginBottom: 20,
+    marginBottom: 20
   },
   optionBox: {
     borderWidth: 0.6,
@@ -336,24 +393,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     marginBottom: 10,
-    backgroundColor: "#FAF8FD",
-  },
-  optionBoxSelected: {
-    backgroundColor: "#D2B7E5",
-    borderColor: "#7A4EC6",
-  },
-  optionBoxCorrectView: {
-    backgroundColor: "rgba(232, 242, 223, 0.59)",
-    borderColor: "#72A13F",
-  },
-  optionBoxIncorrectView: {
-    backgroundColor: "rgba(244, 210, 207, 0.34)",
-    borderColor: "#C95B51",
+    backgroundColor: "#FAF8FD"
   },
   optionText: {
     fontSize: 16,
     fontWeight: "400",
-    color: "#3C3C3C",
+    color: "#3C3C3C"
   },
   solutionBox: {
     borderWidth: 0.6,
@@ -362,24 +407,23 @@ const styles = StyleSheet.create({
     padding: 15,
     minHeight: 100,
     backgroundColor: "#FAF8FD",
-    marginTop: 20,
+    marginTop: 20
   },
   solutionText: {
     fontSize: 14,
-    color: "#3C3C3C",
+    color: "#3C3C3C"
   },
   bottomButton: {
     backgroundColor: "#262626",
     borderRadius: 10,
     height: 53,
     justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
+    alignItems: "center"
   },
   bottomButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "400",
+    fontWeight: "400"
   },
   bottomButtonGroup: {
     flexDirection: "row",
@@ -388,6 +432,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     left: 20,
-    right: 20,
-  },
+    right: 20
+  }
 });
