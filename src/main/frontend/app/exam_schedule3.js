@@ -11,15 +11,16 @@ import {
   ScrollView,
   Image,
   Platform,
+  Modal,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 
 import { useData } from "@/context/DataContext";
 
-const { width } = Dimensions.get("window");
+const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
@@ -54,34 +55,33 @@ export default function ExamInfoInput() {
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-      const checkLogin = async () => {
-        try{
-          let token;
+    const checkLogin = async () => {
+      try {
+        let token;
 
-          if(Platform.OS === 'web'){
-              token = localStorage.getItem("accessToken");
-          } else{
-             // 앱
-             token = await SecureStore.getItemAsync("accessToken");
-          }
-
-          if(!token) throw new Error("Token not found");
-
-          const res = await axios.get("http://localhost:8080/api/validation", {
-              headers: {
-                  Authorization: `Bearer ${token}`,
-              },
-          });
-
-        } catch(e){
-          console.log(e);
-          setUserInfo(null);
-          router.push("/"); // 처음으로 돌아감
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          // 앱
+          token = await SecureStore.getItemAsync("accessToken");
         }
-      };
 
-      checkLogin();
-  }, [])
+        if (!token) throw new Error("Token not found");
+
+        const res = await axios.get("http://localhost:8080/api/validation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (e) {
+        console.log(e);
+        setUserInfo(null);
+        router.push("/"); // 처음으로 돌아감
+      }
+    };
+
+    checkLogin();
+  }, []);
 
   // 추가 버튼 핸들러
   const handleAddSubjectInfo = () => {
@@ -98,120 +98,176 @@ export default function ExamInfoInput() {
   };
 
   const pickImage = async () => {
-    if(Platform.OS === 'web'){
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            base64: true, // 웹용
-            allowsEditing: false,
-            quality: 1,
-        });
+    if (Platform.OS === "web") {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        base64: true, // 웹용
+        allowsEditing: false,
+        quality: 1,
+      });
 
-        if(!result.canceled && result.assets.length > 0){
-            const pickedImage = result.assets[0];
-            uploadBase64Image(pickedImage.base64);
-        }
-    } else{
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            base64: false, // 앱용
-            allowsEditing: false,
-            quality: 1,
-        });
+      if (!result.canceled && result.assets.length > 0) {
+        const pickedImage = result.assets[0];
+        uploadBase64Image(pickedImage.base64);
+      }
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        base64: false, // 앱용
+        allowsEditing: false,
+        quality: 1,
+      });
 
-        if(!result.canceled && result.assets.length > 0){
-            const pickedImages = result.assets[0];
-            uploadImage(pickedImage.uri); // uri을 보냄
-        }
+      if (!result.canceled && result.assets.length > 0) {
+        const pickedImages = result.assets[0];
+        uploadImage(pickedImage.uri); // uri을 보냄
+      }
     }
   };
 
   const uploadBase64Image = async (base64) => {
-  // 웹용
+    // 웹용
     setLoading(true);
 
-    try{
-        const response = await axios.post("http://localhost:8080/api/ocr/web", {
-            base64: base64,
-        });
+    try {
+      const response = await axios.post("http://localhost:8080/api/ocr/web", {
+        base64: base64,
+      });
 
-        useAi(response.data);
-    } catch(err){
-        console.log(err);
-    } finally{
-        setLoading(false);
+      useAi(response.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   const uploadImage = async (uri: string) => {
     // 앱용
     setLoading(true);
     const formData = new FormData();
-    let fileType = 'image/jpeg';
+    let fileType = "image/jpeg";
 
-    if(uri.endsWith('png')){
-        fileType = 'image/png';
+    if (uri.endsWith("png")) {
+      fileType = "image/png";
     }
 
     const file = {
-        uri,
-        type: fileType,
-        name: `upload.${fileType.split('/')[1]}`,
+      uri,
+      type: fileType,
+      name: `upload.${fileType.split("/")[1]}`,
     };
 
-    formData.append('image', file);
+    formData.append("image", file);
 
-    try{
-        const response = await axios.post("http://localhost:8080/api/ocr/app", formData);
-        useAi(response.data);
-    } catch(e){
-        console.log(e);
-    } finally{
-        setLoading(false);
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/ocr/app",
+        formData
+      );
+      useAi(response.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
     }
   };
 
   const useAi = async (request) => {
-    if(request.trim()){
-        // 있어야만 실행
-        try{
-            const response = await axios.post("http://localhost:8080/api/ai/syllabus",{
-                request: request,
-            });
+    if (request.trim()) {
+      // 있어야만 실행
+      try {
+        const response = await axios.post(
+          "http://localhost:8080/api/ai/syllabus",
+          {
+            request: request,
+          }
+        );
 
-            console.log(response.data);
+        console.log(response.data);
 
-            const { weekList, contentList } = response.data;
+        const { weekList, contentList } = response.data;
 
-            const newSubjectInfosList = weekList.map((week, index) => ({
-                subject: selectedSubject,
-                week,
-                content: contentList[index],
-            }));
+        const newSubjectInfosList = weekList.map((week, index) => ({
+          subject: selectedSubject,
+          week,
+          content: contentList[index],
+        }));
 
-            setSubjectInfos([...subjectInfos, ...newSubjectInfosList]);
-        } catch(e){
-            console.log(e);
-        }
+        setSubjectInfos([...subjectInfos, ...newSubjectInfosList]);
+      } catch (e) {
+        console.log(e);
+      }
     }
   };
 
   const handleSubmit = () => {
-    if(subjectInfos.length === 0){
-        alert("하나 이상의 공부 분량을 추가하세요.");
-        return;
+    if (subjectInfos.length === 0) {
+      alert("하나 이상의 공부 분량을 추가하세요.");
+      return;
     }
 
-    setData((prev) => ({...prev, subjectInfos: JSON.stringify(subjectInfos)}));
+    setData((prev) => ({
+      ...prev,
+      subjectInfos: JSON.stringify(subjectInfos),
+    }));
     router.push("/exam_schedule4");
+  };
+
+  // 내용 수정
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editIndex, setEditIndex] = useState(null); // 수정 중인 인덱스
+  const [editWeek, setEditWeek] = useState("");
+  const [editContent, setEditContent] = useState("");
+
+  const openEditModal = (index) => {
+    const info = subjectInfos[index];
+    setEditIndex(index);
+    setEditWeek(info.week);
+    setEditContent(info.content);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editWeek.trim() === "" || editContent.trim() === "") {
+      alert("주차/단원, 내용/분량을 모두 입력하세요!");
+      return;
+    }
+
+    setSubjectInfos((prev) => {
+      const newArr = [...prev];
+      newArr[editIndex] = {
+        ...newArr[editIndex],
+        week: editWeek,
+        content: editContent,
+      };
+      return newArr;
+    });
+
+    setEditModalVisible(false);
+  };
+
+  const handleDeleteSubjectInfo = (index) => {
+    setSubjectInfos((prev) => {
+      const newArr = [...prev];
+      newArr.splice(index, 1);
+      return newArr;
+    });
   };
 
   return (
     <PaperProvider>
       <View style={styles.container}>
-        {loading && <View style={styles.loadingOverlay}>
-          <Image source={require("../assets/images/main.png")} style={styles.character} resizeMode="contain"/>
-          <Text style={styles.loadingText}>로딩 중입니다....</Text>
-        </View>}
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+              source={require("../assets/images/main.png")}
+              style={styles.character}
+              resizeMode="contain"
+            />
+            <Text style={styles.loadingText}>로딩 중입니다....</Text>
+          </View>
+        )}
 
         {/* 뒤로가기 버튼 */}
         <View style={styles.backButtonContainer}>
@@ -269,11 +325,10 @@ export default function ExamInfoInput() {
                   ))}
                 </Menu>
               </View>
-              <TouchableOpacity
-                style={styles.photoAddBtn}
-                onPress={pickImage}
-              >
-                <Text style={styles.photoAddBtnText}>강의계획서로 추가하기</Text>
+              <TouchableOpacity style={styles.photoAddBtn} onPress={pickImage}>
+                <Text style={styles.photoAddBtnText}>
+                  강의계획서로 추가하기
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -304,23 +359,97 @@ export default function ExamInfoInput() {
               <Text style={styles.directAddBtnText}>직접 추가하기</Text>
             </TouchableOpacity>
 
-            {/* 저장된 데이터 확인용(디버깅) */}
-            <ScrollView style={{ marginTop: 20, maxHeight: 120 }}>
-              {subjectInfos.map((info, idx) => (
-                  info.subject === selectedSubject && (
-                  <Text key={idx} style={{ color: "#616161", marginTop: 5}}>
-                    {info.week} {info.content}
-                  </Text>
-                  )
-              ))}
+            {/* 저장된 데이터 확인 */}
+            <ScrollView
+              style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
+            >
+              {subjectInfos
+                .filter((info) => info.subject === selectedSubject)
+                .map((info, idx) => (
+                  <View key={idx} style={styles.subjectInfoItem}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <View>
+                        <Text style={styles.subjectInfoWeek}>{info.week}</Text>
+                        <Text style={styles.subjectInfoContent}>
+                          {info.content}
+                        </Text>
+                      </View>
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => openEditModal(idx)}
+                          style={styles.editButton}
+                        >
+                          <Text style={{ color: "#5e43c2" }}>수정</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => handleDeleteSubjectInfo(idx)}
+                          style={[styles.editButton, { marginLeft: 10 }]}
+                        >
+                          <Text style={styles.subjectItemDelete}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ))}
             </ScrollView>
+
+            {/* 수정 모달 */}
+            <Modal
+              visible={editModalVisible}
+              transparent
+              animationType="none"
+              onRequestClose={() => setEditModalVisible(false)}
+            >
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>수정하기</Text>
+
+                  <Text style={styles.modalLabel}>주차/단원</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editWeek}
+                    onChangeText={setEditWeek}
+                    placeholder="예시: 2주차"
+                  />
+                  <Text style={styles.modalLabel}>내용/분량</Text>
+                  <TextInput
+                    style={[styles.modalInput, { height: 80 }]}
+                    value={editContent}
+                    onChangeText={setEditContent}
+                    placeholder="예시: 클라우드 컨셉 개요"
+                    multiline
+                  />
+
+                  <View style={styles.modalBtnRow}>
+                    <TouchableOpacity
+                      onPress={() => setEditModalVisible(false)}
+                      style={[styles.modalBtn, { backgroundColor: "#e0e0e0" }]}
+                    >
+                      <Text style={{ color: "#535353" }}>취소</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleSaveEdit}
+                      style={[styles.modalBtn, { backgroundColor: "#7A4DD6" }]}
+                    >
+                      <Text style={{ color: "white" }}>저장</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </View>
         </View>
         {/* 입력 완료 버튼 */}
-        <TouchableOpacity
-          style={styles.submitBtn}
-          onPress={handleSubmit}
-        >
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
           <Text style={styles.submitBtnText}>입력 완료</Text>
         </TouchableOpacity>
       </View>
@@ -329,19 +458,19 @@ export default function ExamInfoInput() {
 }
 
 const styles = StyleSheet.create({
-loadingOverlay: {
+  loadingOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 9999,
   },
   loadingText: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
     fontWeight: 300,
   },
@@ -453,7 +582,7 @@ loadingOverlay: {
   directAddBtn: {
     width: 120,
     height: 35,
-    backgroundColor: "#c0c0c0ff",
+    backgroundColor: "#E5DFF5",
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
@@ -461,7 +590,7 @@ loadingOverlay: {
     alignSelf: "flex-end",
   },
   directAddBtnText: {
-    color: "#616161ff",
+    color: "#5e43c2ff",
     fontSize: 14,
   },
   submitBtn: {
@@ -478,5 +607,78 @@ loadingOverlay: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  subjectInfoItem: {
+    backgroundColor: "#e6e1f3ff",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  subjectInfoWeek: {
+    marginLeft: 12,
+    fontWeight: "600",
+    color: "#333",
+    fontSize: 14,
+  },
+  subjectInfoContent: {
+    marginLeft: 12,
+    color: "#555",
+    marginTop: 4,
+  },
+  editButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
+  subjectItemDelete: {
+    color: "#9c73b8ff",
+    fontSize: 18,
+    //marginLeft: 4,
+    fontWeight: "bold",
+  },
+
+  // modal styles
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+    textAlign: "center",
+  },
+  modalLabel: {
+    fontWeight: "600",
+    marginBottom: 6,
+    color: "#555",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    padding: 10,
+    fontSize: 15,
+    marginBottom: 12,
+    color: "#333",
+  },
+  modalBtnRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginHorizontal: 6,
+    alignItems: "center",
   },
 });

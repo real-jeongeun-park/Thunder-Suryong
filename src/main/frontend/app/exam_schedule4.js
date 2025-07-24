@@ -30,33 +30,35 @@ export default function ExamInfoInput() {
 
   const { examName, startDate, endDate, subjectInfos } = data;
   const parsedSubjectInfos = JSON.parse(data.subjectInfos);
-  const newSubjectList = [...new Set(parsedSubjectInfos.map(item => item.subject))];
+  const newSubjectList = [
+    ...new Set(parsedSubjectInfos.map((item) => item.subject)),
+  ];
   // 다 불러옴
 
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
     const checkLogin = async () => {
-      try{
+      try {
         let token;
 
-        if(Platform.OS === 'web'){
-            token = localStorage.getItem("accessToken");
-        } else{
-           // 앱
-           token = await SecureStore.getItemAsync("accessToken");
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          // 앱
+          token = await SecureStore.getItemAsync("accessToken");
         }
 
-        if(!token) throw new Error("Token not found");
+        if (!token) throw new Error("Token not found");
 
         const res = await axios.get("http://localhost:8080/api/validation", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         setUserInfo(res.data); // userInfo.nickname으로 받아옴
-      } catch(e){
+      } catch (e) {
         console.log(e);
         setUserInfo(null);
         router.push("/"); // 처음으로 돌아감
@@ -64,32 +66,35 @@ export default function ExamInfoInput() {
     };
 
     checkLogin();
-  }, [])
+  }, []);
 
   useEffect(() => {
     const getPlans = async () => {
       setLoading(true);
       try {
-        const response = await axios.post("http://localhost:8080/api/ai/plans", {
-          subjectInfos: parsedSubjectInfos,
-          nickname: userInfo.nickname,
-          startDate,
-          endDate,
-        });
+        const response = await axios.post(
+          "http://localhost:8080/api/ai/plans",
+          {
+            subjectInfos: parsedSubjectInfos,
+            nickname: userInfo.nickname,
+            startDate,
+            endDate,
+          }
+        );
 
         const { date, subject, week, content } = response.data; // 모두 다 리스트 형태
 
         const newPlanList = date.map((date, index) => ({
-            date,
-            subject: subject[index],
-            week: week[index],
-            content: content[index],
+          date,
+          subject: subject[index],
+          week: week[index],
+          content: content[index],
         }));
 
-        setPlans(prev => [...prev, ...newPlanList]);
+        setPlans((prev) => [...prev, ...newPlanList]);
       } catch (e) {
         console.log(e);
-      } finally{
+      } finally {
         setLoading(false);
       }
     };
@@ -100,53 +105,64 @@ export default function ExamInfoInput() {
   }, [userInfo]); // userInfo가 바뀔 때마다 실행됨
 
   // 입력 상태
-  const [selectedSubject, setSelectedSubject] = useState(newSubjectList[0] || "");
+  const [selectedSubject, setSelectedSubject] = useState(
+    newSubjectList[0] || ""
+  );
 
   // 선택된 과목의 plan만 보여주기
   const selectedPlans = plans.filter((p) => p.subject === selectedSubject);
 
   const handleSubmit = async () => {
-    try{
-        const response = await axios.post("http://localhost:8080/api/createExam", {
-            list: { startDate,
-            endDate,
-            examName,
-            newSubjectList},
-            nickname: userInfo.nickname,
-        }); // exam db에 저장
-        // console.log(newSubjectList.length);
-        // console.log(plans.length);
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/createExam",
+        {
+          list: { startDate, endDate, examName, newSubjectList },
+          nickname: userInfo.nickname,
+        }
+      ); // exam db에 저장
+      // console.log(newSubjectList.length);
+      // console.log(plans.length);
 
-        const transformedPlans = {
-          date: plans.map(p => p.date),
-          subject: plans.map(p => p.subject),
-          week: plans.map(p => p.week),
-          content: plans.map(p => p.content),
-        };
+      const transformedPlans = {
+        date: plans.map((p) => p.date),
+        subject: plans.map((p) => p.subject),
+        week: plans.map((p) => p.week),
+        content: plans.map((p) => p.content),
+      };
 
-        const response2 = await axios.post("http://localhost:8080/api/createPlan", {
-            plans: transformedPlans,
-            nickname: userInfo.nickname,
-        });
+      const response2 = await axios.post(
+        "http://localhost:8080/api/createPlan",
+        {
+          plans: transformedPlans,
+          nickname: userInfo.nickname,
+        }
+      );
 
-        // plan db에 저장
+      // plan db에 저장
 
-        console.log(response.data);
-        console.log(response2.data); // 디버깅
+      console.log(response.data);
+      console.log(response2.data); // 디버깅
 
-        router.push("/main");
-    } catch(e){
-        console.log(e);
+      router.push("/main");
+    } catch (e) {
+      console.log(e);
     }
-  }
+  };
 
   return (
     <PaperProvider>
       <View style={styles.container}>
-        {loading && <View style={styles.loadingOverlay}>
-            <Image source={require("../assets/images/main.png")} style={styles.character} resizeMode="contain"/>
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+              source={require("../assets/images/main.png")}
+              style={styles.character}
+              resizeMode="contain"
+            />
             <Text style={styles.loadingText}>로딩 중입니다....</Text>
-        </View>}
+          </View>
+        )}
         {/* 뒤로가기 버튼 */}
         <View style={styles.backButtonContainer}>
           <TouchableOpacity onPress={() => router.back()}>
@@ -164,7 +180,9 @@ export default function ExamInfoInput() {
           <View style={styles.formBox}>
             {/* 기간 */}
             <Text style={styles.inputText}>기간</Text>
-            <Text style={styles.periodText}>{startDate} ~ {endDate}</Text>
+            <Text style={styles.periodText}>
+              {startDate} ~ {endDate}
+            </Text>
             {/* 시험명 */}
             <Text style={styles.inputText}>시험명</Text>
             <Text style={styles.periodText}>{examName}</Text>
@@ -202,26 +220,25 @@ export default function ExamInfoInput() {
                   선택한 과목의 일정이 없습니다.
                 </Text>
               ) : (
-                selectedPlans.map((plan, idx) => (
-                  <View key={idx} style={styles.scheduleItem}>
-                    <Text style={styles.scheduleWeek}>날짜: {plan.date}</Text>
-                    <Text style={styles.scheduleWeek}>
-                      주차/단원: {plan.week}
-                    </Text>
-                    <Text style={styles.scheduleContent}>
-                      내용: {plan.content}
-                    </Text>
-                  </View>
-                ))
+                <ScrollView style={{ maxHeight: 300 }}>
+                  {selectedPlans.map((plan, idx) => (
+                    <View key={idx} style={styles.scheduleItem}>
+                      <Text style={styles.scheduleWeek}>날짜: {plan.date}</Text>
+                      <Text style={styles.scheduleWeek}>
+                        주차/단원: {plan.week}
+                      </Text>
+                      <Text style={styles.scheduleContent}>
+                        내용: {plan.content}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
               )}
             </View>
           </View>
         </View>
         {/* 입력 완료 버튼 */}
-        <TouchableOpacity
-          style={styles.submitBtn}
-          onPress={handleSubmit}
-        >
+        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
           <Text style={styles.submitBtnText}>입력 완료</Text>
         </TouchableOpacity>
       </View>
@@ -236,13 +253,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 9999,
   },
   loadingText: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
     fontWeight: 300,
   },
