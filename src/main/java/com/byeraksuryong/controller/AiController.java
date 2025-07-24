@@ -51,5 +51,16 @@ public class AiController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/chatInput")
+    public ResponseEntity<?> receiveChatInput(@RequestBody Map<String, String> body){
+        try{
+            String result = aiService.getChatInput(body);
+            return ResponseEntity.ok(result);
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
 

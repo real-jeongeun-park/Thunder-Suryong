@@ -5,7 +5,7 @@ create table plan (
     exam_id bigint,
     week varchar(50),
     content varchar(255),
-    date varchar(50),
+    date DATE,
     learned boolean,
     FOREIGN KEY (exam_id) REFERENCES exam(id),
     primary key (id)

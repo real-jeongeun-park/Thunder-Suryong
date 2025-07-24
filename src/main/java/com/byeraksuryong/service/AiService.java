@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -207,5 +208,14 @@ public class AiService {
         styleInfo.put("studyStyle", style.getStudyStyle());
 
         return styleInfo;
+    }
+
+    public String getChatInput(Map<String, String> body) throws IOException, InterruptedException {
+        String content = body.get("content");
+        String chatInput = body.get("chatInput");
+        ai.setDefaultPrompt(content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
+
+        String result = ai.requestAnswer(chatInput).getResponse();
+        return result.replace("**", "");
     }
 }
