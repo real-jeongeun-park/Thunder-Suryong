@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import axios from 'axios';
+import axios from "axios";
 
 import {
   Animated,
@@ -62,7 +62,7 @@ export default function Home() {
       <Animated.View style={{ opacity: fadeButtons, marginTop: 30 }}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/login")}
+          onPress={() => router.push("/main")}
         >
           <Text style={styles.buttonText}>로그인</Text>
         </TouchableOpacity>
