@@ -38,25 +38,8 @@ export default function HomeScreen() {
     { name: "마이페이지", label: "마이페이지" },
   ];
 
-  const [plans, setPlans] = useState([
-    {
-      id: 1,
-      title: "추천시스템",
-      isExpanded: false,
-      checked: false,
-      todos: [
-        { id: "1-1", title: "하이퍼파라미터 튜닝", checked: false },
-        { id: "1-2", title: "논문 읽기", checked: false },
-      ],
-    },
-    {
-      id: 2,
-      title: "고급기계학습",
-      isExpanded: false,
-      checked: false,
-      todos: [{ id: "2-1", title: "과제 3번 제출", checked: false }],
-    },
-  ]);
+  const [plans, setPlans] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const toggleExpand = (id) => {
     setPlans((prev) =>
@@ -75,6 +58,47 @@ export default function HomeScreen() {
     }).start();
     setIsExpanded(!isExpanded);
   };
+
+  // 체크 변경 핸들러 함수
+  const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
+    try {
+      // 1. 토큰 불러오기
+      let token;
+      if (Platform.OS === "web") {
+        token = localStorage.getItem("accessToken");
+      } else {
+        token = await SecureStore.getItemAsync("accessToken");
+      }
+
+      // 2. 서버에 PATCH 요청
+      await axios.patch(
+        `http://localhost:8080/api/plans/${todoId}/learned`,
+        { learned: newValue },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // 3. 프론트 상태도 업데이트
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) =>
+          plan.id === planGroupId
+            ? {
+                ...plan,
+                todos: plan.todos.map((todo) =>
+                  todo.id === todoId ? { ...todo, checked: newValue } : todo
+                ),
+              }
+            : plan
+        )
+      );
+    } catch (err) {
+      console.error("체크박스 상태 변경 실패", err);
+    }
+  };
+
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -107,6 +131,55 @@ export default function HomeScreen() {
 
     checkLogin();
   }, []);
+
+  // 오늘의 계획 불러오기
+  useEffect(() => {
+    async function fetchTodayPlans() {
+      try {
+        setIsLoading(true);
+
+        let token;
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
+
+        const res = await axios.get(`http://localhost:8080/api/plans/date?date=${formattedDate}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = res.data;
+
+        const transformed = Object.entries(result).map(([subject, todos]) => ({
+          id: subject,
+          title: subject,
+          isExpanded: false,
+          checked: false,
+          todos: todos.map((todo) => ({
+            id: todo.id,
+            title: todo.content,
+            checked: todo.learned,
+          })),
+        }));
+
+        setPlans(transformed);
+      } catch (err) {
+        console.log("계획 불러오기 실패", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTodayPlans();
+  }, [date]); // date가 변경될 때마다 계획 다시 불러오기
+
+
+
 
   return (
     <View style={{ flex: 1 }}>
@@ -180,30 +253,44 @@ export default function HomeScreen() {
 
           <View style={styles.card}>
             <Text style={styles.toDoTitle}>오늘의 계획</Text>
-            {plans.map((plan) => (
-              <View key={plan.id}>
-                <View style={styles.planItem}>
-                  <Text style={styles.planText}>{plan.title}</Text>
-                  <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
-                    <Ionicons
-                      name={plan.isExpanded ? "chevron-back" : "chevron-down"}
-                      size={16}
-                      color="#555"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {plan.isExpanded && (
-                  <View style={styles.subTodoContainer}>
-                    {plan.todos.map((todo) => (
-                      <View key={todo.id} style={styles.subTodoItem}>
-                        <Checkbox value={todo.checked} />
-                        <Text style={styles.subTodoText}>{todo.title}</Text>
-                      </View>
-                    ))}
+
+            {isLoading ? (
+              <Text style={{ alignSelf: "center", marginTop: 10 }}>불러오는 중...</Text>
+            ) : plans.length === 0 ? (
+              <Text style={{ alignSelf: "center", marginTop: 10 }}>계획이 없습니다.</Text>
+            ) : (
+              plans.map((plan) => (
+                <View key={plan.id}>
+                  <View style={styles.planItem}>
+                    <Text style={styles.planText}>{plan.title}</Text>
+                    <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
+                      <Ionicons
+                        name={plan.isExpanded ? "chevron-back" : "chevron-down"}
+                        size={16}
+                        color="#555"
+                      />
+                    </TouchableOpacity>
                   </View>
-                )}
-              </View>
-            ))}
+
+                  {plan.isExpanded && (
+                    <View style={styles.subTodoContainer}>
+                      {plan.todos.map((todo) => (
+                        <View key={todo.id} style={styles.subTodoItem}>
+                          <Checkbox
+                            value={todo.checked}
+                            onValueChange={(newValue) =>
+                              handleCheckboxChange(plan.id, todo.id, newValue)
+                            }
+                          />
+                          <Text style={styles.subTodoText}>{todo.title}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+
             <TouchableOpacity style={styles.addButton}>
               <Text style={styles.addButtonText}>+ 과목</Text>
             </TouchableOpacity>

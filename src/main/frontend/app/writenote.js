@@ -19,15 +19,13 @@ import {
   View,
 } from "react-native";
 
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
 const screenHeight = Dimensions.get("window").height;
 
 export default function WriteNote() {
   const router = useRouter();
-  const params = useLocalSearchParams();
-
-  const [noteTitle, setNoteTitle] = useState(params.initialNoteTitle || "노트 제목");
-  const [noteContent, setNoteContent] = useState(params.initialNoteContent || "");
-  const noteId = useRef(params.noteId);
 
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const scrollRef = useRef(null);
@@ -37,9 +35,6 @@ export default function WriteNote() {
   const paddingHorizontal = 15;
   const paddingVertical = 15;
   const MIN_LINES = 30;
-
-  const lines = noteContent.split("\n");
-  const totalLines = Math.max(lines.length, MIN_LINES);
 
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
@@ -59,6 +54,66 @@ export default function WriteNote() {
   const dotOpacity1 = useRef(new Animated.Value(0)).current;
   const dotOpacity2 = useRef(new Animated.Value(0)).current;
   const dotOpacity3 = useRef(new Animated.Value(0)).current;
+
+  const { noteId } = useLocalSearchParams();
+
+  const [userInfo, setUserInfo] = useState(null);
+  const [noteContent, setNoteContent] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [totalLines, setTotalLines] = useState(0);
+
+  useEffect(() => {
+    async function checkLogin(){
+        try{
+            let token;
+
+            if(Platform.OS === 'web'){
+                token = localStorage.getItem("accessToken");
+            } else{
+                token = SecureStore.getItemAsync("accessToken");
+            }
+            if(!token) throw new Error("token not found");
+
+            const response = await axios.get("http://localhost:8080/api/validation", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setUserInfo(response.data.nickname);
+        } catch(err){
+            console.log(err);
+            router.push("/");
+        }
+    }
+
+    checkLogin();
+  }, [])
+
+  useEffect(() => {
+    // title과 content 가져오기
+    async function getOneNote(){
+        try{
+            const response = await axios.post("http://localhost:8080/api/printOneNote", {
+                noteId
+            });
+            const note = response.data;
+
+            setNoteTitle(note.title);
+            if(note.content !== null){
+                setNoteContent(note.content); // null만 아니면 됨 ?
+                setTotalLines(Math.max(noteContent.split("\n"), MIN_LINES));
+            }
+            else{
+                setTotalLines(MIN_LINES);
+            }
+        } catch(err){
+            console.log(err);
+        }
+    }
+
+    getOneNote();
+  }, [userInfo])
 
   useEffect(() => {
     if (isBotTyping) {
@@ -91,24 +146,46 @@ export default function WriteNote() {
     }).start(() => setIsSheetOpen(!isSheetOpen));
   }, [isSheetOpen]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (chatInput.trim()) {
-      setChatMessages((prev) => [
+      try{
+         const newUserChatMessage = {
+            type: "user",
+            text: chatInput,
+         }
+         setChatMessages(prev => [...prev, newUserChatMessage]);
+         setIsBotTyping(true);
+
+         const response = await axios.post("http://localhost:8080/api/ai/chatInput", {
+            content: noteContent,
+            chatInput,
+         });
+
+         setChatInput("");
+         setSelectedTexts([]);
+
+         const newBotChatMessage = {
+            type: "bot",
+            text: response.data,
+         };
+
+         setChatMessages(prev => [...prev, newBotChatMessage]);
+      } catch(err){
+        console.log(err);
+      } finally{
+        setIsBotTyping(false);
+      }
+
+      /* setChatMessages((prev) => [
         ...prev,
         selectedTexts.length > 0
           ? { type: "user", text: `→ 오늘 내가 공부한 내용은 ${selectedTexts.join(" / ")} ...\n${chatInput}` }
           : { type: "user", text: chatInput },
-      ]);
-      setSelectedTexts([]);
-      setChatInput("");
-      setIsBotTyping(true);
-      setTimeout(() => {
-        setIsBotTyping(false);
-        setChatMessages((prev) => [
-          ...prev,
-          { type: "bot", text: "질문하신 내용에 대해 알려드릴게요!\n(gpt 답변 내용)." },
-        ]);
-      }, 2000);
+      ]); */
+    }
+    else{
+        alert("채팅을 입력하세요.");
+        return;
     }
   };
 
@@ -125,13 +202,32 @@ export default function WriteNote() {
     }
   };
 
+  const handleNoteSave = async () => {
+    if(noteTitle.trim() && noteContent.trim()){
+        try{
+            const response = await axios.post("http://localhost:8080/api/updateNote", {
+                noteId,
+                title: noteTitle,
+                content: noteContent,
+            });
+
+            alert("저장되었습니다.");
+        } catch(err){
+            console.log(err);
+        }
+    }
+    else{
+        return;
+    }
+  }
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={() => { if(Platform.OS !== 'web') Keyboard.dismiss(); }}>
         <View style={{ flex: 1 }}>
           {/* 헤더 */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back("/notefolder")} style={{ marginRight: 8 }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8 }}>
               <Feather name="chevron-left" size={24} color="#717171" />
             </TouchableOpacity>
             <Feather name="file" size={24} color="#717171" />
@@ -178,7 +274,7 @@ export default function WriteNote() {
           </ScrollView>
 
           {/* 플로팅 버튼 */}
-          <TouchableOpacity
+          {!isSheetOpen && <TouchableOpacity
             style={styles.floatingButton}
             onPress={isSelecting ? handleSelectContent : toggleChatSheet}
           >
@@ -187,7 +283,7 @@ export default function WriteNote() {
             ) : (
               <Image source={require("../assets/images/chatsu.png")} style={styles.floatingButtonImage} />
             )}
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           {/* 챗봇 시트 */}
           <Animated.View style={[styles.chatSheet, { transform: [{ translateY: sheetTranslateY }] }]}>
@@ -216,7 +312,7 @@ export default function WriteNote() {
                 {isBotTyping && (
                   <View style={[styles.chatMessageRow, styles.botMessageRow]}>
                     <Image source={require("../assets/images/chatsu.png")} style={styles.chatsuAvatar} />
-                    <View style={styles.botBubble}>
+                    <View style={[styles.botBubble, { borderRadius: 15 }]}>
                       <Text style={styles.loadingDotsContainer}>
                         <Animated.Text style={[styles.dot, { opacity: dotOpacity1 }]}>.</Animated.Text>
                         <Animated.Text style={[styles.dot, { opacity: dotOpacity2 }]}>.</Animated.Text>
@@ -254,8 +350,8 @@ export default function WriteNote() {
                   placeholderTextColor="#717171"
                   value={chatInput}
                   onChangeText={setChatInput}
-                  onSubmitEditing={handleSendMessage}
                   returnKeyType="send"
+                  onSubmitEditing={handleSendMessage}
                 />
                 <TouchableOpacity onPress={handleSendMessage} style={styles.sendButton}>
                   <Feather name="send" size={20} color="#BA94CC" />
@@ -263,6 +359,12 @@ export default function WriteNote() {
               </View>
             </View>
           </Animated.View>
+          {/* 저장 버튼 */}
+          {!isSheetOpen && <View style={styles.saveButtonWrapper}>
+            <TouchableOpacity style={styles.saveButton} onPress={handleNoteSave}>
+              <Text style={styles.saveButtonText}>노트 저장</Text>
+            </TouchableOpacity>
+          </View>}
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -314,8 +416,9 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: 40,
-    right: 25,
+    bottom: 85,
+    right: -5,
+    zIndex: 10,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -404,14 +507,15 @@ const styles = StyleSheet.create({
   botText: { color: '#3C3C3C' },
   loadingDotsContainer: {
     fontSize: 20,
-    lineHeight: 20,
+    lineHeight: 15,
+    padding: 10,
     fontWeight: 'bold',
     color: '#3C3C3C',
     flexDirection: 'row',
     justifyContent: 'flex-start',
   },
   dot: {
-    fontSize: 20,
+    fontSize: 25,
     width: 10,
     textAlign: 'center',
   },
@@ -439,5 +543,28 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  saveButtonWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButton: {
+    borderRadius: 15,
+    backgroundColor: '#E6D6F3', // 연한 보라색
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+    marginBottom: 25,
+    width: '100%',
+  },
+  saveButtonText: {
+    color: '#3C3C3C',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

@@ -11,21 +11,86 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  Platform,
 } from "react-native";
+
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
 export default function NoteFolder() {
   const {
-    folderName,
+    folderId,
     openAddNote,
-    updatedNoteTitle,
-    updatedNoteContent,
-    originalNoteId,
   } = useLocalSearchParams();
   const router = useRouter();
 
   const [notes, setNotes] = useState([]);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
-  const [newNoteName, setNewNoteName] = useState("");
+  const [noteName, setNoteName] = useState("");
+
+  const [userInfo, setUserInfo] = useState(null);
+  const [folderName, setFolderName] = useState(null);
+
+  useEffect(() => {
+    async function checkLogin(){
+        try{
+            let token;
+
+            if(Platform.OS === 'web'){
+                token = localStorage.getItem("accessToken");
+            } else{
+                token = SecureStore.getItemAsync("accessToken");
+            }
+
+            if(!token) throw new Error("Token not found");
+            const res = await axios.get("http://localhost:8080/api/validation", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setUserInfo(res.data.nickname);
+        } catch(err){
+            console.log(err);
+            router.push("/");
+        }
+    }
+
+    checkLogin();
+  }, [])
+
+  useEffect(() => {
+    const getFolderName = async () => {
+        try{
+            const response = await axios.post("http://localhost:8080/api/printFolderById", {
+                id: folderId,
+            })
+            setFolderName(response.data);
+        } catch(err){
+            console.log(err);
+        }
+    }
+
+    const getNotes = async () => {
+        try{
+            const res = await axios.post("http://localhost:8080/api/printNotes", {
+                folderId: folderId,
+            });
+
+            const mappedNotes = res.data.map(n => ({
+                noteId: n.noteId,
+                title: n.title
+            }));
+
+            setNotes(mappedNotes)
+        } catch(err){
+            console.log(err);
+        }
+    }
+
+    getFolderName();
+    getNotes();
+  }, [userInfo])
 
   useEffect(() => {
     if (openAddNote === "true") {
@@ -33,49 +98,45 @@ export default function NoteFolder() {
     }
   }, [openAddNote]);
 
-  useEffect(() => {
-    if (
-      originalNoteId &&
-      updatedNoteTitle !== undefined &&
-      updatedNoteContent !== undefined
-    ) {
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === originalNoteId
-            ? { ...note, title: updatedNoteTitle, content: updatedNoteContent }
-            : note
-        )
-      );
-    }
-  }, [updatedNoteTitle, updatedNoteContent, originalNoteId]);
+  const handleAddNote = async () => {
+    const newNoteName = noteName.trim();
 
-  const handleAddNote = () => {
-    if (newNoteName.trim()) {
-      const newId = Date.now().toString();
-      const newNote = {
-        id: newId,
-        title: newNoteName.trim(),
-        content: "",
-      };
-      setNotes((prevNotes) => [...prevNotes, newNote]);
+    if(newNoteName) {
+      const noteId = Date.now().toString(); // 임의의 id 부여
 
-      router.push({
-        pathname: "/writenote",
-        params: {
-          initialNoteTitle: newNote.title,
-          initialNoteContent: newNote.content,
-          noteId: newNote.id,
-        },
-      });
-    }
-    setNewNoteName("");
-    setIsCreatingNote(false);
-    Keyboard.dismiss();
-  };
+      try{
+        const response = await axios.post("http://localhost:8080/api/createNote", {
+            folderId,
+            noteId,
+            title: newNoteName,
+        });
 
+        const newNote = {
+            noteId,
+            title: newNoteName,
+        }
+
+        setNotes(prev => [...prev, newNote]);
+
+        router.push({
+            pathname: "/writenote",
+            params: {
+                folderId: folderId,
+                noteId: noteId
+            },
+        });
+      } catch(err){
+        console.log("failed to save note in database. For more: ", err);
+      } finally{
+        setNoteName("");
+        setIsCreatingNote(false);
+        Keyboard.dismiss();
+      }
+    };
+  }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback onPress={() => { if(Platform.OS !== 'web') Keyboard.dismiss() }}>
       <View style={styles.container}>
         {/* 뒤로가기 버튼 + 폴더명 */}
         <View
@@ -100,16 +161,14 @@ export default function NoteFolder() {
 
         <FlatList
           data={notes}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.noteId}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() =>
                 router.push({
                   pathname: "/writenote",
                   params: {
-                    initialNoteTitle: item.title,
-                    initialNoteContent: item.content,
-                    noteId: item.id,
+                    noteId: item.noteId
                   },
                 })
               }
@@ -128,8 +187,8 @@ export default function NoteFolder() {
                   style={styles.noteText}
                   placeholder="노트명을 입력해주세요."
                   placeholderTextColor="#717171"
-                  value={newNoteName}
-                  onChangeText={setNewNoteName}
+                  value={noteName}
+                  onChangeText={setNoteName}
                   autoFocus
                   onSubmitEditing={handleAddNote}
                   returnKeyType="done"

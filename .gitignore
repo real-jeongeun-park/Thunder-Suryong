@@ -39,4 +39,4 @@ out/
 node_modules/
 
 *.json
-vision-key.json
+/src/main/resources/vision-key.json
