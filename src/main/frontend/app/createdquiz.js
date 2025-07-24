@@ -63,7 +63,30 @@ export default function CreatedQuizScreen() {
           correctAnswer: "정답",
           solution: `해설: 주관식 문제 ${i + 1}의 정답은 '정답'입니다.`
         };
+      } else if (type === 2) {
+        const options = ["보기 1", "보기 2", "보기 3"];
+        const correctIndex = Math.floor(Math.random() * 3);
+        const correctText = `${options[correctIndex]}`;
+        return {
+          id: i + 1,
+          type: "objective",
+          question: `문제${i + 1}. 어쩌고 저쩌고 기계학습이 블라블라`,
+          options: options,
+          correctAnswer: [correctText],
+          solution: `해설: 객관식 문제 ${i + 1}의 정답은 '${correctText}'입니다.`
+        };
+      } else if (type === 3) {
+        // OX 문제 예시
+        return {
+          id: i + 1,
+          type: "ox",
+          question: `문제${i + 1}. OX 문제 예시입니다.`,
+          options: ["O", "X"],
+          correctAnswer: ["O"],
+          solution: `해설: OX 문제 ${i + 1}의 정답은 'O'입니다.`
+        };
       } else {
+        // 기본 객관식 fallback
         const options = ["보기 1", "보기 2", "보기 3"];
         const correctIndex = Math.floor(Math.random() * 3);
         const correctText = `${options[correctIndex]}`;
@@ -253,7 +276,7 @@ export default function CreatedQuizScreen() {
         <ScrollView style={styles.questionContentContainer} keyboardShouldPersistTaps="handled">
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
 
-          {currentQuestion.type === "objective" ? (
+          {currentQuestion.type === "objective" || currentQuestion.type === "ox" ? (
             currentQuestion.options.map((option, idx) => (
               <TouchableOpacity
                 key={idx}
@@ -299,7 +322,18 @@ export default function CreatedQuizScreen() {
         ) : (
           <View style={styles.bottomButtonGroup}>
             <TouchableOpacity
-              onPress={() => router.push("/quiz")}
+              onPress={() => {
+                // 여기에 selectedTypes 배열로 어떤 유형 선택했는지 전달
+                router.push({
+                  pathname: "/quiz",
+                  params: {
+                    newQuizName: quizProblemName,
+                    subjective: selectedTypes.includes(1) ? "true" : "false",
+                    objective: selectedTypes.includes(2) ? "true" : "false",
+                    ox: selectedTypes.includes(3) ? "true" : "false"
+                  }
+                });
+              }}
               style={{ ...styles.bottomButton, marginRight: 10, flex: 1 }}
             >
               <Text style={styles.bottomButtonText}>끝내기</Text>
