@@ -283,6 +283,7 @@ export default function ExamInfoInput() {
             data={[examName, ...subjectList]}
             horizontal
             keyExtractor={(item, idx) => item + idx}
+            showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={styles.subjectBadge}>
                 <Text style={styles.subjectBadgeText}>{item}</Text>
@@ -362,6 +363,7 @@ export default function ExamInfoInput() {
             {/* 저장된 데이터 확인 */}
             <ScrollView
               style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
+              showsVerticalScrollIndicator={false}
             >
               {subjectInfos
                 .filter((info) => info.subject === selectedSubject)
@@ -521,7 +523,7 @@ const styles = StyleSheet.create({
   subjectBadgeText: {
     color: "#7A4DD6",
     fontSize: 14,
-    fontWeight: "bold",
+    //fontWeight: "bold",
   },
   inputContainer: {
     flex: 1,
