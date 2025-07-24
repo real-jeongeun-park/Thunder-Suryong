@@ -1,6 +1,7 @@
 package com.byeraksuryong.controller;
 import com.byeraksuryong.api.JwtTokenProvider;
 import com.byeraksuryong.domain.Member;
+import com.byeraksuryong.service.PlanService;
 import com.byeraksuryong.service.SignupService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

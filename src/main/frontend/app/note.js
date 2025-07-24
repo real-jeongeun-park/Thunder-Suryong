@@ -1,7 +1,7 @@
 // NoteScreen.js
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -16,6 +16,9 @@ import {
   View,
 } from "react-native";
 
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+
 export default function NoteScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("노트");
@@ -25,6 +28,8 @@ export default function NoteScreen() {
 
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
 
+  const [nickname, setNickname] = useState(null);
+
   const tabs = [
     { name: "홈", label: "홈" },
     { name: "노트", label: "노트" },
@@ -32,12 +37,78 @@ export default function NoteScreen() {
     { name: "마이페이지", label: "마이페이지" },
   ];
 
-  const handleCreateFolder = () => {
-    if (folderName.trim()) {
-      const newFolder = { name: folderName.trim(), notes: [] };
-      setFolders([...folders, newFolder]);
-      setFolderName("");
-      setIsCreatingFolder(false);
+  useEffect(() => {
+    async function checkLogin(){
+        try{
+            let token;
+
+            if(Platform.OS === 'web'){
+                token = localStorage.getItem("accessToken");
+            } else{
+                token = SecureStore.getItemAsync("accessToken");
+            }
+
+            if(!token) throw new Error("Token not found");
+            const res = await axios.get("http://localhost:8080/api/validation", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setNickname(res.data.nickname);
+        } catch(err){
+            console.log(err);
+            router.push("/");
+        }
+    }
+    checkLogin();
+  }, [])
+
+  useEffect(() => {
+    const getFolder = async () => {
+        try{
+            const res = await axios.post("http://localhost:8080/api/printFolder", {
+                nickname,
+            });
+
+            const mappedFolders = res.data.map(f => ({
+                folderId: f.folderId,
+                folderName: f.folderName,
+            }));
+
+            setFolders(mappedFolders);
+        } catch(err){
+            console.log(err);
+        }
+    };
+
+    getFolder();
+  }, [nickname]);
+
+  const handleCreateFolder = async () => {
+    const newFolderName = folderName.trim();
+    if (newFolderName) {
+    // 내용 없으면 동작 x
+      try{
+        const newId = Date.now().toString();
+        const res = await axios.post("http://localhost:8080/api/createFolder", {
+            nickname,
+            folderId: newId,
+            folderName: newFolderName,
+        });
+
+        const newFolder = {
+            folderId: newId,
+            folderName: newFolderName,
+        }
+
+        setFolders(prev => [...prev, newFolder]);
+      } catch(e){
+        console.log("failed to store folder name. For more: ", e);
+      } finally{
+        setFolderName("");
+        setIsCreatingFolder(false);
+      }
     }
   };
 
@@ -61,19 +132,19 @@ export default function NoteScreen() {
         </>
       ) : (
         <ScrollView style={{ marginHorizontal: 20, marginBottom: 10 }}>
-          {folders.map((folder, index) => (
+          {folders.map((f, index) => (
             <TouchableOpacity
               key={index}
               style={styles.folderItem}
               onPress={() =>
                 router.push({
                   pathname: "/notefolder",
-                  params: { folderName: folder.name },
+                  params: { folderId: f.folderId },
                 })
               }
             >
               <Feather name="folder" size={20} color="#A18CD1" />
-              <Text style={styles.folderText}>{folder.name}</Text>
+              <Text style={styles.folderText}>{f.folderName}</Text>
             </TouchableOpacity>
           ))}
 
@@ -82,7 +153,7 @@ export default function NoteScreen() {
               <Feather name="folder" size={20} color="#B697F4" />
               <TextInput
                 style={styles.input}
-                placeholder="폴더 이름을 입력하세요"
+                placeholder="폴더 이름을 입력하세요."
                 placeholderTextColor="#717171"
                 value={folderName}
                 onChangeText={setFolderName}
@@ -121,9 +192,9 @@ export default function NoteScreen() {
               {/* 수정: styles.folderSelectModal → styles.modalContent로 변경해서 하얀 모달 박스 스타일 적용 */}
               <View style={styles.modalContent}>
                 <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}>
-                  노트를 추가할 폴더를 선택하세요
+                  노트를 추가할 폴더를 선택하세요.
                 </Text>
-                {folders.map((folder, idx) => (
+                {folders.map((f, idx) => (
                   <TouchableOpacity
                     key={idx}
                     style={styles.modalFolderItem}
@@ -132,14 +203,14 @@ export default function NoteScreen() {
                       router.push({
                         pathname: "/notefolder",
                         params: {
-                          folderName: folder.name,
+                          folderId: f.folderId,
                           openAddNote: "true",
                         },
                       });
                     }}
                   >
                     <Feather name="folder" size={20} color="#A18CD1" />
-                    <Text style={{ marginLeft: 10, fontSize: 16 }}>{folder.name}</Text>
+                    <Text style={{ marginLeft: 10, fontSize: 16 }}>{f.folderName}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
