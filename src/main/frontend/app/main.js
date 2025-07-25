@@ -274,11 +274,14 @@ export default function HomeScreen() {
             </View>
           </LinearGradient>
         </ScrollView>
+
+        {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
         <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
           <TouchableOpacity onPress={toggleSheet}>
             <View style={styles.handleBar} />
           </TouchableOpacity>
 
+          {/* 날짜 선택 및 이동 컨트롤 */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setDate(subDays(date, 1))}>
               <Ionicons name="chevron-back" size={20} />
@@ -293,6 +296,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* 오늘의 계획 카드 영역 */}
           <View style={styles.card}>
             <Text style={styles.toDoTitle}>오늘의 계획</Text>
 
@@ -318,6 +322,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </View>
 
+                  {/* 펼쳐진 todo 항목별 체크박스 및 제목 */}
                   {plan.isExpanded && (
                     <View style={styles.subTodoContainer}>
                       {plan.todos.map((todo) => (
@@ -337,6 +342,7 @@ export default function HomeScreen() {
               ))
             )}
 
+            {/* 과목 추가 버튼 (터치 기능은 별도 구현 필요) */}
             <TouchableOpacity style={styles.addButton}>
               <Text style={styles.addButtonText}>+ 과목</Text>
             </TouchableOpacity>
