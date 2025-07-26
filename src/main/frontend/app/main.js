@@ -29,7 +29,6 @@ export default function HomeScreen() {
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [sheetHeight] = useState(new Animated.Value(380));
   const [isExpanded, setIsExpanded] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
 
   const tabs = [
     { name: "홈", label: "홈" },
@@ -243,7 +242,7 @@ export default function HomeScreen() {
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => router.push("/schedule_list")}
                   >
                     <Text style={styles.buttonText}>일정 불러오기</Text>
                   </TouchableOpacity>
