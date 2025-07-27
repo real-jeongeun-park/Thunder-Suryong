@@ -11,4 +11,6 @@ public interface ExamRepository {
     Exam save(Exam exam);
     List<Exam> findByNicknameAndDefaultExam(String nickname, boolean defaultExam);
     List<Exam> findByExamId(String examId);
+    List<Exam> findByNickname(String nickname);
+    List<Exam> findByDefaultExam(boolean defaultExam);
 }

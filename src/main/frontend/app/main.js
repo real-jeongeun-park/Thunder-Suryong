@@ -298,7 +298,9 @@ export default function HomeScreen() {
                 계획이 없습니다.
               </Text>
             ) : (
-              plans.map((plan) => (
+              [...plans]
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((plan) => (
                 <View key={plan.id}>
                   <View style={styles.planItem}>
                     <Text style={styles.planText}>{plan.title}</Text>
@@ -317,13 +319,18 @@ export default function HomeScreen() {
                       {plan.todos.map((todo) => (
                         <View key={todo.id} style={styles.subTodoItem}>
                           <Checkbox
+                            style={{marginRight: 8}}
                             value={todo.checked}
                             onValueChange={(newValue) =>
                               handleCheckboxChange(plan.id, todo.id, newValue)
                             }
                           />
-                          <Text style={styles.subTodoWeek}>{todo.week} </Text>
-                          <Text>{todo.title}</Text>
+                          <View style={styles.subTodoTextContainer}>
+                            <Text style={styles.subTodoText}>
+                              <Text style={styles.subTodoWeek}>{todo.week} </Text>
+                              <Text>{todo.title}</Text>
+                            </Text>
+                          </View>
                         </View>
                       ))}
                     </View>
@@ -543,11 +550,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  subTodoTextContainer: {
+    flex: 1,
+  },
   subTodoWeek: {
-    marginLeft: 8,
     fontSize: 14,
     color: "#333",
     fontWeight: 500,
+    flexShrink: 0,
+  },
+  subTodoText: {
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   addButton: {
     alignSelf: "flex-start",

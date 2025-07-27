@@ -6,9 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,5 +38,41 @@ public class ExamService {
         newExam.setDefaultExam(true);
 
         return examRepository.save(newExam);
+    }
+
+    public Map<String, Object> getExams(Map<String, String> body){
+        String nickname = body.get("nickname");
+
+        List<Exam> exams = examRepository.findByNickname(nickname);
+
+        List<String> examIds = exams.stream()
+                .map(Exam::getExamId)
+                .collect(Collectors.toList());
+
+        List<String> examNames = exams.stream()
+                .map(Exam::getExamName)
+                .collect(Collectors.toList());
+
+        List<Boolean> defaultExams = exams.stream()
+                .map(Exam::isDefaultExam)
+                .collect(Collectors.toList());
+
+        Map<String, Object> examMap = new HashMap<>();
+        examMap.put("examIds", examIds);
+        examMap.put("examNames", examNames);
+        examMap.put("defaultExams", defaultExams);
+
+        return examMap;
+    }
+
+    public void changeDefaultExam(String id){
+        Exam previousExam = examRepository.findByDefaultExam(true).get(0);
+        Exam newExam = examRepository.findByExamId(id).get(0);
+
+        if(previousExam.equals(newExam)) return;
+
+        previousExam.setDefaultExam(false);
+        newExam.setDefaultExam(true);
+        examRepository.save(newExam);
     }
 }
