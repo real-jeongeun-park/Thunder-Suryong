@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
   Image,
+  Modal,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
@@ -106,6 +107,86 @@ export default function ExamInfoInput() {
       getPlans(); // userInfo가 반드시 있어야 함
     }
   }, [userInfo]); // userInfo가 바뀔 때마다 실행됨
+
+  // 수정 모달 관련 상태
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editWeek, setEditWeek] = useState("");
+  const [editContent, setEditContent] = useState("");
+
+  // 수정 모달 열기 함수 (index 기준)
+  const openEditModal = (index) => {
+    const plan = selectedPlans[index];
+    setEditIndex(index);
+    setEditDate(plan.date);
+    setEditWeek(plan.week);
+    setEditContent(plan.content);
+    setEditModalVisible(true);
+  };
+
+  // 수정 완료 함수
+  const handleSaveEdit = () => {
+    if (!editDate.trim() || !editWeek.trim() || !editContent.trim()) {
+      alert("날짜, 주차/단원, 내용을 모두 입력하세요!");
+      return;
+    }
+
+    // 전체 plans 배열에서 selectedPlans[index]에 대응하는 원본 인덱스를 찾아 수정해줘야 합니다.
+    // selectedPlans는 plans.filter(...)로 만든 배열이므로 전체 plans 배열의 실제 인덱스 찾기 필요
+
+    // 실제 plans 배열에서 찾는 예시
+    const originalIndex = plans.findIndex(
+      (p) =>
+        p.date === selectedPlans[editIndex].date &&
+        p.subject === selectedSubject &&
+        p.week === selectedPlans[editIndex].week &&
+        p.content === selectedPlans[editIndex].content
+    );
+
+    if (originalIndex === -1) {
+      alert("수정할 계획을 찾지 못했습니다.");
+      setEditModalVisible(false);
+      return;
+    }
+
+    // plans 복사해서 수정
+    const updatedPlans = [...plans];
+    updatedPlans[originalIndex] = {
+      ...updatedPlans[originalIndex],
+      date: editDate,
+      week: editWeek,
+      content: editContent,
+    };
+
+    setPlans(updatedPlans);
+    setEditModalVisible(false);
+  };
+
+  // 삭제 함수
+  const handleDeletePlan = (index) => {
+    // selectedPlans에서 삭제할 계획 찾기 → plans에서 해당 객체 실제 인덱스 찾기
+
+    const target = selectedPlans[index];
+    if (!target) return;
+
+    const originalIndex = plans.findIndex(
+      (p) =>
+        p.date === target.date &&
+        p.subject === selectedSubject &&
+        p.week === target.week &&
+        p.content === target.content
+    );
+
+    if (originalIndex === -1) {
+      alert("삭제할 계획을 찾지 못했습니다.");
+      return;
+    }
+
+    const updatedPlans = [...plans];
+    updatedPlans.splice(originalIndex, 1);
+    setPlans(updatedPlans);
+  };
 
   // 입력 상태
   const [selectedSubject, setSelectedSubject] = useState(
@@ -215,7 +296,10 @@ export default function ExamInfoInput() {
                   선택한 과목의 일정이 없습니다.
                 </Text>
               ) : (
-                <ScrollView style={{ maxHeight: 300 }}>
+                <ScrollView
+                  style={{ maxHeight: 300 }}
+                  showsVerticalScrollIndicator={false}
+                >
                   {selectedPlans.map((plan, idx) => (
                     <View key={idx} style={styles.scheduleItem}>
                       <Text style={styles.scheduleWeek}>날짜: {plan.date}</Text>
@@ -225,6 +309,47 @@ export default function ExamInfoInput() {
                       <Text style={styles.scheduleContent}>
                         내용: {plan.content}
                       </Text>
+
+                      <View style={{ flexDirection: "row", marginTop: 8 }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.actionButton,
+                            { backgroundColor: "#b6a3dbff" },
+                          ]}
+                          onPress={() => openEditModal(idx)}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                            }}
+                          >
+                            수정
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.actionButton,
+                            { backgroundColor: "#7c66a8ff", marginLeft: 10 },
+                          ]}
+                          onPress={() => {
+                            //if (confirm("정말 삭제하시겠습니까?")) {
+                            handleDeletePlan(idx);
+                            //}
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                            }}
+                          >
+                            삭제
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   ))}
                 </ScrollView>
@@ -232,6 +357,61 @@ export default function ExamInfoInput() {
             </View>
           </View>
         </View>
+        <Modal
+          visible={editModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setEditModalVisible(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>계획 수정하기</Text>
+
+              <TextInput
+                style={styles.modalInput}
+                value={editDate}
+                onChangeText={setEditDate}
+                placeholder="날짜 (YYYY-MM-DD)"
+              />
+              <TextInput
+                style={styles.modalInput}
+                value={editWeek}
+                onChangeText={setEditWeek}
+                placeholder="주차/단원"
+              />
+              <TextInput
+                style={[styles.modalInput, { height: 80 }]}
+                value={editContent}
+                onChangeText={setEditContent}
+                multiline
+                placeholder="내용"
+              />
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: "#ccc", marginRight: 10 },
+                  ]}
+                  onPress={() => setEditModalVisible(false)}
+                >
+                  <Text>취소</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#7A4DD6" }]}
+                  onPress={handleSaveEdit}
+                >
+                  <Text style={{ color: "white" }}>저장</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
         {/* 입력 완료 버튼 */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
           <Text style={styles.submitBtnText}>입력 완료</Text>
@@ -449,5 +629,47 @@ const styles = StyleSheet.create({
   },
   scheduleContent: {
     color: "#665783",
+  },
+  actionButton: {
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContainer: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 12,
+    fontSize: 16,
+  },
+
+  modalButton: {
+    flex: 1,
+    borderRadius: 6,
+    paddingVertical: 12,
+    alignItems: "center",
   },
 });
