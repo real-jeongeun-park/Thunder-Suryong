@@ -135,8 +135,6 @@ export default function HomeScreen() {
   // 체크 변경 함수
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-
-      // 서버에 PATCH 요청
       await axios.patch(
         `http://localhost:8080/api/plan/${todoId}/learned`,
         {

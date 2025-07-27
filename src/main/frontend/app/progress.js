@@ -36,6 +36,36 @@ export default function CalendarTimetableScreen() {
   // --- plans 상태 및 데이터 로딩 ---
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState(false);
+
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
+
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get("http://localhost:8080/api/validation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
 
   // 날짜 선택시 plans 새로 불러오기
   useEffect(() => {
@@ -43,31 +73,21 @@ export default function CalendarTimetableScreen() {
       try {
         setIsLoading(true);
 
-        let token;
-        if (Platform.OS === "web") {
-          token = localStorage.getItem("accessToken");
-        } else {
-          token = await SecureStore.getItemAsync("accessToken");
-        }
-
-        if (!token) throw new Error("Token is missing");
-
         // 서버에 yyyy-MM-dd 형식 날짜로 요청
-        const res = await axios.get(
-          `http://localhost:8080/api/plans/date?date=${selectedDate}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axios.post("http://localhost:8080/api/plan/date", {
+            nickname: userInfo.nickname,
+            date: selectedDate,
+        })
 
         // 변환: {subject: todos[]} → 배열 [{id,title,isExpanded,todos:[]}]
-        const result = res.data;
+        const result = response.data;
         const transformed = Object.entries(result).map(([subject, todos]) => ({
           id: subject,
           title: subject,
-          isExpanded: false,
+          isExpanded: true,
           todos: todos.map((todo) => ({
             id: todo.id,
+            week: todo.week,
             title: todo.content,
             checked: todo.learned,
           })),
@@ -81,8 +101,11 @@ export default function CalendarTimetableScreen() {
         setIsLoading(false);
       }
     }
-    fetchPlans();
-  }, [selectedDate]);
+
+    if(activeTab === "Planner"){
+        fetchPlans();
+    }
+  }, [selectedDate, activeTab, userInfo]);
 
   // 토글로 펼치기/접기
   const toggleExpand = (id) => {
@@ -96,24 +119,17 @@ export default function CalendarTimetableScreen() {
   // 체크박스 변경시 서버에 PATCH 요청 및 상태 반영
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-      let token;
-      if (Platform.OS === "web") {
-        token = localStorage.getItem("accessToken");
-      } else {
-        token = await SecureStore.getItemAsync("accessToken");
-      }
-      if (!token) throw new Error("Token is missing");
-
       await axios.patch(
-        `http://localhost:8080/api/plans/${todoId}/learned`,
-        { learned: newValue },
+        `http://localhost:8080/api/plan/${todoId}/learned`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          learned: newValue,
+          nickname: userInfo.nickname
         }
       );
 
-      setPlans((prev) =>
-        prev.map((plan) =>
+      // 프론트 상태도 업데이트
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) =>
           plan.id === planGroupId
             ? {
                 ...plan,
@@ -154,12 +170,12 @@ export default function CalendarTimetableScreen() {
         {/* 오늘의 계획 카드 영역 */}
         <ScrollView style={styles.card}>
           <Text style={styles.toDoTitle}>
-            {format(date, "yyyy년 M월 d일")} 계획
+            {format(selectedDate, "yyyy년 M월 d일")} 계획
           </Text>
           {plans.map((plan) => (
             <View key={plan.id}>
               <View style={styles.planItem}>
-                <Text style={styles.planText}>{plan.title}</Text>
+                <Text styles={styles.planText}>{plan.title} </Text>
                 <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
                   <Ionicons
                     name={plan.isExpanded ? "chevron-back" : "chevron-down"}
@@ -173,12 +189,18 @@ export default function CalendarTimetableScreen() {
                   {plan.todos.map((todo) => (
                     <View key={todo.id} style={styles.subTodoItem}>
                       <Checkbox
+                        style={{marginRight: 8}}
                         value={todo.checked}
                         onValueChange={(newValue) =>
                           handleCheckboxChange(plan.id, todo.id, newValue)
                         }
                       />
-                      <Text style={styles.subTodoText}>{todo.title}</Text>
+                      <View style={styles.subTodoTextContainer}>
+                        <Text style={styles.subTodoText}>
+                          <Text style={styles.subTodoWeek}>{todo.week} </Text>
+                          <Text>{todo.title}</Text>
+                        </Text>
+                      </View>
                     </View>
                   ))}
                 </View>
@@ -471,4 +493,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
+  subTodoTextContainer: {
+    flex: 1,
+  },
+  subTodoWeek: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: 500,
+    flexShrink: 0,
+  },
+  subTodoText: {
+    flexWrap: 'wrap',
+    flexShrink: 1,
+  }
 });
