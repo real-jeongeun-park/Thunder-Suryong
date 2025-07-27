@@ -1,26 +1,101 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // 아이콘 라이브러리 사용(선택)
 import { useRouter } from "expo-router";
 
-const examList = [
-  { id: "1", name: "2025 1학기 기말고사" },
-  { id: "2", name: "2024 2학기 기말고사" },
-  { id: "3", name: "2024 2학기 중간고사" },
-];
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
-const router = useRouter();
+export default function ExamListScreen() {
+  const router = useRouter();
 
-const ExamListScreen = () => {
+  const [userInfo, setUserInfo] = useState(null);
+  const [exams, setExams] = useState([]);
+
+  useEffect(() => {
+    async function checkLogin(){
+        try{
+            let token;
+
+            if(Platform.OS === 'web'){
+                token = localStorage.getItem("accessToken");
+            }
+            else{
+                token = SecureStore.getItemAsync("accessToken");
+            }
+
+            if(!token){
+                throw new Error("Token not found");
+            }
+
+            const res = await axios.get("http://localhost:8080/api/validation", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setUserInfo(res.data);
+        } catch(err){
+            console.log(err);
+            setUserInfo(null);
+            router.push("/");
+        }
+    }
+
+    checkLogin();
+  }, []);
+
+  // 시험 가져오기
+  useEffect(() => {
+    const getExams = async () => {
+        try{
+            const response = await axios.post("http://localhost:8080/api/exam/get", {
+                nickname: userInfo.nickname,
+            });
+
+            const { examIds, examNames, defaultExams } = response.data;
+            // 리스트
+
+            const newExamList = examIds.map((examId, index) => ({
+                id: examId,
+                name: examNames[index],
+                isDefault: defaultExams[index]
+            }));
+
+            setExams((prev) => [...prev, ...newExamList]);
+        } catch(err){
+            console.log(err);
+        }
+    }
+
+    if(userInfo !== null){
+        getExams();
+    }
+  }, [userInfo])
+
+  const handleExamPress = async (id) => {
+    try{
+      const response = await axios.get("http://localhost:8080/api/exam/id", {
+        params: { id }
+      });
+
+      router.push("/main");
+    } catch(e){
+      console.log(e);
+    }
+  };
+
   const renderItem = ({ item, index }) => (
     <TouchableOpacity
-      style={[styles.examItem, index === 0 && styles.firstExam]}
+      style={[styles.examItem, item.isDefault && styles.defaultExam]}
+      onPress={() => handleExamPress(item.id)}
     >
       <Ionicons
         name="document-text-outline"
@@ -47,7 +122,7 @@ const ExamListScreen = () => {
         <Text style={styles.title}>나의 시험</Text>
       </View>
       <FlatList
-        data={examList}
+        data={exams}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingTop: 20 }}
@@ -88,7 +163,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginHorizontal: 15,
   },
-  firstExam: {
+  defaultExam: {
     backgroundColor: "#fff",
     borderColor: "#9A7DD5",
     borderWidth: 1,
@@ -99,5 +174,3 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
-
-export default ExamListScreen;

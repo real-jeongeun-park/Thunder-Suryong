@@ -41,32 +41,6 @@ public class PlanController {
         return ResponseEntity.ok(true);
     }
 
-    // 오늘 날짜의 계획을 닉네임 기준으로 조회하는 API
-   /*
-    @GetMapping("/today")
-    public ResponseEntity<?> receivePlanInfo() {
-        // JWT 인증 필터를 통과한 사용자 정보 가져오기
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        String nickname = memberRepository.findByEmail(email).get().getNickname();
-        List<Plan> plans = planService.getTodayPlans(nickname);
-
-        // 과목별로 Plan을 묶어서 Map으로 정리
-        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
-        for (Plan plan : plans) {
-            String subject = plan.getExam().getSubject();
-            result.putIfAbsent(subject, new ArrayList<>());
-            result.get(subject).add(Map.of(
-                    "id", plan.getId(),
-                    "content", plan.getContent(),
-                    "learned", plan.isLearned()
-            ));
-        }
-
-        return ResponseEntity.ok(result);
-    }
-    */
-
     // 체크박스 상태 변경 API
     @PatchMapping("/{id}/learned")
     public ResponseEntity<?> updateLearnedStatus(@PathVariable("id") Long id, @RequestBody Map<String, Object> body) {
