@@ -2,37 +2,52 @@ package com.byeraksuryong.service;
 
 import com.byeraksuryong.domain.Folder;
 import com.byeraksuryong.dto.FolderRequest;
+import com.byeraksuryong.repository.ExamRepository;
 import com.byeraksuryong.repository.FolderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
 @Service
 public class FolderService {
     private final FolderRepository folderRepository;
+    private final ExamRepository examRepository;
 
     @Autowired
-    public FolderService(FolderRepository folderRepository){
+    public FolderService(FolderRepository folderRepository, ExamRepository examRepository){
         this.folderRepository = folderRepository;
+        this.examRepository = examRepository;
     }
 
-    public Folder createFolder(FolderRequest folderRequest){
+    public String createFolder(FolderRequest folderRequest){
+        String nickname = folderRequest.getNickname();
+        String folderName = folderRequest.getFolderName();
+
         Folder folder = new Folder();
-        folder.setNickname(folderRequest.getNickname());
-        folder.setFolderId(folderRequest.getFolderId());
+        folder.setNickname(nickname);
+
+        // exam id 불러오기
+        String examId = examRepository.findByNicknameAndDefaultExam(nickname, true).get(0).getExamId();
+        folder.setExamId(examId);
+
+        String key = UUID.randomUUID().toString();
+        folder.setFolderId(key);
+
         folder.setFolderName(folderRequest.getFolderName());
-        return folderRepository.save(folder);
+
+        return folderRepository.save(folder).getFolderId();
     }
 
-    public List<Map<String, String>> getFolders(String nickname){
-        return folderRepository.findByNickname(nickname)
+    public List<Map<String, String>> getFolders(Map<String, String> body){
+        String nickname = body.get("nickname");
+        // 현재 exam id 가져옴
+        String examId = examRepository.findByNicknameAndDefaultExam(nickname, true).get(0).getExamId();
+
+        return folderRepository.findByNicknameAndExamId(nickname, examId)
                 .stream()
                 .map(folder -> {
                     Map<String, String> map = new HashMap<>();

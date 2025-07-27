@@ -1,6 +1,6 @@
 package com.byeraksuryong.controller;
 
-import com.byeraksuryong.dto.PlanRequest;
+import com.byeraksuryong.dto.SubjectInfoList;
 import com.byeraksuryong.repository.MemberRepository;
 import com.byeraksuryong.service.PlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
+@RequestMapping("/api/plan")
 @RestController
 public class PlanController {
     private final PlanService planService;
@@ -29,10 +30,10 @@ public class PlanController {
         this.examService = examService;
     }
 
-    @PostMapping("/api/createPlan")
-    public ResponseEntity<?> receivePlans(@RequestBody PlanRequest planRequest) {
+    @PostMapping("/create")
+    public ResponseEntity<?> receivePlans(@RequestBody SubjectInfoList subjectInfoList) {
         try {
-            planService.createPlans(planRequest.getPlans(), planRequest.getNickname());
+            planService.createPlans(subjectInfoList);
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(404).body(e.getMessage());
@@ -41,8 +42,9 @@ public class PlanController {
     }
 
     // 오늘 날짜의 계획을 닉네임 기준으로 조회하는 API
-    @GetMapping("/api/plans/today")
-    public ResponseEntity<?> getTodayPlans() {
+   /*
+    @GetMapping("/today")
+    public ResponseEntity<?> receivePlanInfo() {
         // JWT 인증 필터를 통과한 사용자 정보 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -63,48 +65,37 @@ public class PlanController {
 
         return ResponseEntity.ok(result);
     }
+    */
 
     // 체크박스 상태 변경 API
-    @PatchMapping("/api/plans/{id}/learned")
-    public ResponseEntity<?> updateLearnedStatus(@PathVariable("id") Long id, @RequestBody Map<String, Boolean> body) {
+    @PatchMapping("/{id}/learned")
+    public ResponseEntity<?> updateLearnedStatus(@PathVariable("id") Long id, @RequestBody Map<String, Object> body) {
         try {
-            boolean learned = body.get("learned");
-
-            // JWT에서 nickname 꺼내기
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String email = authentication.getName();
-            String nickname = memberRepository.findByEmail(email).get().getNickname(); // 닉네임으로 변환
-
-
-            // nickname도 같이 넘기기
-            planService.updateLearnedStatus(id, learned, nickname);
-
+            planService.updateLearnedStatus(id, body);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
 
-    @GetMapping("/api/plans/date")
-    public ResponseEntity<?> getPlansByDate(@RequestParam("date") String date) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        String nickname = memberRepository.findByEmail(email).get().getNickname();
-        List<Plan> plans = planService.getPlansByDate(nickname, date);
-
-        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
-        for (Plan plan : plans) {
-            String subject = plan.getExam().getSubject();
-            result.putIfAbsent(subject, new ArrayList<>());
-            result.get(subject).add(Map.of(
-                    "id", plan.getId(),
-                    "content", plan.getContent(),
-                    "learned", plan.isLearned()
-            ));
+    @PostMapping("/date")
+    public ResponseEntity<?> getPlans(@RequestBody Map<String, String> body) {
+        try{
+            return ResponseEntity.ok(planService.getPlansByDate(body));
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
         }
-
-        return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/achievement")
+    public ResponseEntity<?> getPlanNumber(@RequestBody Map<String, String> body){
+        try{
+            return ResponseEntity.ok(planService.getPlanNumber(body));
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }
 

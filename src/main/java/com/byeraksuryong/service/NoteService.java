@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -24,16 +21,19 @@ public class NoteService {
         this.noteRepository = noteRepository;
     }
 
-    public Note createNote(NoteRequest noteRequest){
+    public String createNote(NoteRequest noteRequest){
         Note note = new Note();
         note.setFolderId(noteRequest.getFolderId());
-        note.setNoteId(noteRequest.getNoteId());
+
+        String key = UUID.randomUUID().toString();
+        note.setNoteId(key);
+
         note.setTitle(noteRequest.getTitle());
-        return noteRepository.save(note);
+        return noteRepository.save(note).getNoteId();
     }
 
-    public List<Map<String, String>> getNotes(Map<String, Long> body){
-        Long folderId = body.get("folderId");
+    public List<Map<String, String>> getNotes(Map<String, String> body){
+        String folderId = body.get("folderId");
         if(folderId != null){
             // folderId 있는 경우만
             return noteRepository.findByFolderId(folderId).stream()

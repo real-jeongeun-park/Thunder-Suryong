@@ -7,6 +7,5 @@ import lombok.Setter;
 @Setter
 public class FolderRequest {
     private String nickname;
-    private String folderId;
     private String folderName;
 }

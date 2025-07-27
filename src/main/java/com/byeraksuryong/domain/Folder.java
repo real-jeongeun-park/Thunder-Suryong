@@ -10,6 +10,8 @@ public class Folder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "exam_id")
+    private String examId;
     private String nickname;
     @Column(name = "folder_id")
     private String folderId;

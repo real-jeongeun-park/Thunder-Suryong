@@ -2,83 +2,140 @@ package com.byeraksuryong.service;
 
 import com.byeraksuryong.domain.Exam;
 import com.byeraksuryong.domain.Plan;
-import com.byeraksuryong.dto.SubjectInfosList;
+import com.byeraksuryong.domain.Subject;
+import com.byeraksuryong.dto.SubjectInfoList;
 import com.byeraksuryong.repository.ExamRepository;
-import com.byeraksuryong.repository.SpringDataJpaPlanRepository;
+import com.byeraksuryong.repository.PlanRepository;
+import com.byeraksuryong.repository.SubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.*;
 
-import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class PlanService {
-    private final SpringDataJpaPlanRepository planRepository;
+    private final PlanRepository planRepository;
     private final ExamRepository examRepository;
+    private final SubjectRepository subjectRepository;
 
     @Autowired
-    public PlanService(SpringDataJpaPlanRepository planRepository, ExamRepository examRepository) {
+    public PlanService(PlanRepository planRepository, ExamRepository examRepository, SubjectRepository subjectRepository){
         this.planRepository = planRepository;
         this.examRepository = examRepository;
+        this.subjectRepository = subjectRepository;
     }
 
-    public boolean createPlans(SubjectInfosList list, String nickname){
-        for(int i = 0; i < list.getDate().size(); i++){
-            Plan plan = new Plan();
-            plan.setWeek(list.getWeek().get(i));
-            plan.setContent(list.getContent().get(i));
-            plan.setDate(LocalDate.parse(list.getDate().get(i))); // 공부 계획일
-            plan.setLearned(false);
+    public boolean createPlans(SubjectInfoList list){
+        int size = list.getSubject().size();
+        try {
+            for (int i = 0; i < size; i++) {
+                Plan newPlan = new Plan();
+                String subjectId = subjectRepository.findBySubject(list.getSubject().get(i)).get(0).getSubjectId();
+                newPlan.setSubjectId(subjectId);
+                newPlan.setWeek(list.getWeek().get(i));
+                newPlan.setContent(list.getContent().get(i));
+                newPlan.setDate(LocalDate.parse(list.getDate().get(i)));
+                newPlan.setLearned(false);
 
-            String subject = list.getSubject().get(i);
-
-            List<Exam> exams = examRepository.findByNicknameAndSubject(nickname, subject);
-            if (exams == null || exams.isEmpty()) {
-                return false;
+                planRepository.save(newPlan);
             }
-            Exam exam = exams.get(0);
-            plan.setExam(exam);
-
-            try{
-                planRepository.save(plan);
-            } catch(Exception e){
-                System.out.println(e.getMessage());
-                return false;
-            }
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return false;
         }
-
         return true;
     }
 
-    public List<Plan> getTodayPlans(String nickname) {
-        LocalDate today = LocalDate.now();
-        return planRepository.findByNicknameAndDate(nickname, today);
+    public Map<String, List<Map<String, Object>>> getPlansByDate(Map<String, String> body){
+        String nickname = (String)body.get("nickname");
+        String stringDate = (String)body.get("date");
+        LocalDate date = LocalDate.parse(stringDate);
+
+        List<Exam> exam = examRepository.findByNicknameAndDefaultExam(nickname, true);
+
+        if(exam.isEmpty()) return null;
+
+        String examId = exam.get(0).getExamId();
+        List<Subject> subjects = subjectRepository.findByExamId(examId);
+
+        if(subjects.isEmpty()) return null;
+
+        List<String> subjectIds = subjects.stream()
+                .map(Subject::getSubjectId)
+                .collect(Collectors.toList());
+
+        List<Plan> plans = planRepository.findBySubjectIdInAndDate(subjectIds, date);
+
+        Map<String, List<Map<String, Object>>> result = new LinkedHashMap<>();
+        for(Plan plan : plans){
+            String subject = subjectRepository.findBySubjectId(plan.getSubjectId()).get(0).getSubject();
+            result.putIfAbsent(subject, new ArrayList<>());
+            result.get(subject).add(Map.of(
+                    "id", plan.getId(),
+                    "week", plan.getWeek(),
+                    "content", plan.getContent(),
+                    "learned", plan.isLearned()
+            ));
+        }
+        return result;
     }
 
+    public void updateLearnedStatus(Long planId, Map<String, Object> body) {
+        boolean learned = (boolean) body.get("learned");
+        String nickname = (String) body.get("nickname");
 
-    public void updateLearnedStatus(Long planId, boolean learned, String nickname) {
         Optional<Plan> optionalPlan = planRepository.findById(planId);
         if (optionalPlan.isPresent()) {
             Plan plan = optionalPlan.get();
 
-            // 본인의 Plan이 맞는지 확인
-            Exam exam = plan.getExam();
-            if (!exam.getNickname().equals(nickname)) {
-                throw new SecurityException("다른 사용자의 계획을 수정할 수 없습니다.");
+            // 본인의 plan이 맞는지 확인
+            String subjectId = plan.getSubjectId();
+            String examId = subjectRepository.findBySubjectId(subjectId).get(0).getExamId();
+            String foundNickname = examRepository.findByExamId(examId).get(0).getNickname();
+
+            if (!foundNickname.equals(nickname)) {
+                throw new SecurityException("다른 사용자의 계획에 접근할 수 없습니다.");
             }
 
             plan.setLearned(learned);
-            planRepository.save(plan);
+            planRepository.save(plan); // 업데이트
         } else {
             throw new IllegalArgumentException("해당 계획이 존재하지 않습니다.");
         }
     }
 
-    public List<Plan> getPlansByDate(String nickname, String dateString) {
-        LocalDate targetDate = LocalDate.parse(dateString);
-        return planRepository.findByNicknameAndDate(nickname, targetDate);
+    public double getPlanNumber(Map<String, String> body){
+        String today = body.get("today");
+        LocalDate date = LocalDate.parse(today);
+        String nickname = body.get("nickname");
+
+        // default exam인 경우만 불러옴
+        List<Exam> exam = examRepository.findByNicknameAndDefaultExam(nickname, true);
+        if(exam.isEmpty()) {
+            return 0;
+        }
+
+        String examId = exam.get(0).getExamId(); // 현재 exam Id
+
+        List<String> subjectIds = subjectRepository.findByExamId(examId)
+                .stream()
+                .map(Subject::getSubjectId)
+                .collect(Collectors.toList());
+
+        List<Plan> plans = planRepository.findBySubjectIdInAndDate(subjectIds, date);
+        if(plans.isEmpty()){
+            return 0;
+        }
+
+        int total = plans.size();
+        double learned = (double)plans.stream()
+                .filter(Plan::isLearned)
+                .count();
+
+        return learned/total * 100;
     }
 }

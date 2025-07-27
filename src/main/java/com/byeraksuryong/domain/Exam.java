@@ -10,6 +10,9 @@ import lombok.Setter;
 public class Exam {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "exam_id")
+    private String examId;
     private String nickname;
 
     @Column(name = "start_date")
@@ -21,5 +24,6 @@ public class Exam {
     @Column(name = "exam_name")
     private String examName;
 
-    private String subject;
+    @Column(name = "default_exam")
+    private boolean defaultExam;
 }

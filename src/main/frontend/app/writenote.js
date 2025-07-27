@@ -94,14 +94,14 @@ export default function WriteNote() {
     // title과 content 가져오기
     async function getOneNote(){
         try{
-            const response = await axios.post("http://localhost:8080/api/printOneNote", {
+            const response = await axios.post("http://localhost:8080/api/note/getOne", {
                 noteId
             });
             const note = response.data;
 
             setNoteTitle(note.title);
             if(note.content !== null){
-                setNoteContent(note.content); // null만 아니면 됨 ?
+                setNoteContent(note.content);
                 setTotalLines(Math.max(noteContent.split("\n"), MIN_LINES));
             }
             else{
@@ -153,15 +153,15 @@ export default function WriteNote() {
             type: "user",
             text: chatInput,
          }
+         setChatInput("");
          setChatMessages(prev => [...prev, newUserChatMessage]);
          setIsBotTyping(true);
 
          const response = await axios.post("http://localhost:8080/api/ai/chatInput", {
             content: noteContent,
-            chatInput,
+            chatInput: newUserChatMessage.text,
          });
 
-         setChatInput("");
          setSelectedTexts([]);
 
          const newBotChatMessage = {
@@ -175,13 +175,6 @@ export default function WriteNote() {
       } finally{
         setIsBotTyping(false);
       }
-
-      /* setChatMessages((prev) => [
-        ...prev,
-        selectedTexts.length > 0
-          ? { type: "user", text: `→ 오늘 내가 공부한 내용은 ${selectedTexts.join(" / ")} ...\n${chatInput}` }
-          : { type: "user", text: chatInput },
-      ]); */
     }
     else{
         alert("채팅을 입력하세요.");
@@ -205,12 +198,11 @@ export default function WriteNote() {
   const handleNoteSave = async () => {
     if(noteTitle.trim() && noteContent.trim()){
         try{
-            const response = await axios.post("http://localhost:8080/api/updateNote", {
+            const response = await axios.post("http://localhost:8080/api/note/update", {
                 noteId,
                 title: noteTitle,
                 content: noteContent,
             });
-
             alert("저장되었습니다.");
         } catch(err){
             console.log(err);

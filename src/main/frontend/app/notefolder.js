@@ -62,7 +62,7 @@ export default function NoteFolder() {
   useEffect(() => {
     const getFolderName = async () => {
         try{
-            const response = await axios.post("http://localhost:8080/api/printFolderById", {
+            const response = await axios.post("http://localhost:8080/api/folder/getById", {
                 id: folderId,
             })
             setFolderName(response.data);
@@ -73,9 +73,7 @@ export default function NoteFolder() {
 
     const getNotes = async () => {
         try{
-            const res = await axios.post("http://localhost:8080/api/printNotes", {
-                folderId: folderId,
-            });
+            const res = await axios.post("http://localhost:8080/api/note/get", { folderId });
 
             const mappedNotes = res.data.map(n => ({
                 noteId: n.noteId,
@@ -88,8 +86,10 @@ export default function NoteFolder() {
         }
     }
 
-    getFolderName();
-    getNotes();
+    if(userInfo !== null){
+        getFolderName();
+        getNotes();
+    }
   }, [userInfo])
 
   useEffect(() => {
@@ -98,21 +98,19 @@ export default function NoteFolder() {
     }
   }, [openAddNote]);
 
+
+  // 노트 저장
   const handleAddNote = async () => {
     const newNoteName = noteName.trim();
-
     if(newNoteName) {
-      const noteId = Date.now().toString(); // 임의의 id 부여
-
       try{
-        const response = await axios.post("http://localhost:8080/api/createNote", {
+        const response = await axios.post("http://localhost:8080/api/note/create", {
             folderId,
-            noteId,
             title: newNoteName,
         });
 
         const newNote = {
-            noteId,
+            noteId: response.data,
             title: newNoteName,
         }
 
@@ -122,7 +120,7 @@ export default function NoteFolder() {
             pathname: "/writenote",
             params: {
                 folderId: folderId,
-                noteId: noteId
+                noteId: response.data
             },
         });
       } catch(err){

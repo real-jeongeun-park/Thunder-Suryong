@@ -6,9 +6,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class SubjectInfosList {
-    private List<String> date;
+public class SubjectInfoList {
     private List<String> subject;
     private List<String> week;
     private List<String> content;
+    private List<String> date;
 }
