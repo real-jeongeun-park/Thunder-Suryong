@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-@RequestMapping("/api")
+@RequestMapping("/api/note")
 @RestController
 public class NoteController {
     private final NoteService noteService;
@@ -20,29 +20,27 @@ public class NoteController {
         this.noteService = noteService;
     }
 
-    @PostMapping("/createNote")
+    @PostMapping("/create")
     public ResponseEntity<?> receiveNoteName(@RequestBody NoteRequest noteRequest){
         try{
-            noteService.createNote(noteRequest);
-            return ResponseEntity.ok(true);
+            return ResponseEntity.ok(noteService.createNote(noteRequest));
         } catch(Exception e){
             System.out.println(e.getMessage());
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 
-    @PostMapping("/printNotes")
-    public ResponseEntity<?> printNotes(@RequestBody Map<String, Long> body){
+    @PostMapping("/get")
+    public ResponseEntity<?> printNotes(@RequestBody Map<String, String> body){
         try{
-            List<Map<String, String>> notes = noteService.getNotes(body);
-            return ResponseEntity.ok(notes);
+            return ResponseEntity.ok(noteService.getNotes(body));
         } catch(Exception e){
             System.out.println(e.getMessage());
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 
-    @PostMapping("/printOneNote")
+    @PostMapping("/getOne")
     public ResponseEntity<?> printOneNote(@RequestBody Map<String, String> body){
         try{
             Map<String, String> note = noteService.getOneNote(body);
@@ -53,7 +51,7 @@ public class NoteController {
         }
     }
 
-    @PostMapping("/updateNote")
+    @PostMapping("/update")
     public ResponseEntity<?> updateNote(@RequestBody Map<String, String> body){
         try{
             noteService.updateNote(body);

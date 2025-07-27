@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface ExamRepository {
     Exam save(Exam exam);
-    List<Exam> findByNicknameAndSubject(String nickname, String subject);
+    List<Exam> findByNicknameAndDefaultExam(String nickname, boolean defaultExam);
+    List<Exam> findByExamId(String examId);
 }

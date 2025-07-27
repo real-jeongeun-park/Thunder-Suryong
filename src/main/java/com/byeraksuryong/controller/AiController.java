@@ -1,7 +1,6 @@
 package com.byeraksuryong.controller;
 
-import com.byeraksuryong.dto.Response;
-import com.byeraksuryong.dto.SubjectInfosList;
+import com.byeraksuryong.dto.SubjectInfoList;
 import com.byeraksuryong.dto.SyllabusList;
 import com.byeraksuryong.service.AiService;
 import org.springframework.http.ResponseEntity;
@@ -42,10 +41,10 @@ public class AiController {
         }
     }
 
-    @PostMapping("/plans")
+    @PostMapping("/plan")
     public ResponseEntity<?> getPlans(@RequestBody Map<String, Object> body){
         try{
-            SubjectInfosList list = aiService.usePlansAi(body);
+            SubjectInfoList list = aiService.usePlansAi(body);
             return ResponseEntity.ok(list);
         } catch(Exception e){
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -13,14 +13,12 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
-
 import { Calendar } from "react-native-calendars";
 
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-
-import { Platform } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -30,6 +28,11 @@ export default function HomeScreen() {
   const [sheetHeight] = useState(new Animated.Value(380));
   const [isExpanded, setIsExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // 사용자 로그인 여부 확인
+  const [userInfo, setUserInfo] = useState(null);
+  // 성취률
+  const [rate, setRate] = useState(null);
 
   const tabs = [
     { name: "홈", label: "홈" },
@@ -41,67 +44,7 @@ export default function HomeScreen() {
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const toggleExpand = (id) => {
-    setPlans((prev) =>
-      prev.map((plan) =>
-        plan.id === id ? { ...plan, isExpanded: !plan.isExpanded } : plan
-      )
-    );
-  };
-
-  const toggleSheet = () => {
-    const toValue = isExpanded ? 380 : 800;
-    Animated.timing(sheetHeight, {
-      toValue,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-    setIsExpanded(!isExpanded);
-  };
-
-  // 체크 변경 핸들러 함수
-  const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
-    try {
-      // 1. 토큰 불러오기
-      let token;
-      if (Platform.OS === "web") {
-        token = localStorage.getItem("accessToken");
-      } else {
-        token = await SecureStore.getItemAsync("accessToken");
-      }
-
-      // 2. 서버에 PATCH 요청
-      await axios.patch(
-        `http://localhost:8080/api/plans/${todoId}/learned`,
-        { learned: newValue },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // 3. 프론트 상태도 업데이트
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan.id === planGroupId
-            ? {
-                ...plan,
-                todos: plan.todos.map((todo) =>
-                  todo.id === todoId ? { ...todo, checked: newValue } : todo
-                ),
-              }
-            : plan
-        )
-      );
-    } catch (err) {
-      console.error("체크박스 상태 변경 실패", err);
-    }
-  };
-
-  // 사용자 로그인 여부 확인
-  const [userInfo, setUserInfo] = useState(null);
-
+  // 로그인 여부 확인
   useEffect(() => {
     async function checkLogin() {
       try {
@@ -131,39 +74,28 @@ export default function HomeScreen() {
     checkLogin();
   }, []);
 
-  // 오늘의 계획 불러오기
+  // 페이지에 대응되는 날짜의 계획 불러오기
   useEffect(() => {
-    async function fetchTodayPlans() {
+    async function fetchPlans() {
       try {
         setIsLoading(true);
-
-        let token;
-        if (Platform.OS === "web") {
-          token = localStorage.getItem("accessToken");
-        } else {
-          token = await SecureStore.getItemAsync("accessToken");
-        }
-
         const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
 
-        const res = await axios.get(
-          `http://localhost:8080/api/plans/date?date=${formattedDate}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await axios.post("http://localhost:8080/api/plan/date", {
+            nickname: userInfo.nickname,
+            date: formattedDate,
+        });
 
         const result = res.data;
 
         const transformed = Object.entries(result).map(([subject, todos]) => ({
           id: subject,
           title: subject,
-          isExpanded: false,
+          isExpanded: true,
           checked: false,
           todos: todos.map((todo) => ({
             id: todo.id,
+            week: todo.week,
             title: todo.content,
             checked: todo.learned,
           })),
@@ -177,23 +109,81 @@ export default function HomeScreen() {
       }
     }
 
-    fetchTodayPlans();
-  }, [date]); // date가 변경될 때마다 계획 다시 불러오기
+    if(userInfo !== null){
+        fetchPlans();
+    }
+  }, [userInfo, date]); // date가 변경될 때마다 계획 다시 불러오기
 
-  // 계획 달성률 계산 함수
-  function getAchievementRate(plans) {
-    let total = 0,
-      checked = 0;
-    plans.forEach((plan) => {
-      plan.todos.forEach((todo) => {
-        total += 1;
-        if (todo.checked) checked += 1;
-      });
-    });
-    if (total === 0) return 0;
-    return Math.round((checked / total) * 100);
-  }
-  const achievementRate = getAchievementRate(plans);
+
+  const toggleExpand = (id) => {
+    setPlans((prev) =>
+      prev.map((plan) =>
+        plan.id === id ? { ...plan, isExpanded: !plan.isExpanded } : plan
+      )
+    );
+  };
+
+  const toggleSheet = () => {
+    const toValue = isExpanded ? 380 : 800;
+    Animated.timing(sheetHeight, {
+      toValue,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    setIsExpanded(!isExpanded);
+  };
+
+  // 체크 변경 함수
+  const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
+    try {
+
+      // 서버에 PATCH 요청
+      await axios.patch(
+        `http://localhost:8080/api/plan/${todoId}/learned`,
+        {
+          learned: newValue,
+          nickname: userInfo.nickname
+        }
+      );
+
+      // 프론트 상태도 업데이트
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) =>
+          plan.id === planGroupId
+            ? {
+                ...plan,
+                todos: plan.todos.map((todo) =>
+                  todo.id === todoId ? { ...todo, checked: newValue } : todo
+                ),
+              }
+            : plan
+        )
+      );
+
+      getAchievementRate();
+    } catch (err) {
+      console.error("체크박스 상태 변경 실패\n", err);
+    }
+  };
+
+  // 달성률 계산
+  const getAchievementRate = async() => {
+    try{
+        const response = await axios.post("http://localhost:8080/api/plan/achievement", {
+            nickname: userInfo.nickname,
+            today: format(new Date(), "yyyy-MM-dd")
+        });
+        setRate(response.data.toFixed(0)); // 소수점 표기 x
+    } catch(err){
+        console.log("달성률 계산 실패\n", err);
+    }
+  };
+
+  useEffect(() => {
+    if(userInfo !== null){
+        getAchievementRate();
+    }
+  }, [userInfo]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -226,10 +216,10 @@ export default function HomeScreen() {
                       style={{
                         color: "#6c4ed5",
                         fontWeight: "bold",
-                        fontSize: 15,
+                     fontSize: 15,
                       }}
                     >
-                      오늘 계획 {achievementRate}% 달성!
+                      오늘 계획 {rate}% 달성!
                     </Text>
                     <Ionicons
                       name="chevron-forward"
@@ -328,7 +318,8 @@ export default function HomeScreen() {
                               handleCheckboxChange(plan.id, todo.id, newValue)
                             }
                           />
-                          <Text style={styles.subTodoText}>{todo.title}</Text>
+                          <Text style={styles.subTodoWeek}>{todo.week} </Text>
+                          <Text>{todo.title}</Text>
                         </View>
                       ))}
                     </View>
@@ -547,10 +538,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  subTodoText: {
+  subTodoWeek: {
     marginLeft: 8,
     fontSize: 14,
     color: "#333",
+    fontWeight: 500,
   },
   addButton: {
     alignSelf: "flex-start",

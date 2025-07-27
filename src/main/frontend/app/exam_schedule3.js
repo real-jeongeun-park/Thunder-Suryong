@@ -26,8 +26,7 @@ export default function ExamInfoInput() {
   const router = useRouter();
   const { data, setData } = useData();
 
-  const { examName, startDate, endDate, subjects } = data;
-  // const examName = data.examName; const startDate = data.startDate; ...와 같음
+  const { startDate, endDate, examName, subjects } = data;
 
   let subjectList = [];
   try {
@@ -49,7 +48,7 @@ export default function ExamInfoInput() {
   const [menuVisible, setMenuVisible] = useState(false);
 
   // 저장 배열
-  const [subjectInfos, setSubjectInfos] = useState([]);
+  const [subjectInfo, setSubjectInfo] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [userInfo, setUserInfo] = useState(null);
@@ -89,8 +88,8 @@ export default function ExamInfoInput() {
       alert("과목, 주차/단원, 내용/분량을 모두 입력하세요!");
       return;
     }
-    setSubjectInfos([
-      ...subjectInfos,
+    setSubjectInfo([
+      ...subjectInfo,
       { subject: selectedSubject, week, content },
     ]);
     setWeek("");
@@ -188,13 +187,13 @@ export default function ExamInfoInput() {
 
         const { weekList, contentList } = response.data;
 
-        const newSubjectInfosList = weekList.map((week, index) => ({
+        const newSubjectInfoList = weekList.map((week, index) => ({
           subject: selectedSubject,
           week,
           content: contentList[index],
         }));
 
-        setSubjectInfos([...subjectInfos, ...newSubjectInfosList]);
+        setSubjectInfo([...subjectInfo, ...newSubjectInfoList]);
       } catch (e) {
         console.log(e);
       }
@@ -202,14 +201,14 @@ export default function ExamInfoInput() {
   };
 
   const handleSubmit = () => {
-    if (subjectInfos.length === 0) {
+    if (subjectInfo.length === 0) {
       alert("하나 이상의 공부 분량을 추가하세요.");
       return;
     }
 
     setData((prev) => ({
       ...prev,
-      subjectInfos: JSON.stringify(subjectInfos),
+      subjectInfo: JSON.stringify(subjectInfo),
     }));
     router.push("/exam_schedule4");
   };
@@ -221,7 +220,7 @@ export default function ExamInfoInput() {
   const [editContent, setEditContent] = useState("");
 
   const openEditModal = (index) => {
-    const info = subjectInfos[index];
+    const info = subjectInfo[index];
     setEditIndex(index);
     setEditWeek(info.week);
     setEditContent(info.content);
@@ -234,7 +233,7 @@ export default function ExamInfoInput() {
       return;
     }
 
-    setSubjectInfos((prev) => {
+    setSubjectInfo((prev) => {
       const newArr = [...prev];
       newArr[editIndex] = {
         ...newArr[editIndex],
@@ -248,7 +247,7 @@ export default function ExamInfoInput() {
   };
 
   const handleDeleteSubjectInfo = (index) => {
-    setSubjectInfos((prev) => {
+    setSubjectInfo((prev) => {
       const newArr = [...prev];
       newArr.splice(index, 1);
       return newArr;
@@ -365,7 +364,7 @@ export default function ExamInfoInput() {
               style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
               showsVerticalScrollIndicator={false}
             >
-              {subjectInfos
+              {subjectInfo
                 .filter((info) => info.subject === selectedSubject)
                 .map((info, idx) => (
                   <View key={idx} style={styles.subjectInfoItem}>

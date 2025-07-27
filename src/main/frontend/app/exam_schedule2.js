@@ -162,10 +162,7 @@ export default function ExamInfoInput() {
     if (request.trim()) {
       // 과목 뽑아오기
       try {
-        const res = await axios.post("http://localhost:8080/api/ai/schedule", {
-          request: request,
-        });
-
+        const res = await axios.post("http://localhost:8080/api/ai/schedule", {request});
         setSubjects((prev) => [...prev, ...res.data]);
       } catch (err) {
         console.log(err);
@@ -178,17 +175,15 @@ export default function ExamInfoInput() {
       setEmptyExamName(true);
     }
 
-    let newSubjects = [...subjects];
-
-    if (newSubjects.length === 0) {
+    if (subjects.length === 0) {
       setEmptySubjects(true);
     }
 
-    if (examName.trim() && newSubjects.length !== 0) {
+    if (examName.trim() && subjects.length !== 0) {
       // data 존재
       setData((prev) => ({
         ...prev,
-        examName: examName,
+        examName,
         subjects: JSON.stringify(subjects),
       }));
       router.push("/exam_schedule3");

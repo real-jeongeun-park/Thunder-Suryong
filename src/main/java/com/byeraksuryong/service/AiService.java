@@ -2,7 +2,7 @@ package com.byeraksuryong.service;
 
 import com.byeraksuryong.api.AiApi;
 import com.byeraksuryong.domain.Style;
-import com.byeraksuryong.dto.SubjectInfosList;
+import com.byeraksuryong.dto.SubjectInfoList;
 import com.byeraksuryong.dto.SyllabusList;
 import com.byeraksuryong.repository.StyleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,8 +80,8 @@ public class AiService {
         }
     }
 
-    public SubjectInfosList usePlansAi(Map<String, Object> body){
-        List<Map<String, String>> subjectInfos = (List<Map<String, String>>)body.get("subjectInfos");
+    public SubjectInfoList usePlansAi(Map<String, Object> body){
+        List<Map<String, String>> subjectInfo = (List<Map<String, String>>)body.get("subjectInfo");
         String nickname = (String)body.get("nickname");
         String startDate = (String)body.get("startDate");
         String endDate = (String)body.get("endDate");
@@ -90,7 +90,7 @@ public class AiService {
         Map<String, String> styleInfo = getStyleInfo(nickname); // 스타일 가져옴. studyTime, studySubject, studystyle
 
         StringBuilder stringBuilder = new StringBuilder();
-        for(Map<String, String> info : subjectInfos){
+        for(Map<String, String> info : subjectInfo){
             for(String value : info.values()){
                 stringBuilder.append(value + " ");
             }
@@ -183,13 +183,13 @@ public class AiService {
                 }
             }
 
-            SubjectInfosList subjectInfosList = new SubjectInfosList();
-            subjectInfosList.setDate(dateList);
-            subjectInfosList.setSubject(subjectList);
-            subjectInfosList.setWeek(weekList);
-            subjectInfosList.setContent(contentList);
+            SubjectInfoList subjectInfoList = new SubjectInfoList();
+            subjectInfoList.setDate(dateList);
+            subjectInfoList.setSubject(subjectList);
+            subjectInfoList.setWeek(weekList);
+            subjectInfoList.setContent(contentList);
 
-            return subjectInfosList;
+            return subjectInfoList;
         } catch(Exception e) {
             System.out.println(e.getMessage());
             return null;
@@ -213,8 +213,7 @@ public class AiService {
     public String getChatInput(Map<String, String> body) throws IOException, InterruptedException {
         String content = body.get("content");
         String chatInput = body.get("chatInput");
-        ai.setDefaultPrompt(content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
-
+        ai.setDefaultPrompt("너는 학생들의 공부를 도와주는 '수룡이 챗봇'이야. 친근한 말투로 학생들을 도와줘야 해.\n\n" + content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
         String result = ai.requestAnswer(chatInput).getResponse();
         return result.replace("**", "");
     }

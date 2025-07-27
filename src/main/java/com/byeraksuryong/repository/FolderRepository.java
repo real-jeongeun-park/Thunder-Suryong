@@ -10,4 +10,5 @@ public interface FolderRepository {
     Folder save(Folder folder);
     List<Folder> findByNickname(String nickname);
     List<Folder> findByFolderId(String folderId);
+    List<Folder> findByNicknameAndExamId(String nickname, String examId);
 }

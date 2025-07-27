@@ -67,7 +67,7 @@ export default function NoteScreen() {
   useEffect(() => {
     const getFolder = async () => {
         try{
-            const res = await axios.post("http://localhost:8080/api/printFolder", {
+            const res = await axios.post("http://localhost:8080/api/folder/get", {
                 nickname,
             });
 
@@ -82,23 +82,24 @@ export default function NoteScreen() {
         }
     };
 
-    getFolder();
+    if(nickname !== null){
+        getFolder();
+    }
   }, [nickname]);
 
+  // 폴더 생성
   const handleCreateFolder = async () => {
     const newFolderName = folderName.trim();
     if (newFolderName) {
     // 내용 없으면 동작 x
       try{
-        const newId = Date.now().toString();
-        const res = await axios.post("http://localhost:8080/api/createFolder", {
+        const res = await axios.post("http://localhost:8080/api/folder/create", {
             nickname,
-            folderId: newId,
             folderName: newFolderName,
         });
 
         const newFolder = {
-            folderId: newId,
+            folderId: res.data,
             folderName: newFolderName,
         }
 
@@ -117,7 +118,7 @@ export default function NoteScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <Text style={styles.title}>학습 노트</Text>
+      <Text style={styles.title}>학습 폴더</Text>
 
       {folders.length === 0 && !isCreatingFolder ? (
         <>
@@ -127,7 +128,7 @@ export default function NoteScreen() {
             resizeMode="contain"
           />
           <Text style={styles.emptyMessage}>
-            아직 생성된 노트가 없어요!{"\n"}학습한 내용을 기록해보세요!
+            아직 생성된 폴더가 없어요!
           </Text>
         </>
       ) : (

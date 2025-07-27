@@ -28,15 +28,15 @@ export default function ExamInfoInput() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  const { examName, startDate, endDate, subjectInfos } = data;
-  const parsedSubjectInfos = JSON.parse(data.subjectInfos);
+  const {startDate, endDate, examName, subjects, subjectInfo } = data;
+  const parsedSubjectInfo = JSON.parse(subjectInfo);
   const newSubjectList = [
-    ...new Set(parsedSubjectInfos.map((item) => item.subject)),
-  ];
-  // 다 불러옴
+    ...new Set(parsedSubjectInfo.map((item) => item.subject)),
+  ]; // selected 된 것만
 
   const [plans, setPlans] = useState([]);
 
+  // 로그인 상태 여부 확인
   useEffect(() => {
     const checkLogin = async () => {
       try {
@@ -68,21 +68,24 @@ export default function ExamInfoInput() {
     checkLogin();
   }, []);
 
+
+  // 자동 생성된 계획을 받아옴
   useEffect(() => {
     const getPlans = async () => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://localhost:8080/api/ai/plans",
+          "http://localhost:8080/api/ai/plan",
           {
-            subjectInfos: parsedSubjectInfos,
+            subjectInfo: parsedSubjectInfo,
             nickname: userInfo.nickname,
             startDate,
             endDate,
           }
         );
 
-        const { date, subject, week, content } = response.data; // 모두 다 리스트 형태
+        const { date, subject, week, content } = response.data;
+        // 모두 다 리스트임
 
         const newPlanList = date.map((date, index) => ({
           date,
@@ -114,36 +117,28 @@ export default function ExamInfoInput() {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/createExam",
-        {
-          list: { startDate, endDate, examName, newSubjectList },
+      const response = await axios.post("http://localhost:8080/api/exam/create", {
           nickname: userInfo.nickname,
-        }
-      ); // exam db에 저장
-      // console.log(newSubjectList.length);
-      // console.log(plans.length);
+          startDate,
+          endDate,
+          examName
+      });
+
+      const examId = response.data;
+
+      const response2 = await axios.post("http://localhost:8080/api/subject/create", {
+        examId,
+        subjects: JSON.parse(subjects),
+      });
 
       const transformedPlans = {
-        date: plans.map((p) => p.date),
         subject: plans.map((p) => p.subject),
         week: plans.map((p) => p.week),
         content: plans.map((p) => p.content),
+        date: plans.map((p) => p.date),
       };
 
-      const response2 = await axios.post(
-        "http://localhost:8080/api/createPlan",
-        {
-          plans: transformedPlans,
-          nickname: userInfo.nickname,
-        }
-      );
-
-      // plan db에 저장
-
-      console.log(response.data);
-      console.log(response2.data); // 디버깅
-
+      const response3 = await axios.post("http://localhost:8080/api/plan/create", transformedPlans);
       router.push("/main");
     } catch (e) {
       console.log(e);

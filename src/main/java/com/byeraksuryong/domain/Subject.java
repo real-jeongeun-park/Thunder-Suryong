@@ -7,13 +7,14 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Note {
+public class Subject {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "folder_id")
-    private String folderId;
-    @Column(name = "note_id")
-    private String noteId;
-    private String title;
-    private String content;
+
+    @Column(name = "exam_id")
+    private String examId;
+
+    @Column(name = "subject_id")
+    private String subjectId;
+    private String subject;
 }
