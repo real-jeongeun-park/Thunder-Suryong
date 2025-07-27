@@ -25,7 +25,6 @@ const { height: screenHeight } = Dimensions.get("window");
 export default function ExamInfoInput() {
   const router = useRouter();
   const { data, setData } = useData();
-
   const { startDate, endDate, examName, subjects } = data;
 
   let subjectList = [];
@@ -118,7 +117,7 @@ export default function ExamInfoInput() {
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        const pickedImages = result.assets[0];
+        const pickedImage = result.assets[0];
         uploadImage(pickedImage.uri); // uri을 보냄
       }
     }
@@ -215,13 +214,30 @@ export default function ExamInfoInput() {
 
   // 내용 수정
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editIndex, setEditIndex] = useState(null); // 수정 중인 인덱스
+  const [editIndex, setEditIndex] = useState(null); // 수정 중인 전체 배열 인덱스
   const [editWeek, setEditWeek] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  const openEditModal = (index) => {
-    const info = subjectInfo[index];
-    setEditIndex(index);
+  // 필터된 subjectInfos (선택한 과목에 해당하는 것만)
+  const filteredSubjectInfos = subjectInfos.filter(
+    (info) => info.subject === selectedSubject
+  );
+
+  const openEditModal = (filteredIdx) => {
+    const info = filteredSubjectInfos[filteredIdx];
+    if (!info) return;
+
+    // 전체 배열에서 실제 인덱스 찾기 (동일한 객체를 찾음)
+    const realIndex = subjectInfos.findIndex(
+      (item) =>
+        item.subject === info.subject &&
+        item.week === info.week &&
+        item.content === info.content
+    );
+
+    if (realIndex === -1) return;
+
+    setEditIndex(realIndex);
     setEditWeek(info.week);
     setEditContent(info.content);
     setEditModalVisible(true);
@@ -235,21 +251,35 @@ export default function ExamInfoInput() {
 
     setSubjectInfo((prev) => {
       const newArr = [...prev];
-      newArr[editIndex] = {
-        ...newArr[editIndex],
-        week: editWeek,
-        content: editContent,
-      };
+      if (editIndex !== null && editIndex >= 0) {
+        newArr[editIndex] = {
+          ...newArr[editIndex],
+          week: editWeek,
+          content: editContent,
+        };
+      }
       return newArr;
     });
 
     setEditModalVisible(false);
   };
 
-  const handleDeleteSubjectInfo = (index) => {
-    setSubjectInfo((prev) => {
+  const handleDeleteSubjectInfo = (filteredIdx) => {
+    // 필터된 배열에서의 인덱스를 전체 배열 인덱스로 변환 후 삭제
+    const info = filteredSubjectInfos[filteredIdx];
+    if (!info) return;
+
+    const realIndex = subjectInfos.findIndex(
+      (item) =>
+        item.subject === info.subject &&
+        item.week === info.week &&
+        item.content === info.content
+    );
+    if (realIndex === -1) return;
+
+    setSubjectInfos((prev) => {
       const newArr = [...prev];
-      newArr.splice(index, 1);
+      newArr.splice(realIndex, 1);
       return newArr;
     });
   };
@@ -274,6 +304,7 @@ export default function ExamInfoInput() {
             <Ionicons name="chevron-back" size={32} color="#535353" />
           </TouchableOpacity>
         </View>
+
         {/* 상단 날짜 및 안내 */}
         <View style={styles.headerContainer}>
           <Text style={styles.headerTitle}>분량을 입력해주세요.</Text>
@@ -292,6 +323,7 @@ export default function ExamInfoInput() {
             contentContainerStyle={{ alignItems: "center" }}
           />
         </View>
+
         <View style={styles.inputContainer}>
           <View style={styles.formBox}>
             <Text style={styles.inputText}>과목</Text>
@@ -325,6 +357,7 @@ export default function ExamInfoInput() {
                   ))}
                 </Menu>
               </View>
+
               <TouchableOpacity style={styles.photoAddBtn} onPress={pickImage}>
                 <Text style={styles.photoAddBtnText}>
                   강의계획서로 추가하기
@@ -351,7 +384,6 @@ export default function ExamInfoInput() {
               onChangeText={setContent}
             />
             {/* 안내/추가 버튼 */}
-
             <TouchableOpacity
               style={styles.directAddBtn}
               onPress={handleAddSubjectInfo}
@@ -364,42 +396,40 @@ export default function ExamInfoInput() {
               style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
               showsVerticalScrollIndicator={false}
             >
-              {subjectInfo
-                .filter((info) => info.subject === selectedSubject)
-                .map((info, idx) => (
-                  <View key={idx} style={styles.subjectInfoItem}>
+              {filteredSubjectInfos.map((info, idx) => (
+                <View key={idx} style={styles.subjectInfoItem}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <View>
+                      <Text style={styles.subjectInfoWeek}>{info.week}</Text>
+                      <Text style={styles.subjectInfoContent}>
+                        {info.content}
+                      </Text>
+                    </View>
                     <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      <View>
-                        <Text style={styles.subjectInfoWeek}>{info.week}</Text>
-                        <Text style={styles.subjectInfoContent}>
-                          {info.content}
-                        </Text>
-                      </View>
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
+                      <TouchableOpacity
+                        onPress={() => openEditModal(idx)}
+                        style={styles.editButton}
                       >
-                        <TouchableOpacity
-                          onPress={() => openEditModal(idx)}
-                          style={styles.editButton}
-                        >
-                          <Text style={{ color: "#5e43c2" }}>수정</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleDeleteSubjectInfo(idx)}
-                          style={[styles.editButton, { marginLeft: 10 }]}
-                        >
-                          <Text style={styles.subjectItemDelete}>✕</Text>
-                        </TouchableOpacity>
-                      </View>
+                        <Text style={{ color: "#5e43c2" }}>수정</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteSubjectInfo(idx)}
+                        style={[styles.editButton, { marginLeft: 10 }]}
+                      >
+                        <Text style={styles.subjectItemDelete}>✕</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
-                ))}
+                </View>
+              ))}
             </ScrollView>
 
             {/* 수정 모달 */}
@@ -473,7 +503,7 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "white",
     fontSize: 20,
-    fontWeight: 300,
+    fontWeight: "300",
   },
   character: {
     width: 170,
@@ -522,7 +552,6 @@ const styles = StyleSheet.create({
   subjectBadgeText: {
     color: "#7A4DD6",
     fontSize: 14,
-    //fontWeight: "bold",
   },
   inputContainer: {
     flex: 1,
@@ -625,6 +654,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     color: "#555",
     marginTop: 4,
+    maxWidth: 350,
   },
   editButton: {
     paddingHorizontal: 6,
@@ -633,7 +663,6 @@ const styles = StyleSheet.create({
   subjectItemDelete: {
     color: "#9c73b8ff",
     fontSize: 18,
-    //marginLeft: 4,
     fontWeight: "bold",
   },
 
