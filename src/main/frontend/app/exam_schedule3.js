@@ -218,17 +218,17 @@ export default function ExamInfoInput() {
   const [editWeek, setEditWeek] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  // 필터된 subjectInfos (선택한 과목에 해당하는 것만)
-  const filteredSubjectInfos = subjectInfos.filter(
+  // 필터된 subjectInfo (선택한 과목에 해당하는 것만)
+  const filteredSubjectInfo = subjectInfo.filter(
     (info) => info.subject === selectedSubject
   );
 
   const openEditModal = (filteredIdx) => {
-    const info = filteredSubjectInfos[filteredIdx];
+    const info = filteredSubjectInfo[filteredIdx];
     if (!info) return;
 
     // 전체 배열에서 실제 인덱스 찾기 (동일한 객체를 찾음)
-    const realIndex = subjectInfos.findIndex(
+    const realIndex = subjectInfo.findIndex(
       (item) =>
         item.subject === info.subject &&
         item.week === info.week &&
@@ -266,10 +266,10 @@ export default function ExamInfoInput() {
 
   const handleDeleteSubjectInfo = (filteredIdx) => {
     // 필터된 배열에서의 인덱스를 전체 배열 인덱스로 변환 후 삭제
-    const info = filteredSubjectInfos[filteredIdx];
+    const info = filteredSubjectInfo[filteredIdx];
     if (!info) return;
 
-    const realIndex = subjectInfos.findIndex(
+    const realIndex = subjectInfo.findIndex(
       (item) =>
         item.subject === info.subject &&
         item.week === info.week &&
@@ -277,7 +277,7 @@ export default function ExamInfoInput() {
     );
     if (realIndex === -1) return;
 
-    setSubjectInfos((prev) => {
+    setSubjectInfo((prev) => {
       const newArr = [...prev];
       newArr.splice(realIndex, 1);
       return newArr;
@@ -396,7 +396,7 @@ export default function ExamInfoInput() {
               style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
               showsVerticalScrollIndicator={false}
             >
-              {filteredSubjectInfos.map((info, idx) => (
+              {filteredSubjectInfo.map((info, idx) => (
                 <View key={idx} style={styles.subjectInfoItem}>
                   <View
                     style={{
