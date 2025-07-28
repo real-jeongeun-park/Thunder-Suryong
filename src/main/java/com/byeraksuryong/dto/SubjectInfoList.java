@@ -7,6 +7,7 @@ import java.util.List;
 @Getter
 @Setter
 public class SubjectInfoList {
+    private String examId;
     private List<String> subject;
     private List<String> week;
     private List<String> content;

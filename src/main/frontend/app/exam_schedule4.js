@@ -213,6 +213,7 @@ export default function ExamInfoInput() {
       });
 
       const transformedPlans = {
+        examId,
         subject: plans.map((p) => p.subject),
         week: plans.map((p) => p.week),
         content: plans.map((p) => p.content),

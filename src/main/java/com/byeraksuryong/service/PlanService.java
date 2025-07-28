@@ -34,7 +34,7 @@ public class PlanService {
         try {
             for (int i = 0; i < size; i++) {
                 Plan newPlan = new Plan();
-                String subjectId = subjectRepository.findBySubject(list.getSubject().get(i)).get(0).getSubjectId();
+                String subjectId = subjectRepository.findByExamIdAndSubject(list.getExamId(), list.getSubject().get(i)).get(0).getSubjectId();
                 newPlan.setSubjectId(subjectId);
                 newPlan.setWeek(list.getWeek().get(i));
                 newPlan.setContent(list.getContent().get(i));
