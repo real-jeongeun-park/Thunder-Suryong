@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons"; // 아이콘 라이브러리 사�
 import { useRouter } from "expo-router";
 
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 
 export default function ExamListScreen() {
@@ -28,14 +29,14 @@ export default function ExamListScreen() {
                 token = localStorage.getItem("accessToken");
             }
             else{
-                token = SecureStore.getItemAsync("accessToken");
+                token = await SecureStore.getItemAsync("accessToken");
             }
 
             if(!token){
                 throw new Error("Token not found");
             }
 
-            const res = await axios.get("http://localhost:8080/api/validation", {
+            const res = await axios.get(`${API_BASE_URL}/api/validation`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -56,7 +57,7 @@ export default function ExamListScreen() {
   useEffect(() => {
     const getExams = async () => {
         try{
-            const response = await axios.post("http://localhost:8080/api/exam/get", {
+            const response = await axios.post(`${API_BASE_URL}/api/exam/get`, {
                 nickname: userInfo.nickname,
             });
 
@@ -75,14 +76,14 @@ export default function ExamListScreen() {
         }
     }
 
-    if(userInfo !== null){
+    if(userInfo && userInfo.nickname){
         getExams();
     }
   }, [userInfo])
 
   const handleExamPress = async (id) => {
     try{
-      const response = await axios.get("http://localhost:8080/api/exam/id", {
+      const response = await axios.get(`${API_BASE_URL}/api/exam/id`, {
         params: { id }
       });
 

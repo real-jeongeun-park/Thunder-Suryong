@@ -10,10 +10,16 @@ import {
   Platform,
   Image,
   Modal,
+  TextInputBase,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+
 import { useData } from "@/context/DataContext";
+
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+
 import * as ImagePicker from "expo-image-picker";
 import { parseISO, addDays, format } from "date-fns";
 import {
@@ -66,7 +72,7 @@ export default function ExamInfoInput() {
 
         if (!token) throw new Error("Token not found");
 
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -164,7 +170,7 @@ export default function ExamInfoInput() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8080/api/ocr/web", {
+      const res = await axios.post(`${API_BASE_URL}/api/ocr/web`, {
         base64: base64,
       });
 
@@ -197,10 +203,7 @@ export default function ExamInfoInput() {
     formData.append("image", file);
 
     try {
-      const res = await axios.post(
-        "http://localhost:8080/api/ocr/app",
-        formData
-      );
+      const res = await axios.post(`${API_BASE_URL}/api/ocr/app`, formData);
       console.log(res.data);
       useAi(res.data);
     } catch (e) {
@@ -214,7 +217,7 @@ export default function ExamInfoInput() {
     if (request.trim()) {
       // 과목 뽑아오기
       try {
-        const res = await axios.post("http://localhost:8080/api/ai/schedule", {
+        const res = await axios.post(`${API_BASE_URL}/api/ai/schedule`, {
           request,
         });
         setSubjects((prev) => [...prev, ...res.data]);
@@ -379,7 +382,7 @@ export default function ExamInfoInput() {
                       onPress={() => openDatePicker(index)}
                       style={styles.editButton}
                     >
-                      <Text style={{ color: "#5e43c2" }}>
+                      <Text style={styles.dateSelectBox}>
                         {selectedDates[index]
                           ? format(parseISO(selectedDates[index]), "M/d")
                           : "날짜 선택"}
@@ -448,7 +451,16 @@ export default function ExamInfoInput() {
                   visible={datePickerDialogVisible}
                   onDismiss={closeDatePicker}
                 >
-                  <Dialog.Title>시험 날짜 선택</Dialog.Title>
+                  <Dialog.Title
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "bold",
+                      color: "#4B3F72",
+                      textAlign: "center",
+                    }}
+                  >
+                    시험 날짜 선택
+                  </Dialog.Title>
                   <Dialog.Content>
                     <View style={styles.dropdownRow}>
                       <View style={styles.dropdown}>
@@ -614,6 +626,18 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 10,
   },
+  dateSelectBox: {
+    padding: 5,
+    borderRadius: 7,
+    color: "#85608bff",
+    marginRight: 10,
+    shadowColor: "#535353", // 그림자 색상 (어두운 회색)
+    shadowOpacity: 0.3, // 투명도 (0~1)
+    shadowOffset: { width: 0, height: 2 }, // 그림자 위치(오프셋)
+    shadowRadius: 4, // 블러 반경
+    elevation: 5, // Android 그림자 깊이
+  },
+
   inputContainer: {
     flex: 1,
     borderRadius: 30,
@@ -875,9 +899,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 20,
+    //backgroundColor: "#000000ff",
   },
 
   dropdown: {
+    backgroundColor: "#ffffffff",
     flex: 1,
     height: 40,
     backgroundColor: "#FAF8FD",

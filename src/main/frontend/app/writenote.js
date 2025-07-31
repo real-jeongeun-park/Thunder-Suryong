@@ -20,6 +20,7 @@ import {
 } from "react-native";
 
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 
 const screenHeight = Dimensions.get("window").height;
@@ -49,7 +50,7 @@ export default function WriteNote() {
   const [isBotTyping, setIsBotTyping] = useState(false);
 
   const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedTexts, setSelectedTexts] = useState([]);
+  const [selectedTexts, setSelectedTexts] = useState(null);
 
   const dotOpacity1 = useRef(new Animated.Value(0)).current;
   const dotOpacity2 = useRef(new Animated.Value(0)).current;
@@ -70,11 +71,11 @@ export default function WriteNote() {
             if(Platform.OS === 'web'){
                 token = localStorage.getItem("accessToken");
             } else{
-                token = SecureStore.getItemAsync("accessToken");
+                token = await SecureStore.getItemAsync("accessToken");
             }
             if(!token) throw new Error("token not found");
 
-            const response = await axios.get("http://localhost:8080/api/validation", {
+            const response = await axios.get(`${API_BASE_URL}/api/validation`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -94,7 +95,7 @@ export default function WriteNote() {
     // title과 content 가져오기
     async function getOneNote(){
         try{
-            const response = await axios.post("http://localhost:8080/api/note/getOne", {
+            const response = await axios.post(`${API_BASE_URL}/api/note/getOne`, {
                 noteId
             });
             const note = response.data;
@@ -157,12 +158,12 @@ export default function WriteNote() {
          setChatMessages(prev => [...prev, newUserChatMessage]);
          setIsBotTyping(true);
 
-         const response = await axios.post("http://localhost:8080/api/ai/chatInput", {
-            content: noteContent,
+         const response = await axios.post(`${API_BASE_URL}/api/ai/chatInput`, {
+            content: selectedTexts || noteContent,
             chatInput: newUserChatMessage.text,
          });
 
-         setSelectedTexts([]);
+         setSelectedTexts(null);
 
          const newBotChatMessage = {
             type: "bot",
@@ -185,7 +186,7 @@ export default function WriteNote() {
   const handleSelectContent = () => {
     if (selection.start !== selection.end) {
       const selected = noteContent.substring(selection.start, selection.end);
-      setSelectedTexts((prev) => [...prev, selected]);
+      setSelectedTexts(selected);
       setIsSelecting(false);
       Animated.timing(sheetTranslateY, {
         toValue: 30,
@@ -198,7 +199,7 @@ export default function WriteNote() {
   const handleNoteSave = async () => {
     if(noteTitle.trim() && noteContent.trim()){
         try{
-            const response = await axios.post("http://localhost:8080/api/note/update", {
+            const response = await axios.post(`${API_BASE_URL}/api/note/update`, {
                 noteId,
                 title: noteTitle,
                 content: noteContent,
@@ -316,13 +317,9 @@ export default function WriteNote() {
               </ScrollView>
 
               <View style={{ paddingBottom: 5 }}>
-                {selectedTexts.length > 0 && (
+                {selectedTexts && (
                   <View style={{ marginBottom: 6 }}>
-                    {selectedTexts.map((text, index) => (
-                      <Text key={index} style={{ fontSize: 12, color: "#555", marginBottom: 2 }}>
-                        {text}
-                      </Text>
-                    ))}
+                    <Text style={{ fontSize: 12, color: "#555", marginBottom: 2}}>{selectedTexts}</Text>
                   </View>
                 )}
                 <TouchableOpacity

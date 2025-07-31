@@ -5,15 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
 import Checkbox from "expo-checkbox";
+
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
 
 const tabs = ["Time table", "Planner", "Completion rate"];
 const studyTags = [
@@ -50,7 +52,7 @@ export default function CalendarTimetableScreen() {
         }
 
         if (!token) throw new Error("Token not found");
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -74,7 +76,7 @@ export default function CalendarTimetableScreen() {
         setIsLoading(true);
 
         // 서버에 yyyy-MM-dd 형식 날짜로 요청
-        const response = await axios.post("http://localhost:8080/api/plan/date", {
+        const response = await axios.post(`${API_BASE_URL}/api/plan/date`, {
             nickname: userInfo.nickname,
             date: selectedDate,
         })
@@ -119,8 +121,7 @@ export default function CalendarTimetableScreen() {
   // 체크박스 변경시 서버에 PATCH 요청 및 상태 반영
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-      await axios.patch(
-        `http://localhost:8080/api/plan/${todoId}/learned`,
+      await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`,
         {
           learned: newValue,
           nickname: userInfo.nickname
