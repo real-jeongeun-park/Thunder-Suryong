@@ -16,7 +16,10 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
+
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
 
 import { useData } from "@/context/DataContext";
 
@@ -66,7 +69,7 @@ export default function ExamInfoInput() {
 
         if (!token) throw new Error("Token not found");
 
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -128,7 +131,7 @@ export default function ExamInfoInput() {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8080/api/ocr/web", {
+      const response = await axios.post(`${API_BASE_URL}/api/ocr/web`, {
         base64: base64,
       });
 
@@ -160,7 +163,7 @@ export default function ExamInfoInput() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/ocr/app",
+        `${API_BASE_URL}/api/ocr/app`,
         formData
       );
       useAi(response.data);
@@ -176,13 +179,12 @@ export default function ExamInfoInput() {
       // 있어야만 실행
       try {
         const response = await axios.post(
-          "http://localhost:8080/api/ai/syllabus",
+          `${API_BASE_URL}/api/ai/syllabus`,
           {
             request: request,
           }
         );
 
-        console.log(response.data);
 
         const { weekList, contentList } = response.data;
 

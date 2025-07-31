@@ -10,12 +10,17 @@ import {
   Platform,
   Image,
   Modal,
+  TextInputBase,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+
 import { useData } from "@/context/DataContext";
+
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+
 import * as ImagePicker from "expo-image-picker";
-import { TextInputBase } from "react-native";
 
 export default function ExamInfoInput() {
   const router = useRouter();
@@ -50,7 +55,7 @@ export default function ExamInfoInput() {
 
         if (!token) throw new Error("Token not found");
 
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -112,7 +117,7 @@ export default function ExamInfoInput() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8080/api/ocr/web", {
+      const res = await axios.post(`${API_BASE_URL}/api/ocr/web`, {
         base64: base64,
       });
 
@@ -146,7 +151,7 @@ export default function ExamInfoInput() {
 
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/ocr/app",
+        `${API_BASE_URL}/api/ocr/app`,
         formData
       );
       console.log(res.data);
@@ -162,7 +167,7 @@ export default function ExamInfoInput() {
     if (request.trim()) {
       // 과목 뽑아오기
       try {
-        const res = await axios.post("http://localhost:8080/api/ai/schedule", {request});
+        const res = await axios.post(`${API_BASE_URL}/api/ai/schedule`, {request});
         setSubjects((prev) => [...prev, ...res.data]);
       } catch (err) {
         console.log(err);

@@ -18,6 +18,7 @@ import {
 
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
 
 export default function NoteScreen() {
   const router = useRouter();
@@ -45,11 +46,11 @@ export default function NoteScreen() {
             if(Platform.OS === 'web'){
                 token = localStorage.getItem("accessToken");
             } else{
-                token = SecureStore.getItemAsync("accessToken");
+                token = await SecureStore.getItemAsync("accessToken");
             }
 
             if(!token) throw new Error("Token not found");
-            const res = await axios.get("http://localhost:8080/api/validation", {
+            const res = await axios.get(`${API_BASE_URL}/api/validation`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -67,7 +68,7 @@ export default function NoteScreen() {
   useEffect(() => {
     const getFolder = async () => {
         try{
-            const res = await axios.post("http://localhost:8080/api/folder/get", {
+            const res = await axios.post(`${API_BASE_URL}/api/folder/get`, {
                 nickname,
             });
 
@@ -93,7 +94,7 @@ export default function NoteScreen() {
     if (newFolderName) {
     // 내용 없으면 동작 x
       try{
-        const res = await axios.post("http://localhost:8080/api/folder/create", {
+        const res = await axios.post(`${API_BASE_URL}/api/folder/create`, {
             nickname,
             folderName: newFolderName,
         });
