@@ -18,6 +18,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { differenceInDays, parseISO } from "date-fns";
 
+import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 
@@ -60,7 +61,7 @@ export default function HomeScreen() {
         }
 
         if (!token) throw new Error("Token not found");
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -84,7 +85,7 @@ export default function HomeScreen() {
         setIsLoading(true);
         const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
 
-        const res = await axios.post("http://localhost:8080/api/plan/date", {
+        const res = await axios.post(`${API_BASE_URL}/api/plan/date`, {
           nickname: userInfo.nickname,
           date: formattedDate,
         });
@@ -196,7 +197,7 @@ export default function HomeScreen() {
   // 체크 변경 함수
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-      await axios.patch(`http://localhost:8080/api/plan/${todoId}/learned`, {
+      await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`, {
         learned: newValue,
         nickname: userInfo.nickname,
       });
@@ -225,7 +226,7 @@ export default function HomeScreen() {
   const getAchievementRate = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/plan/achievement",
+        `${API_BASE_URL}/api/plan/achievement`,
         {
           nickname: userInfo.nickname,
           today: format(new Date(), "yyyy-MM-dd"),
@@ -355,13 +356,15 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-            <View style={styles.speechContainer}>
-              <SpeechBalloon tailPosition="right">
-                시험이 얼마 남지 않았네요! {"\n"} 오늘도 파이팅!
-              </SpeechBalloon>
-            </View>
           </LinearGradient>
         </ScrollView>
+
+        {/* 말풍선 */}
+        <View style={styles.speechContainer}>
+          <Text style={styles.characterText}>
+            시험이 얼마 남지 않았네요! {"\n"} 오늘도 파이팅!
+          </Text>
+        </View>
 
         {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
         <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
@@ -573,6 +576,19 @@ const styles = StyleSheet.create({
     height: 250,
     marginTop: 20,
   },
+  characterText: {
+    backgroundColor: "#c9c4dfff",
+    width: "50%",
+    color: "#fff",
+    padding: 10,
+    paddingLeft: 15,
+    borderRadius: 20,
+    marginTop: 80,
+    //shadowOpacity: 0.3,
+    //shadowOffset: { width: 0, height: 2 },
+    //shadowRadius: 4,
+    //elevation: 5,
+  },
   timerText: {
     marginTop: 4,
     color: "#B491DD",
@@ -743,9 +759,8 @@ const styles = StyleSheet.create({
   },
   speechContainer: {
     position: "absolute",
-    left: 20,
-    right: 10,
-    top: "70%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
+    width: "100%",
+    top: "30%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
     //backgroundColor: "#6c4ed5",
     padding: 20,
     //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정

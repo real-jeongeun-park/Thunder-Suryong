@@ -13,6 +13,9 @@ import { Calendar } from "react-native-calendars";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+
 import { useData } from "@/context/DataContext";
 
 export default function ExamDatePicker() {
@@ -40,7 +43,7 @@ export default function ExamDatePicker() {
 
           if(!token) throw new Error("Token not found");
 
-          const res = await axios.get("http://localhost:8080/api/validation", {
+          const res = await axios.get(`${API_BASE_URL}/api/validation`, {
               headers: {
                   Authorization: `Bearer ${token}`,
               },
@@ -198,9 +201,9 @@ export default function ExamDatePicker() {
         <View style={styles.headerRow}>
           <Text style={styles.header}>
             {!startDate
-              ? "공부 시작 일자를\n선택해 주세요."
+              ? "시험 시작 일자를\n선택해 주세요."
               : !endDate
-              ? "공부 종료 일자를\n선택해 주세요."
+              ? "시험 종료 일자를\n선택해 주세요."
               : "시험 기간이\n맞나요?\n"}
           </Text>
           {startDate && (

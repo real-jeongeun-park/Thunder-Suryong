@@ -17,6 +17,7 @@ import {
 
 import axios from "axios";
 import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL } from "../src/constants";
 
 import { useData } from "../context/DataContext";
 
@@ -53,7 +54,7 @@ export default function StudyOptionScreen() {
 
              if(!token) throw new Error("Token not found");
 
-             const res = await axios.get("http://localhost:8080/api/validation", {
+             const res = await axios.get(`${API_BASE_URL}/api/validation`, {
                    headers: {
                      Authorization: `Bearer ${token}`
                    }

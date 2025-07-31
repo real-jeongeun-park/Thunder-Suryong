@@ -19,6 +19,7 @@ import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
 import axios from "axios";
 import { useData } from "@/context/DataContext";
 import * as SecureStore from "expo-secure-store";
+import { API_BASE_URL } from "../src/constants";
 
 const { width } = Dimensions.get("window");
 
@@ -36,6 +37,8 @@ export default function ExamInfoInput() {
   ]; // selected 된 것만
 
   const [plans, setPlans] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState("");
+
 
   // 로그인 상태 여부 확인
   useEffect(() => {
@@ -52,7 +55,7 @@ export default function ExamInfoInput() {
 
         if (!token) throw new Error("Token not found");
 
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -69,24 +72,21 @@ export default function ExamInfoInput() {
     checkLogin();
   }, []);
 
-
   // 자동 생성된 계획을 받아옴
   useEffect(() => {
     const getPlans = async () => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://localhost:8080/api/ai/plan",
+         `${API_BASE_URL}/api/ai/plan`,
           {
             subjectInfo: parsedSubjectInfo,
             nickname: userInfo.nickname,
-            startDate,
             endDate,
           }
         );
 
         const { date, subject, week, content } = response.data;
-        // 모두 다 리스트임
 
         const newPlanList = date.map((date, index) => ({
           date,
@@ -95,7 +95,30 @@ export default function ExamInfoInput() {
           content: content[index],
         }));
 
-        setPlans((prev) => [...prev, ...newPlanList]);
+        if(Platform.OS !== 'web'){
+          const cleanedPlans = newPlanList.map(plan => ({
+            ...plan,
+            subject: plan.subject ? plan.subject.replace(/^"(.*)"$/, "$1") : ""
+          }));
+
+          setPlans(cleanedPlans);
+
+          if (cleanedPlans.length > 0 && !selectedSubject) {
+            const firstSubject = [...new Set(cleanedPlans.map(item => item.subject))][0];
+            if (firstSubject) {
+              setSelectedSubject(firstSubject);
+            }
+          }
+        }
+        else{
+            setPlans(newPlanList);
+            if(newPlanList.length > 0 && !selectedSubject) {
+              const firstSubject = [...new Set(newPlanList.map(item => item.subject))][0];
+              if (firstSubject) {
+                setSelectedSubject(firstSubject);
+              }
+            }
+        }
       } catch (e) {
         console.log(e);
       } finally {
@@ -104,20 +127,40 @@ export default function ExamInfoInput() {
     };
 
     if (userInfo) {
-      getPlans(); // userInfo가 반드시 있어야 함
+      getPlans();
     }
-  }, [userInfo]); // userInfo가 바뀔 때마다 실행됨
+  }, [userInfo]);
 
-  // 수정 모달 관련 상태
+  // 선택된 과목의 계획들만 필터링 (간단하고 명확하게)
+  const getSelectedPlans = () => {
+    if (!selectedSubject || !plans || plans.length === 0) {
+      return [];
+    }
+
+    return plans.filter(plan => {
+      if (!plan || !plan.subject) return false;
+      return plan.subject.trim() === selectedSubject.trim();
+    });
+  };
+
+  const selectedPlans = getSelectedPlans();
+
+  // 디버깅용 로그 (필요시 사용)
+  console.log("현재 선택된 과목:", selectedSubject);
+  console.log("전체 계획 수:", plans.length);
+  console.log("필터된 계획 수:", selectedPlans.length);
+
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editWeek, setEditWeek] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  // 수정 모달 열기 함수 (index 기준)
+  // 수정 모달 관련 함수들
   const openEditModal = (index) => {
     const plan = selectedPlans[index];
+    if (!plan) return;
+
     setEditIndex(index);
     setEditDate(plan.date);
     setEditWeek(plan.week);
@@ -125,23 +168,19 @@ export default function ExamInfoInput() {
     setEditModalVisible(true);
   };
 
-  // 수정 완료 함수
   const handleSaveEdit = () => {
     if (!editDate.trim() || !editWeek.trim() || !editContent.trim()) {
       alert("날짜, 주차/단원, 내용을 모두 입력하세요!");
       return;
     }
 
-    // 전체 plans 배열에서 selectedPlans[index]에 대응하는 원본 인덱스를 찾아 수정해줘야 합니다.
-    // selectedPlans는 plans.filter(...)로 만든 배열이므로 전체 plans 배열의 실제 인덱스 찾기 필요
-
-    // 실제 plans 배열에서 찾는 예시
-    const originalIndex = plans.findIndex(
-      (p) =>
-        p.date === selectedPlans[editIndex].date &&
-        p.subject === selectedSubject &&
-        p.week === selectedPlans[editIndex].week &&
-        p.content === selectedPlans[editIndex].content
+    // 원본 plans 배열에서 해당 계획의 인덱스 찾기
+    const targetPlan = selectedPlans[editIndex];
+    const originalIndex = plans.findIndex(p =>
+      p.date === targetPlan.date &&
+      p.subject === targetPlan.subject &&
+      p.week === targetPlan.week &&
+      p.content === targetPlan.content
     );
 
     if (originalIndex === -1) {
@@ -150,7 +189,7 @@ export default function ExamInfoInput() {
       return;
     }
 
-    // plans 복사해서 수정
+    // plans 업데이트
     const updatedPlans = [...plans];
     updatedPlans[originalIndex] = {
       ...updatedPlans[originalIndex],
@@ -163,19 +202,15 @@ export default function ExamInfoInput() {
     setEditModalVisible(false);
   };
 
-  // 삭제 함수
   const handleDeletePlan = (index) => {
-    // selectedPlans에서 삭제할 계획 찾기 → plans에서 해당 객체 실제 인덱스 찾기
+    const targetPlan = selectedPlans[index];
+    if (!targetPlan) return;
 
-    const target = selectedPlans[index];
-    if (!target) return;
-
-    const originalIndex = plans.findIndex(
-      (p) =>
-        p.date === target.date &&
-        p.subject === selectedSubject &&
-        p.week === target.week &&
-        p.content === target.content
+    const originalIndex = plans.findIndex(p =>
+      p.date === targetPlan.date &&
+      p.subject === targetPlan.subject &&
+      p.week === targetPlan.week &&
+      p.content === targetPlan.content
     );
 
     if (originalIndex === -1) {
@@ -188,17 +223,11 @@ export default function ExamInfoInput() {
     setPlans(updatedPlans);
   };
 
-  // 입력 상태
-  const [selectedSubject, setSelectedSubject] = useState(
-    newSubjectList[0] || ""
-  );
-
-  // 선택된 과목의 plan만 보여주기
-  const selectedPlans = plans.filter((p) => p.subject === selectedSubject);
+  // ... 나머지 코드는 그대로 유지 ...
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/api/exam/create", {
+      const response = await axios.post(`${API_BASE_URL}/api/exam/create`, {
           nickname: userInfo.nickname,
           startDate,
           endDate,
@@ -207,7 +236,7 @@ export default function ExamInfoInput() {
 
       const examId = response.data;
 
-      const response2 = await axios.post("http://localhost:8080/api/subject/create", {
+      const response2 = await axios.post(`${API_BASE_URL}/api/subject/create`, {
         examId,
         subjects: JSON.parse(subjects),
       });
@@ -220,7 +249,7 @@ export default function ExamInfoInput() {
         date: plans.map((p) => p.date),
       };
 
-      const response3 = await axios.post("http://localhost:8080/api/plan/create", transformedPlans);
+      const response3 = await axios.post(`${API_BASE_URL}/api/plan/create`, transformedPlans);
       router.push("/main");
     } catch (e) {
       console.log(e);
@@ -292,7 +321,9 @@ export default function ExamInfoInput() {
             </View>
 
             <View style={styles.scheduleListContainer}>
-              {selectedPlans.length === 0 ? (
+              {loading ? (
+                <Text style={styles.noScheduleText}>일정을 불러오는 중입니다...</Text>
+              ) : selectedPlans.length === 0 ? (
                 <Text style={styles.noScheduleText}>
                   선택한 과목의 일정이 없습니다.
                 </Text>

@@ -1,13 +1,11 @@
 // app/login.js
-
 import Checkbox from "expo-checkbox";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from "react-native";
 
 import {
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -15,8 +13,10 @@ import {
   View,
 } from "react-native";
 
-export default function LoginScreen() {
+import axios from 'axios';
+import { API_BASE_URL } from "../src/constants";
 
+export default function LoginScreen() {
   const router = useRouter();
   const [autoLogin, setAutoLogin] = useState(false);
 
@@ -39,14 +39,16 @@ export default function LoginScreen() {
 
         if(email.trim() && password.trim()){
             // 둘 다 입력됨
-            axios.post("http://localhost:8080/api/login", {email, password})
+            axios.post(`${API_BASE_URL}/api/login`, {email, password})
             .then(async (res) => {
+                console.log(API_BASE_URL);
+
                 const token = res.data.token;
 
                 if(Platform.OS === 'web'){
                     localStorage.setItem("accessToken", token);
                 } else{
-                    await SecureStore.setItemSync("accessToken", token);
+                    await SecureStore.setItemAsync("accessToken", token);
                 }
 
                 router.push("/main");
@@ -54,7 +56,7 @@ export default function LoginScreen() {
             .catch((err) => {
                 console.log(err);
                 setLoginFail(true);
-            });
+            })
         }
   }
 

@@ -10,11 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @Transactional
@@ -62,6 +60,11 @@ public class AiService {
                 int index = whole.indexOf(",");
                 if (index != -1) {
                     String first = whole.substring(0, index).trim();
+                    int firstIndex = first.indexOf("주");
+                    if(firstIndex != -1){
+                        first = first.substring(0, firstIndex+1);
+                        first += "차";
+                    }
                     String second = whole.substring(index + 1).trim();
 
                     weekList.add(first);
@@ -83,7 +86,7 @@ public class AiService {
     public SubjectInfoList usePlansAi(Map<String, Object> body){
         List<Map<String, String>> subjectInfo = (List<Map<String, String>>)body.get("subjectInfo");
         String nickname = (String)body.get("nickname");
-        String startDate = (String)body.get("startDate");
+        String startDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String endDate = (String)body.get("endDate");
         String request;
 
@@ -119,10 +122,10 @@ public class AiService {
                     "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
                     "\n" +
                     "[계획표 예시]\n" +
-                    "2025-07-18, AI융합개론, 1주 1회차, 강의 개요\n" +
-                    "2025-07-18, 고급파이썬프로그래밍, 1주 1회차, 수업 개요 & 파이썬 설치 및 사용법\n" +
-                    "2025-07-19, AI융합개론, 2주 1회차, 지능의 예시와 정의\n" +
-                    "2025-07-19, 고급파이썬프로그래밍, 2주 2회차, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
+                    "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
+                    "2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n" +
+                    "2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n" +
+                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
                     "\n" +
                     "[계획표에 대한 정보]\n" +
                     "- 공부 시작일: " + startDate + "\n" +
@@ -141,10 +144,10 @@ public class AiService {
                     "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
                     "\n" +
                     "[계획표 예시]\n" +
-                    "2025-07-18, AI융합개론, 1주 1회차, 강의 개요\n" +
-                    "2025-07-18, 고급파이썬프로그래밍, 1주 1회차, 수업 개요 & 파이썬 설치 및 사용법\n" +
-                    "2025-07-19, AI융합개론, 2주 1회차, 지능의 예시와 정의\n" +
-                    "2025-07-19, 고급파이썬프로그래밍, 2주 2회차, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
+                    "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
+                    "2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n" +
+                    "2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n" +
+                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
                     "\n" +
                     "[계획표에 대한 정보]\n" +
                     "- 공부 시작일: " + startDate + "\n" +
@@ -213,7 +216,7 @@ public class AiService {
     public String getChatInput(Map<String, String> body) throws IOException, InterruptedException {
         String content = body.get("content");
         String chatInput = body.get("chatInput");
-        ai.setDefaultPrompt("너는 학생들의 공부를 도와주는 '수룡이 챗봇'이야. 친근한 말투로 학생들을 도와줘야 해.\n\n" + content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
+        ai.setDefaultPrompt("너는 학생들의 공부를 도와주는 수룡이 챗봇이야. 친근한 말투로 학생들을 도와줘야 해.\n\n" + content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
         String result = ai.requestAnswer(chatInput).getResponse();
         return result.replace("**", "");
     }

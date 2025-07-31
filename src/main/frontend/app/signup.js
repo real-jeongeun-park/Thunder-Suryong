@@ -3,7 +3,6 @@
 import Checkbox from "expo-checkbox";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import axios from 'axios';
 
 import {
   Modal,
@@ -13,10 +12,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from "react-native";
+import axios from 'axios';
+import { API_BASE_URL } from "../src/constants";
 
 export default function Signup() {
   const router = useRouter();
@@ -53,8 +54,7 @@ export default function Signup() {
 
   const checkNickname = () => {
     if(!nickname.trim()) return;
-
-    axios.post("http://localhost:8080/api/nickname", {nickname})
+    axios.post(`${API_BASE_URL}/api/nickname`, {nickname})
     .then((res) => {
         if(res.data){
             setNicknameStatus("true");
@@ -78,7 +78,7 @@ export default function Signup() {
         return;
     }
 
-    axios.post("http://localhost:8080/api/email", {email})
+    axios.post(`${API_BASE_URL}/api/email`, {email})
     .then((res) => {
         if(res.data){
             setEmailStatus("true");
@@ -100,6 +100,45 @@ export default function Signup() {
     if(password == passwordConfirm) setPasswordStatus("true");
     else setPasswordStatus("false");
   };
+
+const handleSignup = async () => {
+  // 다 잘 입력됐나 확인
+  if (
+    !agreeTerms ||
+    !agreePrivacy ||
+    nicknameStatus !== "true" ||
+    emailStatus !== "true" ||
+    passwordStatus !== "true"
+  ) {
+    setPopupType("alert");
+    setVisible(true);
+  } else {
+    axios
+      .post(`${API_BASE_URL}/api/signup`, { nickname, email, password })
+      .then(async (res) => {
+        const token = res.data.token;
+
+        if (Platform.OS === 'web') {
+          localStorage.setItem("accessToken", token);
+        } else {
+          await SecureStore.setItemAsync("accessToken", token);
+        }
+
+        // 무사히 회원가입 완료
+        setPopupType("success");
+        setVisible(true);
+        setTimeout(() => {
+          setVisible(false);
+          router.push("/question1");
+        }, 1000);
+      })
+      .catch((err) => {
+        // 서버 에러로 회원가입 실패
+        setPopupType("fail");
+        setVisible(true);
+      });
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -246,35 +285,7 @@ export default function Signup() {
       {/* 회원가입 버튼 */}
       <TouchableOpacity
         style={styles.submitButton}
-        onPress={() => {
-        // 다 잘 입력됐나 확인
-          if (!agreeTerms || !agreePrivacy || nicknameStatus !== "true"
-          || emailStatus !== "true" || passwordStatus !== "true") {
-            setPopupType("alert");
-            setVisible(true);
-          } else {
-            axios.post("http://localhost:8080/api/signup", {nickname, email, password})
-            .then(async (res) => {
-                const token = res.data.token;
-
-                if(Platform.OS === 'web') localStorage.setItem("accessToken", token);
-                else await SecureStore.setItemSync("accessToken", token);
-
-                // 무사히 회원가입 완료
-                setPopupType("success");
-                setVisible(true);
-                setTimeout(() => {
-                    setVisible(false);
-                    router.push("/question1");
-                }, 1000);
-            })
-            .catch((err) => {
-                // 서버 에러로 회원가입 실패
-                setPopupType("fail")
-                setVisible(true);
-            });
-          }
-        }}
+        onPress={handleSignup}
       >
         <Text style={styles.submitButtonText}>회원가입</Text>
       </TouchableOpacity>
