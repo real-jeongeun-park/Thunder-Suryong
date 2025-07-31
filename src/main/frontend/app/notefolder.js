@@ -3,8 +3,8 @@ import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  FlatList,
   Keyboard,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +15,8 @@ import {
 } from "react-native";
 
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+
 import * as SecureStore from "expo-secure-store";
 
 export default function NoteFolder() {
@@ -39,17 +41,17 @@ export default function NoteFolder() {
             if(Platform.OS === 'web'){
                 token = localStorage.getItem("accessToken");
             } else{
-                token = SecureStore.getItemAsync("accessToken");
+                token = await SecureStore.getItemAsync("accessToken");
             }
 
             if(!token) throw new Error("Token not found");
-            const res = await axios.get("http://localhost:8080/api/validation", {
+            const res = await axios.get(`${API_BASE_URL}/api/validation`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            setUserInfo(res.data.nickname);
+            setUserInfo(res.data);
         } catch(err){
             console.log(err);
             router.push("/");
@@ -62,7 +64,7 @@ export default function NoteFolder() {
   useEffect(() => {
     const getFolderName = async () => {
         try{
-            const response = await axios.post("http://localhost:8080/api/folder/getById", {
+            const response = await axios.post(`${API_BASE_URL}/api/folder/getById`, {
                 id: folderId,
             })
             setFolderName(response.data);
@@ -73,7 +75,7 @@ export default function NoteFolder() {
 
     const getNotes = async () => {
         try{
-            const res = await axios.post("http://localhost:8080/api/note/get", { folderId });
+            const res = await axios.post(`${API_BASE_URL}/api/note/get`, { folderId });
 
             const mappedNotes = res.data.map(n => ({
                 noteId: n.noteId,
@@ -86,7 +88,7 @@ export default function NoteFolder() {
         }
     }
 
-    if(userInfo !== null){
+    if(userInfo){
         getFolderName();
         getNotes();
     }
@@ -104,7 +106,7 @@ export default function NoteFolder() {
     const newNoteName = noteName.trim();
     if(newNoteName) {
       try{
-        const response = await axios.post("http://localhost:8080/api/note/create", {
+        const response = await axios.post(`${API_BASE_URL}/api/note/create`, {
             folderId,
             title: newNoteName,
         });

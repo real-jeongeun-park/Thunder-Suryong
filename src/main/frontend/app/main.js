@@ -17,8 +17,9 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-import * as SecureStore from "expo-secure-store";
 import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -55,8 +56,9 @@ export default function HomeScreen() {
           token = await SecureStore.getItemAsync("accessToken");
         }
 
+
         if (!token) throw new Error("Token not found");
-        const res = await axios.get("http://localhost:8080/api/validation", {
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -80,7 +82,7 @@ export default function HomeScreen() {
         setIsLoading(true);
         const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
 
-        const res = await axios.post("http://localhost:8080/api/plan/date", {
+        const res = await axios.post(`${API_BASE_URL}/api/plan/date`, {
             nickname: userInfo.nickname,
             date: formattedDate,
         });
@@ -136,7 +138,7 @@ export default function HomeScreen() {
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
       await axios.patch(
-        `http://localhost:8080/api/plan/${todoId}/learned`,
+        `${API_BASE_URL}/api/plan/${todoId}/learned`,
         {
           learned: newValue,
           nickname: userInfo.nickname
@@ -166,7 +168,7 @@ export default function HomeScreen() {
   // 달성률 계산
   const getAchievementRate = async() => {
     try{
-        const response = await axios.post("http://localhost:8080/api/plan/achievement", {
+        const response = await axios.post(`${API_BASE_URL}/api/plan/achievement`, {
             nickname: userInfo.nickname,
             today: format(new Date(), "yyyy-MM-dd")
         });
