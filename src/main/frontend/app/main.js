@@ -16,17 +16,21 @@ import {
   Platform,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
+import { differenceInDays, parseISO } from "date-fns";
 
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
+
+import SpeechBalloon from "../components/SpeechBalloon.js";
 
 export default function HomeScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("홈");
   const [date, setDate] = useState(new Date());
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [sheetHeight] = useState(new Animated.Value(380));
+  const [sheetHeight] = useState(new Animated.Value(280));
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(null);
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -81,8 +85,8 @@ export default function HomeScreen() {
         const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
 
         const res = await axios.post("http://localhost:8080/api/plan/date", {
-            nickname: userInfo.nickname,
-            date: formattedDate,
+          nickname: userInfo.nickname,
+          date: formattedDate,
         });
 
         const result = res.data;
@@ -101,6 +105,7 @@ export default function HomeScreen() {
         }));
 
         setPlans(transformed);
+        console.log("계획 불러오기 성공");
       } catch (err) {
         console.log("계획 불러오기 실패", err);
       } finally {
@@ -108,11 +113,67 @@ export default function HomeScreen() {
       }
     }
 
-    if(userInfo !== null){
-        fetchPlans();
+    if (userInfo !== null) {
+      fetchPlans();
     }
   }, [userInfo, date]); // date가 변경될 때마다 계획 다시 불러오기
 
+  useEffect(() => {
+    async function fetchDefaultExam() {
+      try {
+        setIsLoading(true);
+
+        let token;
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        console.log("Fetching default exam with token:", token);
+        console.log("userInfo.nickname:", userInfo?.nickname);
+
+        const res = await axios.post(
+          "http://localhost:8080/api/exam/get",
+          { nickname: userInfo.nickname },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("기본 시험 API 응답:", res.data);
+
+        const data = res.data;
+        const defaultIndex = data.defaultExams.findIndex((v) => v === true);
+
+        if (defaultIndex !== -1) {
+          setSelectedExam({
+            examName: data.examNames[defaultIndex],
+            examId: data.examIds[defaultIndex],
+            startDate: data.startDates ? data.startDates[defaultIndex] : null,
+          });
+        } else {
+          setSelectedExam(null);
+        }
+
+        console.log(selectedExam);
+      } catch (err) {
+        console.log(
+          "기본 시험 정보 불러오기 실패!",
+          err.response || err.message || err
+        );
+        setSelectedExam(null);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (userInfo !== null && userInfo.nickname) {
+      fetchDefaultExam();
+    }
+  }, [userInfo]);
 
   const toggleExpand = (id) => {
     setPlans((prev) =>
@@ -123,7 +184,7 @@ export default function HomeScreen() {
   };
 
   const toggleSheet = () => {
-    const toValue = isExpanded ? 380 : 800;
+    const toValue = isExpanded ? 280 : 730;
     Animated.timing(sheetHeight, {
       toValue,
       duration: 300,
@@ -135,13 +196,10 @@ export default function HomeScreen() {
   // 체크 변경 함수
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-      await axios.patch(
-        `http://localhost:8080/api/plan/${todoId}/learned`,
-        {
-          learned: newValue,
-          nickname: userInfo.nickname
-        }
-      );
+      await axios.patch(`http://localhost:8080/api/plan/${todoId}/learned`, {
+        learned: newValue,
+        nickname: userInfo.nickname,
+      });
 
       // 프론트 상태도 업데이트
       setPlans((prevPlans) =>
@@ -164,21 +222,24 @@ export default function HomeScreen() {
   };
 
   // 달성률 계산
-  const getAchievementRate = async() => {
-    try{
-        const response = await axios.post("http://localhost:8080/api/plan/achievement", {
-            nickname: userInfo.nickname,
-            today: format(new Date(), "yyyy-MM-dd")
-        });
-        setRate(response.data.toFixed(0)); // 소수점 표기 x
-    } catch(err){
-        console.log("달성률 계산 실패\n", err);
+  const getAchievementRate = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/plan/achievement",
+        {
+          nickname: userInfo.nickname,
+          today: format(new Date(), "yyyy-MM-dd"),
+        }
+      );
+      setRate(response.data.toFixed(0)); // 소수점 표기 x
+    } catch (err) {
+      console.log("달성률 계산 실패\n", err);
     }
   };
 
   useEffect(() => {
-    if(userInfo !== null){
-        getAchievementRate();
+    if (userInfo !== null) {
+      getAchievementRate();
     }
   }, [userInfo]);
 
@@ -193,9 +254,41 @@ export default function HomeScreen() {
             <View style={styles.contentWrapper}>
               {/* 상단 제목 */}
               {userInfo && (
-                <Text style={styles.title}>
-                  {userInfo.nickname}님, 어서오세요!
-                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  {selectedExam && selectedExam.examName ? (
+                    // 시험이 선택된 경우: 시험 이름만 표시
+                    <Text style={styles.title}>{selectedExam.examName}</Text>
+                  ) : (
+                    // 시험이 선택되지 않은 경우: 어서오세요 표시
+                    <Text style={styles.title}>
+                      {userInfo.nickname}님, 어서오세요!
+                    </Text>
+                  )}
+
+                  {selectedExam &&
+                    selectedExam.examName &&
+                    selectedExam.startDate &&
+                    (() => {
+                      const diff =
+                        differenceInDays(
+                          parseISO(selectedExam.startDate),
+                          new Date()
+                        ) + 1;
+                      const displayText =
+                        diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+
+                      return (
+                        <View style={[styles.ddayBox, { marginLeft: 12 }]}>
+                          <Text style={styles.ddayText}>{displayText}</Text>
+                        </View>
+                      );
+                    })()}
+                </View>
               )}
 
               {/* 상단 버튼 */}
@@ -213,7 +306,7 @@ export default function HomeScreen() {
                       style={{
                         color: "#6c4ed5",
                         fontWeight: "bold",
-                     fontSize: 15,
+                        fontSize: 15,
                       }}
                     >
                       오늘 계획 {rate}% 달성!
@@ -247,7 +340,10 @@ export default function HomeScreen() {
 
               {/* 타이머 + 캐릭터 나란히 배치 */}
               <View style={styles.rowContainer}>
-                <TouchableOpacity style={styles.timerButton}>
+                <TouchableOpacity
+                  style={styles.timerButton}
+                  //onPress={() => router.push("/timer")}
+                >
                   <Ionicons name="time-outline" size={30} color="#B491DD" />
                   <Text style={styles.timerText}>Timer</Text>
                 </TouchableOpacity>
@@ -258,6 +354,11 @@ export default function HomeScreen() {
                   resizeMode="contain"
                 />
               </View>
+            </View>
+            <View style={styles.speechContainer}>
+              <SpeechBalloon tailPosition="right">
+                시험이 얼마 남지 않았네요! {"\n"} 오늘도 파이팅!
+              </SpeechBalloon>
             </View>
           </LinearGradient>
         </ScrollView>
@@ -297,44 +398,49 @@ export default function HomeScreen() {
               </Text>
             ) : (
               [...plans]
-              .sort((a, b) => a.id.localeCompare(b.id))
-              .map((plan) => (
-                <View key={plan.id}>
-                  <View style={styles.planItem}>
-                    <Text style={styles.planText}>{plan.title}</Text>
-                    <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
-                      <Ionicons
-                        name={plan.isExpanded ? "chevron-back" : "chevron-down"}
-                        size={16}
-                        color="#555"
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* 펼쳐진 todo 항목별 체크박스 및 제목 */}
-                  {plan.isExpanded && (
-                    <View style={styles.subTodoContainer}>
-                      {plan.todos.map((todo) => (
-                        <View key={todo.id} style={styles.subTodoItem}>
-                          <Checkbox
-                            style={{marginRight: 8}}
-                            value={todo.checked}
-                            onValueChange={(newValue) =>
-                              handleCheckboxChange(plan.id, todo.id, newValue)
-                            }
-                          />
-                          <View style={styles.subTodoTextContainer}>
-                            <Text style={styles.subTodoText}>
-                              <Text style={styles.subTodoWeek}>{todo.week} </Text>
-                              <Text>{todo.title}</Text>
-                            </Text>
-                          </View>
-                        </View>
-                      ))}
+                .sort((a, b) => a.id.localeCompare(b.id))
+                .map((plan) => (
+                  <View key={plan.id}>
+                    <View style={styles.planItem}>
+                      <Text style={styles.planText}>{plan.title}</Text>
+                      <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
+                        <Ionicons
+                          name={
+                            plan.isExpanded ? "chevron-forward" : "chevron-down"
+                          }
+                          size={16}
+                          color="#555"
+                        />
+                      </TouchableOpacity>
                     </View>
-                  )}
-                </View>
-              ))
+
+                    {/* 펼쳐진 todo 항목별 체크박스 및 제목 */}
+                    {plan.isExpanded && (
+                      <View style={styles.subTodoContainer}>
+                        {plan.todos.map((todo) => (
+                          <View key={todo.id} style={styles.subTodoItem}>
+                            <Checkbox
+                              style={{ marginRight: 8 }}
+                              color={todo.checked ? "#B491DD" : undefined}
+                              value={todo.checked}
+                              onValueChange={(newValue) =>
+                                handleCheckboxChange(plan.id, todo.id, newValue)
+                              }
+                            />
+                            <View style={styles.subTodoTextContainer}>
+                              <Text style={styles.subTodoText}>
+                                <Text style={styles.subTodoWeek}>
+                                  {todo.week}{" "}
+                                </Text>
+                                <Text>{todo.title}</Text>
+                              </Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))
             )}
 
             {/* 과목 추가 버튼 (터치 기능은 별도 구현 필요) */}
@@ -418,7 +524,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontWeight: "bold",
-    marginTop: 20,
+    marginTop: 5,
     marginBottom: 10,
     alignSelf: "flex-start",
   },
@@ -558,7 +664,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   subTodoText: {
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     flexShrink: 1,
   },
   addButton: {
@@ -621,5 +727,34 @@ const styles = StyleSheet.create({
   },
   dotInactive: {
     backgroundColor: "#ccc",
+  },
+  ddayBox: {
+    backgroundColor: "#ae9dccff", // 예: 빨간색 박스
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: "flex-start", // 텍스트 너비만큼 박스 크기 조정
+    marginVertical: 10,
+  },
+  ddayText: {
+    color: "#fff", // 흰색 텍스트
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  speechContainer: {
+    position: "absolute",
+    left: 20,
+    right: 10,
+    top: "70%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
+    //backgroundColor: "#6c4ed5",
+    padding: 20,
+    //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정
+  },
+  bubble: {
+    backgroundColor: "#6c4ed5", // 말풍선 배경색
+  },
+  speech: {
+    color: "#fff", // 텍스트 색상
+    fontSize: 14,
   },
 });

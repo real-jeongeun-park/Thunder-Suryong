@@ -56,11 +56,15 @@ public class ExamService {
         List<Boolean> defaultExams = exams.stream()
                 .map(Exam::isDefaultExam)
                 .collect(Collectors.toList());
+        List<String> startDates = exams.stream()
+            .map(Exam::getStartDate)
+            .collect(Collectors.toList());
 
         Map<String, Object> examMap = new HashMap<>();
         examMap.put("examIds", examIds);
         examMap.put("examNames", examNames);
         examMap.put("defaultExams", defaultExams);
+        examMap.put("startDates", startDates);
 
         return examMap;
     }
