@@ -711,4 +711,62 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     alignItems: "center",
   },
+  // 모달 배경 (반투명 검은 배경)
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // 모달 박스 스타일 (흰 배경+둥근 모서리)
+  pickerContainer: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    // 그림자 (iOS)
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    // 엘리베이션 (Android)
+    elevation: 10,
+    alignItems: "center",
+  },
+
+  // 모달 타이틀
+  modalTitle: {
+    fontWeight: "bold",
+    fontSize: 20,
+    marginBottom: 18,
+    color: "#333",
+    textAlign: "center",
+  },
+
+  // Picker 스타일 - 여기서는 기본적 스타일만 적용.
+  // NativePicker가 네이티브 모양을 그대로 사용하는 게 자연스러움
+  picker: {
+    width: "100%",
+    // iOS에서는 높이가 자동으로 조절됨
+    // Android에서 필요시 높이 지정 가능
+    height: 160,
+  },
+
+  // 닫기 버튼 스타일
+  modalBtn: {
+    backgroundColor: "#6c4ed5",
+    borderRadius: 10,
+    paddingVertical: 14,
+    width: "100%",
+    marginTop: 24,
+    alignItems: "center",
+  },
+
+  modalBtnText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });

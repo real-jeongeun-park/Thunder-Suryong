@@ -15,7 +15,14 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useData } from "@/context/DataContext";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
-import { TextInputBase } from "react-native";
+import { parseISO, addDays, format } from "date-fns";
+import {
+  Menu,
+  Button,
+  Provider as PaperProvider,
+  Portal,
+  Dialog,
+} from "react-native-paper";
 
 export default function ExamInfoInput() {
   const router = useRouter();
@@ -27,6 +34,10 @@ export default function ExamInfoInput() {
   const [emptySubjects, setEmptySubjects] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [datePickerDialogVisible, setDatePickerDialogVisible] = useState(false);
+  const [selectedDateIndex, setSelectedDateIndex] = useState(null);
+  const [selectedDates, setSelectedDates] = useState([]);
+
   const { data, setData } = useData();
 
   const startDate = data.startDate;
@@ -35,6 +46,11 @@ export default function ExamInfoInput() {
   const [showModal, setShowModal] = useState(false);
 
   const [userInfo, setUserInfo] = useState(null);
+
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    selectedDateIndex !== null ? selectedDates[selectedDateIndex] : null
+  );
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -65,16 +81,52 @@ export default function ExamInfoInput() {
     checkLogin();
   }, []);
 
+  // 시험기간 내 날짜 리스트 생성 (yyyy-MM-dd 배열)
+  const generateDateOptions = () => {
+    const dates = [];
+    if (!startDate || !endDate) return dates;
+    let currDate = parseISO(startDate);
+    const lastDate = parseISO(endDate);
+
+    while (currDate <= lastDate) {
+      dates.push(format(currDate, "yyyy-MM-dd"));
+      currDate = addDays(currDate, 1);
+    }
+    return dates;
+  };
+
+  // 날짜 선택 모달 띄우기 함수
+  const openDatePicker = (index) => {
+    setSelectedDateIndex(index);
+    setDatePickerDialogVisible(true);
+  };
+  const closeDatePicker = () => {
+    setDatePickerDialogVisible(false);
+  };
+
+  // 날짜 선택 시 동작
+  const onDateSelected = (date) => {
+    setSelectedDates((prevDates) => {
+      const newDates = [...prevDates];
+      newDates[selectedDateIndex] = date;
+      return newDates;
+    });
+  };
+
+  // 과목 추가할 때 selectedDates 배열도 같이 업데이트
   const handleAddSubject = () => {
     if (subject.trim() && subjects.length < 30) {
       setSubjects([...subjects, subject.trim()]);
+      setSelectedDates([...selectedDates, null]); // 새 과목에 날짜 기본 null
       setSubject("");
       setEmptySubjects(false);
     }
   };
 
+  // 과목 삭제 시 selectedDates 배열도 동기화
   const handleRemoveSubject = (removeIdx) => {
     setSubjects(subjects.filter((_, idx) => idx !== removeIdx));
+    setSelectedDates(selectedDates.filter((_, idx) => idx !== removeIdx));
   };
 
   const pickImage = async () => {
@@ -162,7 +214,9 @@ export default function ExamInfoInput() {
     if (request.trim()) {
       // 과목 뽑아오기
       try {
-        const res = await axios.post("http://localhost:8080/api/ai/schedule", {request});
+        const res = await axios.post("http://localhost:8080/api/ai/schedule", {
+          request,
+        });
         setSubjects((prev) => [...prev, ...res.data]);
       } catch (err) {
         console.log(err);
@@ -217,188 +271,288 @@ export default function ExamInfoInput() {
   };
 
   return (
-    <View style={styles.container}>
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <Image
-            source={require("../assets/images/main.png")}
-            style={styles.character}
-            resizeMode="contain"
-          />
-          <Text style={styles.loadingText}>로딩 중입니다....</Text>
-        </View>
-      )}
-
-      {/* 뒤로가기 버튼 */}
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity
-          onPress={() => {
-            router.back();
-          }}
-        >
-          <Ionicons name="chevron-back" size={32} color="#535353" />
-        </TouchableOpacity>
-      </View>
-      {/* 상단 날짜 및 안내 */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>시험 정보를 입력해주세요.</Text>
-        <Text style={styles.periodText}>
-          {startDate} ~ {endDate}
-        </Text>
-      </View>
-      <View style={styles.inputContainer}>
-        {/* 시험명 입력 */}
-        <View style={styles.inputBox}>
-          <Text style={styles.label}>시험명</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="예시: 2025년 1학기 중간고사"
-            maxLength={30}
-            value={examName}
-            onChangeText={(text) => {
-              setExamName(text);
-              setEmptyExamName(false);
-            }}
-          />
-          <Text style={styles.counter1}>{examName.length}/30</Text>
-          {emptyExamName && (
-            <Text style={{ color: "red" }}>시험명을 입력해 주세요.</Text>
+    <PaperProvider>
+      <Portal.Host>
+        <View style={styles.container}>
+          {loading && (
+            <View style={styles.loadingOverlay}>
+              <Image
+                source={require("../assets/images/main.png")}
+                style={styles.character}
+                resizeMode="contain"
+              />
+              <Text style={styles.loadingText}>로딩 중입니다....</Text>
+            </View>
           )}
-        </View>
-        {/* 과목 입력 */}
-        <View style={styles.inputBox}>
-          <Text style={styles.label}>과목</Text>
-          <View style={styles.subjectRow}>
-            <TextInput
-              style={[styles.textInput, { flex: 1 }]}
-              placeholder="과목명을 입력해주세요."
-              maxLength={30}
-              value={subject}
-              onChangeText={setSubject}
-            />
-            <TouchableOpacity style={styles.addBtn} onPress={handleAddSubject}>
-              <Text style={styles.addBtnText}>추가</Text>
-            </TouchableOpacity>
-          </View>
-          {/*시간표 불러오기, 초기화 버튼*/}
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.addScheduleBtn} onPress={pickImage}>
-              <Text style={styles.addScheduleBtnText}>
-                에타 시간표 불러오기
-              </Text>
-            </TouchableOpacity>
+
+          {/* 뒤로가기 버튼 */}
+          <View style={styles.backButtonContainer}>
             <TouchableOpacity
-              style={styles.addScheduleBtn}
               onPress={() => {
-                if (subjects.length > 0) {
-                  setShowModal(true);
-                }
+                router.back();
               }}
             >
-              <Text style={styles.addScheduleBtnText}>초기화</Text>
+              <Ionicons name="chevron-back" size={32} color="#535353" />
             </TouchableOpacity>
-            <Text style={styles.counter2}>{subject.length}/30</Text>
           </View>
-          {emptySubjects && (
-            <Text style={{ color: "red" }}>
-              과목을 하나 이상 추가해 주세요.
+          {/* 상단 날짜 및 안내 */}
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerTitle}>시험 정보를 입력해주세요.</Text>
+            <Text style={styles.periodText}>
+              {startDate} ~ {endDate}
             </Text>
-          )}
-          {/* 과목 리스트 */}
-          <FlatList
-            data={subjects}
-            keyExtractor={(item, idx) => item + idx}
-            style={{ maxHeight: 300 }}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item, index }) => (
-              <View style={styles.subjectItemRow}>
-                <Text style={styles.subjectItemText}>{item}</Text>
+          </View>
+          <View style={styles.inputContainer}>
+            {/* 시험명 입력 */}
+            <View style={styles.inputBox}>
+              <Text style={styles.label}>시험명</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="예시: 2025년 1학기 중간고사"
+                maxLength={30}
+                value={examName}
+                onChangeText={(text) => {
+                  setExamName(text);
+                  setEmptyExamName(false);
+                }}
+              />
+              <Text style={styles.counter1}>{examName.length}/30</Text>
+              {emptyExamName && (
+                <Text style={{ color: "red" }}>시험명을 입력해 주세요.</Text>
+              )}
+            </View>
+            {/* 과목 입력 */}
+            <View style={styles.inputBox}>
+              <Text style={styles.label}>과목</Text>
+              <View style={styles.subjectRow}>
+                <TextInput
+                  style={[styles.textInput, { flex: 1 }]}
+                  placeholder="과목명을 입력해주세요."
+                  maxLength={30}
+                  value={subject}
+                  onChangeText={setSubject}
+                />
                 <TouchableOpacity
-                  onPress={() => openEditModal(index)}
-                  style={styles.editButton}
+                  style={styles.addBtn}
+                  onPress={handleAddSubject}
                 >
-                  <Text style={{ color: "#5e43c2" }}>수정</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRemoveSubject(index)}>
-                  <Text style={styles.subjectItemDelete}>✕</Text>
+                  <Text style={styles.addBtnText}>추가</Text>
                 </TouchableOpacity>
               </View>
-            )}
-          />
-          {/* 수정 모달 */}
+              {/*시간표 불러오기, 초기화 버튼*/}
+              <View style={styles.btnRow}>
+                <TouchableOpacity
+                  style={styles.addScheduleBtn}
+                  onPress={pickImage}
+                >
+                  <Text style={styles.addScheduleBtnText}>
+                    에타 시간표 불러오기
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.addScheduleBtn}
+                  onPress={() => {
+                    if (subjects.length > 0) {
+                      setShowModal(true);
+                    }
+                  }}
+                >
+                  <Text style={styles.addScheduleBtnText}>초기화</Text>
+                </TouchableOpacity>
+                <Text style={styles.counter2}>{subject.length}/30</Text>
+              </View>
+              {emptySubjects && (
+                <Text style={{ color: "red" }}>
+                  과목을 하나 이상 추가해 주세요.
+                </Text>
+              )}
+              {/* 과목 리스트 */}
+              <FlatList
+                data={subjects}
+                keyExtractor={(item, idx) => item + idx}
+                style={{ maxHeight: 250 }}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item, index }) => (
+                  <View style={styles.subjectItemRow}>
+                    <Text style={styles.subjectItemText}>{item}</Text>
+                    <TouchableOpacity
+                      onPress={() => openDatePicker(index)}
+                      style={styles.editButton}
+                    >
+                      <Text style={{ color: "#5e43c2" }}>
+                        {selectedDates[index]
+                          ? format(parseISO(selectedDates[index]), "M/d")
+                          : "날짜 선택"}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => openEditModal(index)}
+                      style={styles.editButton}
+                    >
+                      <Text style={{ color: "#5e43c2" }}>수정</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveSubject(index)}
+                    >
+                      <Text style={styles.subjectItemDelete}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+              {/* 수정 모달 */}
+              <Modal
+                visible={editModalVisible}
+                transparent
+                animationType="none"
+                onRequestClose={() => setEditModalVisible(false)}
+              >
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalBox}>
+                    <Text style={styles.modalTitle}>과목명 수정</Text>
+
+                    <TextInput
+                      style={styles.textInputModify}
+                      value={editSubjectName}
+                      onChangeText={setEditSubjectName}
+                      placeholder="과목명을 입력해주세요"
+                    />
+
+                    <View style={styles.modalBtnRow}>
+                      <TouchableOpacity
+                        onPress={() => setEditModalVisible(false)}
+                        style={[
+                          styles.modalBtn,
+                          { backgroundColor: "#e0e0e0" },
+                        ]}
+                      >
+                        <Text style={{ color: "#535353" }}>취소</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={handleSaveEdit}
+                        style={[
+                          styles.modalBtn,
+                          { backgroundColor: "#B491DD" },
+                        ]}
+                      >
+                        <Text style={{ color: "white" }}>저장</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* 날짜 선택 모달 */}
+              <Portal>
+                <Dialog
+                  visible={datePickerDialogVisible}
+                  onDismiss={closeDatePicker}
+                >
+                  <Dialog.Title>시험 날짜 선택</Dialog.Title>
+                  <Dialog.Content>
+                    <View style={styles.dropdownRow}>
+                      <View style={styles.dropdown}>
+                        <Menu
+                          visible={menuVisible}
+                          onDismiss={() => setMenuVisible(false)}
+                          anchor={
+                            <Button
+                              mode="outlined"
+                              onPress={() => setMenuVisible(true)}
+                              labelStyle={{
+                                color: selectedDate ? "#5e43c2" : "#717171",
+                              }}
+                              style={[
+                                styles.dropdownButton,
+                                { borderColor: "#F4F1F5", borderRadius: 5 },
+                              ]}
+                              contentStyle={{ flexDirection: "row-reverse" }}
+                              icon="chevron-down"
+                              uppercase={false}
+                            >
+                              {selectedDate
+                                ? format(parseISO(selectedDate), "yyyy-MM-dd")
+                                : "날짜 선택"}
+                            </Button>
+                          }
+                          contentStyle={{
+                            backgroundColor: "#FAF8FD",
+                            borderRadius: 8,
+                          }}
+                        >
+                          {generateDateOptions().map((date) => (
+                            <Menu.Item
+                              key={date}
+                              onPress={() => {
+                                setSelectedDate(date);
+                                setSelectedDates((prevDates) => {
+                                  const newDates = [...prevDates];
+                                  newDates[selectedDateIndex] = date;
+                                  return newDates;
+                                });
+                                setMenuVisible(false);
+                              }}
+                              title={format(parseISO(date), "yyyy-MM-dd")}
+                              titleStyle={{ color: "#555", fontSize: 16 }}
+                              style={{ paddingVertical: 8 }}
+                            />
+                          ))}
+                        </Menu>
+                      </View>
+                    </View>
+                  </Dialog.Content>
+                  <Dialog.Actions>
+                    <Button
+                      onPress={closeDatePicker}
+                      labelStyle={{ color: "#7A4DD6" }}
+                    >
+                      닫기
+                    </Button>
+                  </Dialog.Actions>
+                </Dialog>
+              </Portal>
+            </View>
+          </View>
+          {/* 입력 완료 버튼 */}
+          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+            <Text style={styles.submitBtnText}>입력 완료</Text>
+          </TouchableOpacity>
+          {/* 초기화 모달 */}
           <Modal
-            visible={editModalVisible}
+            visible={showModal}
             transparent
-            animationType="none"
-            onRequestClose={() => setEditModalVisible(false)}
+            animationType="fade"
+            onRequestClose={() => setShowModal(false)}
           >
             <View style={styles.modalBackground}>
               <View style={styles.modalBox}>
-                <Text style={styles.modalTitle}>과목명 수정</Text>
-
-                <TextInput
-                  style={styles.textInputModify}
-                  value={editSubjectName}
-                  onChangeText={setEditSubjectName}
-                  placeholder="과목명을 입력해주세요"
-                />
-
+                <Text style={styles.modalTitle}>초기화하시겠습니까?</Text>
+                <Text style={styles.modalDesc}>
+                  과목 목록이 모두 삭제됩니다.
+                </Text>
                 <View style={styles.modalBtnRow}>
                   <TouchableOpacity
-                    onPress={() => setEditModalVisible(false)}
                     style={[styles.modalBtn, { backgroundColor: "#e0e0e0" }]}
+                    onPress={() => setShowModal(false)}
                   >
                     <Text style={{ color: "#535353" }}>취소</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
-                    onPress={handleSaveEdit}
                     style={[styles.modalBtn, { backgroundColor: "#B491DD" }]}
+                    onPress={() => {
+                      setSubjects([]);
+                      setShowModal(false);
+                    }}
                   >
-                    <Text style={{ color: "white" }}>저장</Text>
+                    <Text style={{ color: "#fff" }}>초기화</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </Modal>
         </View>
-      </View>
-      {/* 입력 완료 버튼 */}
-      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-        <Text style={styles.submitBtnText}>입력 완료</Text>
-      </TouchableOpacity>
-      {/* 초기화 모달 */}
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>초기화하시겠습니까?</Text>
-            <Text style={styles.modalDesc}>과목 목록이 모두 삭제됩니다.</Text>
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#e0e0e0" }]}
-                onPress={() => setShowModal(false)}
-              >
-                <Text style={{ color: "#535353" }}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#B491DD" }]}
-                onPress={() => {
-                  setSubjects([]);
-                  setShowModal(false);
-                }}
-              >
-                <Text style={{ color: "#fff" }}>초기화</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      </Portal.Host>
+    </PaperProvider>
   );
 }
 
@@ -556,6 +710,7 @@ const styles = StyleSheet.create({
     color: "#665783ff",
     fontSize: 14,
     flex: 1,
+    maxWidth: 250,
   },
   subjectItemDelete: {
     color: "#9c73b8ff",
@@ -617,38 +772,137 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 4,
   },
-  // modal styles
   modalBackground: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)", // 더 진한 배경으로 집중감 상승
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContainer: {
-    width: "85%",
+
+  modalBox: {
+    width: 320,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 20, // 둥근 모서리 더 부드럽게
+    paddingVertical: 24,
+    paddingHorizontal: 30,
+    alignItems: "center",
+    shadowColor: "#000", // 그림자 효과 추가 (iOS)
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 7, // Android 그림자
   },
+
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: "#333",
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#4B3F72", // 조금 더 세련된 딥보라색
+    marginBottom: 18,
     textAlign: "center",
   },
-  modalLabel: {
-    fontWeight: "600",
-    marginBottom: 6,
-    color: "#555",
+
+  modalDesc: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 24,
+    textAlign: "center",
+    lineHeight: 22,
   },
-  modalInput: {
+
+  modalBtnRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 6,
+    paddingVertical: 14,
+    borderRadius: 12, // 버튼 모서리 부드럽게
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000", // 버튼 그림자 (선택적)
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  // 취소 버튼 스타일 (밝은 회색)
+  modalBtnCancel: {
+    backgroundColor: "#E6E6E6",
+  },
+  modalBtnCancelText: {
+    color: "#555",
+    fontWeight: "600",
+  },
+
+  // 저장/초기화 버튼 스타일 (메인 보라색)
+  modalBtnConfirm: {
+    backgroundColor: "#7A4DD6",
+  },
+  modalBtnConfirmText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  // 날짜 선택 모달 내 버튼 스타일
+  modalBtnText: {
+    fontSize: 16,
+    color: "#7A4DD6",
+    fontWeight: "600",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    textAlign: "center",
+  },
+
+  pickerContainer: {
+    width: 320,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+
+  dropdownRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  dropdown: {
+    flex: 1,
+    height: 40,
+    backgroundColor: "#FAF8FD",
+    borderColor: "#D8CDED",
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 15,
-    marginBottom: 12,
-    color: "#333",
+    borderRadius: 10,
+    justifyContent: "center",
+  },
+
+  dropdownButton: {
+    height: 40,
+    justifyContent: "center",
+  },
+
+  // 수정 입력박스 모달 텍스트 인풋
+  textInputModify: {
+    backgroundColor: "#FBFBFB",
+    borderRadius: 12,
+    borderColor: "#D4C9E6",
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#555",
+    width: "100%",
+    marginBottom: 20,
   },
 });
