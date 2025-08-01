@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Platform,
   KeyboardAvoidingView,
   FlatList,
+  TextInput,
+  Modal,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -19,6 +21,10 @@ export default function QuizScreen() {
 
   const [quizList, setQuizList] = useState([]);
   const [activeTab, setActiveTab] = useState("퀴즈");
+  const [editId, setEditId] = useState(null);
+  const [editedName, setEditedName] = useState("");
+  const [modalVisibleId, setModalVisibleId] = useState(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     if (newQuizName) {
@@ -38,24 +44,57 @@ export default function QuizScreen() {
     }
   }, [newQuizName, subjective, objective, ox]);
 
-  const tabs = [
-    { name: "홈", label: "홈" },
-    { name: "노트", label: "노트" },
-    { name: "퀴즈", label: "퀴즈" },
-    { name: "마이페이지", label: "마이페이지" },
-  ];
+  useEffect(() => {
+    if (editId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editId]);
+
+  const handleDelete = (id) => {
+    setQuizList((prev) => prev.filter((item) => item.id !== id));
+    setModalVisibleId(null);
+  };
+
+  const handleEdit = (id, name) => {
+    setEditId(id);
+    setEditedName(name);
+    setModalVisibleId(null);
+  };
+
+  const handleSaveEdit = (id) => {
+    setQuizList((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const trimmed = editedName.trim();
+          return {
+            ...item,
+            name: trimmed.length > 0 ? trimmed : item.name,
+          };
+        }
+        return item;
+      })
+    );
+    setEditId(null);
+  };
 
   const renderQuizItem = ({ item: quiz }) => (
-    <TouchableOpacity
-      key={quiz.id}
-      style={styles.quizItem}
-      onPress={() => alert(`${quiz.name} 열기`)}
-    >
+    <View key={quiz.id} style={styles.quizItem}>
       <View style={styles.quizItemIconWrapper}>
         <Feather name="help-circle" size={24} color="#B9A4DA" />
       </View>
       <View style={styles.contentArea}>
-        <Text style={styles.quizName}>{quiz.name}</Text>
+        {editId === quiz.id ? (
+          <TextInput
+            ref={inputRef}
+            style={styles.quizName}
+            value={editedName}
+            onChangeText={setEditedName}
+            onBlur={() => handleSaveEdit(quiz.id)}
+            onSubmitEditing={() => handleSaveEdit(quiz.id)}
+          />
+        ) : (
+          <Text style={styles.quizName}>{quiz.name}</Text>
+        )}
         <View style={styles.tagContainer}>
           {quiz.subjective && (
             <View style={styles.tagBox}>
@@ -74,9 +113,47 @@ export default function QuizScreen() {
           )}
         </View>
       </View>
-      <Feather name="chevron-right" size={24} color="#A9A9A9" />
-    </TouchableOpacity>
+      <TouchableOpacity onPress={() => setModalVisibleId(quiz.id)}>
+        <Feather name="more-horizontal" size={20} color="#A9A9A9" />
+      </TouchableOpacity>
+
+      <Modal
+        transparent
+        visible={modalVisibleId === quiz.id}
+        animationType="fade"
+        onRequestClose={() => setModalVisibleId(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setModalVisibleId(null)}
+          activeOpacity={1}
+        >
+          <View style={styles.modalMenu}>
+            <TouchableOpacity onPress={() => handleEdit(quiz.id, quiz.name)}>
+              <Text style={styles.modalItem}>이름 변경</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(quiz.id)}>
+              <Text style={styles.modalItem}>삭제</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   );
+
+  const handleAddFolder = () => {
+    const newId = Date.now().toString();
+    const newFolder = {
+      id: newId,
+      name: "새 폴더",
+      subjective: false,
+      objective: false,
+      ox: false,
+    };
+    setQuizList((prev) => [newFolder, ...prev]);
+    setEditId(newId);
+    setEditedName("새 폴더");
+  };
 
   const CreateQuizButton = () => (
     <View style={styles.createButtonWrapper}>
@@ -102,6 +179,13 @@ export default function QuizScreen() {
     </View>
   );
 
+  const tabs = [
+    { name: "홈", label: "홈" },
+    { name: "노트", label: "노트" },
+    { name: "퀴즈", label: "퀴즈" },
+    { name: "마이페이지", label: "마이페이지" },
+  ];
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -110,10 +194,7 @@ export default function QuizScreen() {
       <Text style={styles.title}>퀴즈</Text>
 
       {quizList.length === 0 ? (
-        <ScrollView
-          contentContainerStyle={styles.scrollContentEmpty}
-          style={{ flex: 1 }} // flex:1 줘서 화면 꽉 채우기
-        >
+        <ScrollView contentContainerStyle={styles.scrollContentEmpty} style={{ flex: 1 }}>
           <Image
             source={require("../assets/images/emptynote.png")}
             style={styles.emptyImage}
@@ -135,10 +216,7 @@ export default function QuizScreen() {
       )}
 
       <View style={styles.floatingButtons}>
-        <TouchableOpacity
-          style={styles.circleButton}
-          onPress={() => alert("폴더 추가")}
-        >
+        <TouchableOpacity style={styles.circleButton} onPress={handleAddFolder}>
           <Feather name="folder-plus" size={24} color="#B9A4DA" />
         </TouchableOpacity>
       </View>
@@ -159,17 +237,13 @@ export default function QuizScreen() {
             <View
               style={[
                 styles.dot,
-                activeTab === tab.name
-                  ? styles.dotActive
-                  : styles.dotInactive,
+                activeTab === tab.name ? styles.dotActive : styles.dotInactive,
               ]}
             />
             <Text
               style={[
                 styles.navText,
-                activeTab === tab.name
-                  ? styles.navTextActive
-                  : styles.navTextInactive,
+                activeTab === tab.name ? styles.navTextActive : styles.navTextInactive,
               ]}
             >
               {tab.label}
@@ -355,6 +429,24 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 10,
     lineHeight: 12,
+    color: "#3C3C3C",
+  },
+    modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalMenu: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 15,
+    elevation: 5,
+    width: 150,
+  },
+  modalItem: {
+    paddingVertical: 10,
+    fontSize: 16,
     color: "#3C3C3C",
   },
 });
