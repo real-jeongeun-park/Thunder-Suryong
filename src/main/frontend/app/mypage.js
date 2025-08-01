@@ -1,3 +1,5 @@
+// ✅ MyPageScreen 전체 최종 코드
+
 import React, { useState } from "react";
 import {
   View,
@@ -47,7 +49,6 @@ export default function MyPageScreen() {
       const date = `${month}-${String(day).padStart(2, "0")}`;
       const hours = Math.floor(Math.random() * 7);
       if (hours === 0) continue;
-
       let color = "";
       if (hours >= 6) color = "#8D5ACF";
       else if (hours >= 3) color = "#BFA1E2";
@@ -83,8 +84,11 @@ export default function MyPageScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <LinearGradient colors={["#F4EDFB", "#FFFFFF"]} style={styles.gradient}>
+    <View style={{ backgroundColor: "#fff", flex: 1 }}>
+      <LinearGradient
+        colors={["#F4EDFB", "#FFFFFF"]}
+        style={styles.gradient}
+      >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.title}>나의 시험</Text>
 
@@ -148,18 +152,12 @@ export default function MyPageScreen() {
         </ScrollView>
       </LinearGradient>
 
-      {/* 하단 배경 */}
       <View style={styles.footerContainer}>
         <View style={styles.handleBar} />
-        <TouchableOpacity style={styles.logoutButton} onPress={() => console.log("로그아웃")}>
-          <Text style={styles.logoutText}>로그아웃</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
-          <Text style={styles.withdrawText}>회원 탈퇴하기</Text>
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => console.log("로그아웃")}> <Text style={styles.logoutText}>로그아웃</Text> </TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowWithdrawModal(true)}> <Text style={styles.withdrawText}>회원 탈퇴하기</Text> </TouchableOpacity>
       </View>
 
-      {/* 탈퇴 확인 모달 */}
       {showWithdrawModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -168,11 +166,7 @@ export default function MyPageScreen() {
               <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
                 <Text style={styles.modalCancel}>아니요</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                // 탈퇴 처리 로직
-                console.log("탈퇴 완료");
-                setShowWithdrawModal(false);
-              }}>
+              <TouchableOpacity onPress={() => { console.log("탈퇴 완료"); setShowWithdrawModal(false); }}>
                 <Text style={styles.modalConfirm}>예</Text>
               </TouchableOpacity>
             </View>
@@ -180,22 +174,11 @@ export default function MyPageScreen() {
         </View>
       )}
 
-      {/* 하단 네비게이션 */}
       <View style={styles.bottomNav}>
         {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.navItem}
-            onPress={() => router.push(tab.path)}
-          >
-            <View
-              style={[styles.dot, activeTab === tab.name ? styles.dotActive : styles.dotInactive]}
-            />
-            <Text
-              style={[styles.navText, activeTab === tab.name ? styles.navTextActive : styles.navTextInactive]}
-            >
-              {tab.label}
-            </Text>
+          <TouchableOpacity key={index} style={styles.navItem} onPress={() => router.push(tab.path)}>
+            <View style={[styles.dot, activeTab === tab.name ? styles.dotActive : styles.dotInactive]} />
+            <Text style={[styles.navText, activeTab === tab.name ? styles.navTextActive : styles.navTextInactive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -213,9 +196,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: "#D3BFFF", marginBottom: 8,
   },
   examText: { fontSize: 16, fontWeight: "bold", color: "#5E3BCB" },
-  ddayTagSmallInside: {
-    backgroundColor: "#E9E0F5", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16,
-  },
+  ddayTagSmallInside: { backgroundColor: "#E9E0F5", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16 },
   ddayText: { fontSize: 12, color: "#663399" },
   historyButton: { alignItems: "flex-end", marginTop: 8 },
   historyText: { fontSize: 12, color: "#9E73D9", fontWeight: "500" },
@@ -223,39 +204,23 @@ const styles = StyleSheet.create({
   timetableBox: { alignItems: "center", marginBottom: 20 },
   timetableImage: { width: 180, height: 200, marginVertical: 10 },
   emptyMessage: { textAlign: "center", color: "#3C3C3C", fontSize: 14, marginBottom: 10 },
-  uploadButton: {
-    backgroundColor: "#9E73D9", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-  },
+  uploadButton: { backgroundColor: "#9E73D9", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   uploadText: { fontSize: 12, color: "#fff", fontWeight: "500" },
   studyTitle: { fontSize: 18, fontWeight: "bold", marginTop: 12, marginBottom: 12 },
-  calendarWrapper: {
-    backgroundColor: "#fff", borderRadius: 12, padding: 10,
-    borderWidth: 1, borderColor: "#9E73D9",
-  },
+  calendarWrapper: { backgroundColor: "#fff", borderRadius: 12, padding: 10, borderWidth: 1, borderColor: "#9E73D9" },
   legendContainer: { flexDirection: "row", justifyContent: "flex-start", marginTop: 10, gap: 8 },
   legendItem: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
   legendText: { fontSize: 12, color: "#000" },
   footerContainer: {
     backgroundColor: "#F6F2FC", alignItems: "center", paddingTop: 15, paddingBottom: 24,
-    marginTop: 0, borderTopLeftRadius: 60, borderTopRightRadius: 60,
-    ...Platform.select({
-      ios: { shadowColor: " " },
-      android: { elevation: 0 },
-    }),
+    borderTopLeftRadius: 60, borderTopRightRadius: 60,
+    ...Platform.select({ ios: { shadowColor: " " }, android: { elevation: 0 } }),
   },
-  handleBar: {
-    width: 40, height: 6, borderRadius: 3, backgroundColor: "#D1D1D1", marginBottom: 25,
-  },
-  logoutButton: {
-    backgroundColor: "#9B73D2", paddingVertical: 16, paddingHorizontal: 60,
-    borderRadius: 20, marginBottom: 25,
-  },
+  handleBar: { width: 40, height: 6, borderRadius: 3, backgroundColor: "#D1D1D1", marginBottom: 25 },
+  logoutButton: { backgroundColor: "#9B73D2", paddingVertical: 16, paddingHorizontal: 60, borderRadius: 20, marginBottom: 25 },
   logoutText: { color: "white", fontSize: 18, fontWeight: "bold" },
   withdrawText: { color: "#C0C0C0", fontSize: 13, textDecorationLine: "underline" },
-  bottomNav: {
-    flexDirection: "row", justifyContent: "space-around", height: 100,
-    backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#eee", paddingBottom: 30,
-  },
+  bottomNav: { flexDirection: "row", justifyContent: "space-around", height: 100, backgroundColor: "#fff", borderTopWidth: 1, borderColor: "#eee", paddingBottom: 30 },
   navItem: { alignItems: "center", justifyContent: "center", flex: 1 },
   navText: { fontSize: 12 },
   navTextInactive: { color: "#ccc" },
@@ -263,35 +228,10 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 4, marginBottom: 8 },
   dotActive: { backgroundColor: "#222" },
   dotInactive: { backgroundColor: "#ccc" },
-
-  // 🔽 모달 관련 스타일
-  modalOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', zIndex: 999,
-  },
-  modalContent: {
-    backgroundColor: '#fff', padding: 30, borderRadius: 12, alignItems: 'center', width: '80%',
-  },
-  modalText: {
-    fontSize: 16, fontWeight: 'bold', marginBottom: 20,
-  },
- modalButtonContainer: {
-  flexDirection: 'row',
-  justifyContent: 'center', // 가운데 정렬
-  gap: 100, // 버튼 사이 간격 조절 (필요시 10~12로도 변경 가능)
-},
-
-modalCancel: {
-  color: '#C0C0C0',
-  fontSize: 16,
-  textAlign: 'center',
-  paddingHorizontal: 16,
-},
-
-modalConfirm: {
-  color: '#8D5ACF',
-  fontSize: 16,
-  textAlign: 'center',
-  paddingHorizontal: 16,
-},
+  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', zIndex: 999 },
+  modalContent: { backgroundColor: '#fff', padding: 30, borderRadius: 12, alignItems: 'center', width: '80%' },
+  modalText: { fontSize: 16, fontWeight: 'bold', marginBottom: 20 },
+  modalButtonContainer: { flexDirection: 'row', justifyContent: 'center', gap: 20 },
+  modalCancel: { color: '#C0C0C0', fontSize: 16, textAlign: 'center', paddingHorizontal: 16 },
+  modalConfirm: { color: '#8D5ACF', fontSize: 16, textAlign: 'center', paddingHorizontal: 16 },
 });
