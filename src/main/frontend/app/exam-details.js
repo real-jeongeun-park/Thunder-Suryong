@@ -14,15 +14,15 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function ExamDetailScreen() {
   const { examTitle, examDday } = useLocalSearchParams();
   const [selectedSubject, setSelectedSubject] = useState("추천시스템");
-  const [currentMonth, setCurrentMonth] = useState(null); // ❗초기 null로 설정
+  const [isChecked, setIsChecked] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(null);
   const [markedDates, setMarkedDates] = useState({});
 
-  // ✅ 공부시간 → 색상 마킹
   function getMarkedDatesForMonth(month) {
     const dates = {};
     for (let day = 1; day <= 31; day++) {
       const date = `${month}-${String(day).padStart(2, "0")}`;
-      const hours = Math.floor(Math.random() * 7); // 예시: 0~6시간
+      const hours = Math.floor(Math.random() * 7);
 
       if (hours === 0) continue;
 
@@ -51,9 +51,8 @@ export default function ExamDetailScreen() {
     return dates;
   }
 
-  // ✅ 시험 이름에 따라 초기 월 설정
   useEffect(() => {
-    let initialMonth = "2025-03"; // 기본값
+    let initialMonth = "2025-03";
 
     if (examTitle === "2024 2학기 중간고사") {
       initialMonth = "2024-09";
@@ -90,7 +89,7 @@ export default function ExamDetailScreen() {
           </View>
         </View>
 
-        {/* ✅ 캘린더 (currentMonth가 준비된 후에만 렌더링) */}
+        {/* 캘린더 */}
         {currentMonth && (
           <View style={styles.calendarWrapper}>
             <Calendar
@@ -125,9 +124,14 @@ export default function ExamDetailScreen() {
           </View>
         </View>
 
-        {/* 과목 */}
+        {/* 과목 선택 */}
         <View style={styles.subjectBox}>
-          <View style={styles.checkbox} />
+          <TouchableOpacity
+            style={[styles.checkbox, isChecked && styles.checkboxChecked]}
+            onPress={() => setIsChecked(!isChecked)}
+          >
+            {isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </TouchableOpacity>
           <Text style={styles.subjectText}>{selectedSubject} ⏷</Text>
         </View>
       </ScrollView>
@@ -201,6 +205,13 @@ const styles = StyleSheet.create({
     borderColor: "#000",
     marginRight: 12,
     borderRadius: 4,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#8D5ACF",
+    borderColor: "#8D5ACF",
   },
   subjectText: {
     fontSize: 14,
