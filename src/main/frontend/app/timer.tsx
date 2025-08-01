@@ -8,8 +8,12 @@ import {
   Modal,
   TextInput,
 } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function TimerScreen() {
+  const router = useRouter();
+
   const [subjects, setSubjects] = useState([
     { name: "고급기계학습", time: "00:00:00" },
     { name: "심층학습", time: "00:00:00" },
@@ -33,7 +37,6 @@ export default function TimerScreen() {
 
   const handleDeleteModeToggle = () => {
     if (isDeleteMode && selectedForDelete.length > 0) {
-      // 삭제 실행
       setSubjects(subjects.filter((s) => !selectedForDelete.includes(s.name)));
       setSelectedForDelete([]);
     }
@@ -42,7 +45,14 @@ export default function TimerScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>타이머</Text>
+      {/* 🔙 뒤로가기 + 타이머 타이틀 */}
+    <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+        <Ionicons name="chevron-back" size={28} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.header}>타이머</Text>
+    </View>
+
 
       {/* 메인 타이머 */}
       <View style={styles.timerContainer}>
@@ -116,7 +126,7 @@ export default function TimerScreen() {
         }
       />
 
-      {/* 과목 추가 모달 */}
+      {/* 📦 과목 추가 모달 */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -150,7 +160,20 @@ export default function TimerScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 20 },
-  header: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  backButton: {
+    fontSize: 24,
+    color: "#000",
+    marginRight: 12,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
   timerContainer: { alignItems: "center", marginBottom: 30 },
   timerText: {
     fontSize: 48,
@@ -201,7 +224,6 @@ const styles = StyleSheet.create({
   },
   buttonSymbol: { fontSize: 12 },
 
-  // ✅ 추가/삭제 버튼
   footerButtonGroup: {
     flexDirection: "row",
     justifyContent: "center",
@@ -227,7 +249,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // ✅ 체크박스
   checkbox: {
     width: 18,
     height: 18,
@@ -242,7 +263,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // ✅ 모달
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
@@ -271,21 +291,18 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   modalButtonContainer: {
-  flexDirection: "row",
-  justifyContent: "center", // 중앙 정렬
-  gap: 12, // 또는 아래처럼 margin으로 대체 가능
-},
-modalCancel: {
-  color: "#C0C0C0",
-  fontSize: 16,
-  marginRight: 100, // 버튼 간격을 좁게
-  textAlign: "center",
-},
-modalConfirm: {
-  color: "#8D5ACF",
-  fontSize: 16,
-  marginLeft: 6,
-  textAlign: "center",
-},
-
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  modalCancel: {
+    color: "#C0C0C0",
+    fontSize: 16,
+    marginRight: 16,
+    textAlign: "center",
+  },
+  modalConfirm: {
+    color: "#8D5ACF",
+    fontSize: 16,
+    textAlign: "center",
+  },
 });
