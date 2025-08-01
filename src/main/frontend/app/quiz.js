@@ -26,6 +26,10 @@ export default function QuizScreen() {
   const [modalVisibleId, setModalVisibleId] = useState(null);
   const inputRef = useRef(null);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [moveModalVisible, setMoveModalVisible] = useState(false);
+
   useEffect(() => {
     if (newQuizName) {
       setQuizList((prev) => {
@@ -77,69 +81,35 @@ export default function QuizScreen() {
     setEditId(null);
   };
 
-  const renderQuizItem = ({ item: quiz }) => (
-    <View key={quiz.id} style={styles.quizItem}>
-      <View style={styles.quizItemIconWrapper}>
-        <Feather name="help-circle" size={24} color="#B9A4DA" />
-      </View>
-      <View style={styles.contentArea}>
-        {editId === quiz.id ? (
-          <TextInput
-            ref={inputRef}
-            style={styles.quizName}
-            value={editedName}
-            onChangeText={setEditedName}
-            onBlur={() => handleSaveEdit(quiz.id)}
-            onSubmitEditing={() => handleSaveEdit(quiz.id)}
-          />
-        ) : (
-          <Text style={styles.quizName}>{quiz.name}</Text>
-        )}
-        <View style={styles.tagContainer}>
-          {quiz.subjective && (
-            <View style={styles.tagBox}>
-              <Text style={styles.tagText}>주관식</Text>
-            </View>
-          )}
-          {quiz.objective && (
-            <View style={styles.tagBox}>
-              <Text style={styles.tagText}>객관식</Text>
-            </View>
-          )}
-          {quiz.ox && (
-            <View style={styles.tagBox}>
-              <Text style={styles.tagText}>OX</Text>
-            </View>
-          )}
-        </View>
-      </View>
-      <TouchableOpacity onPress={() => setModalVisibleId(quiz.id)}>
-        <Feather name="more-horizontal" size={20} color="#A9A9A9" />
-      </TouchableOpacity>
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
-      <Modal
-        transparent
-        visible={modalVisibleId === quiz.id}
-        animationType="fade"
-        onRequestClose={() => setModalVisibleId(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          onPress={() => setModalVisibleId(null)}
-          activeOpacity={1}
-        >
-          <View style={styles.modalMenu}>
-            <TouchableOpacity onPress={() => handleEdit(quiz.id, quiz.name)}>
-              <Text style={styles.modalItem}>이름 변경</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDelete(quiz.id)}>
-              <Text style={styles.modalItem}>삭제</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </View>
-  );
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setSelectedIds([]);
+  };
+
+  const handleBulkDelete = () => {
+    setQuizList((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
+    cancelEditing();
+  };
+
+  const handleMoveToFolder = (folderName) => {
+    router.push({
+      pathname: "/quiz_folder",
+      params: {
+        folder: folderName,
+        items: JSON.stringify(
+          quizList.filter((item) => selectedIds.includes(item.id))
+        ),
+      },
+    });
+    setQuizList((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
+    cancelEditing();
+  };
 
   const handleAddFolder = () => {
     const newId = Date.now().toString();
@@ -153,6 +123,80 @@ export default function QuizScreen() {
     setQuizList((prev) => [newFolder, ...prev]);
     setEditId(newId);
     setEditedName("새 폴더");
+  };
+
+  const renderQuizItem = ({ item: quiz }) => {
+    const isSelected = selectedIds.includes(quiz.id);
+    return (
+      <TouchableOpacity
+        key={quiz.id}
+        style={[styles.quizItem, isSelected && { backgroundColor: "#D3C1E5" }]}
+        onPress={() => isEditing && toggleSelect(quiz.id)}
+        activeOpacity={isEditing ? 0.7 : 1}
+      >
+        <View style={styles.quizItemIconWrapper}>
+          <Feather name="help-circle" size={24} color="#B9A4DA" />
+        </View>
+        <View style={styles.contentArea}>
+          {editId === quiz.id ? (
+            <TextInput
+              ref={inputRef}
+              style={styles.quizName}
+              value={editedName}
+              onChangeText={setEditedName}
+              onBlur={() => handleSaveEdit(quiz.id)}
+              onSubmitEditing={() => handleSaveEdit(quiz.id)}
+            />
+          ) : (
+            <Text style={styles.quizName}>{quiz.name}</Text>
+          )}
+          <View style={styles.tagContainer}>
+            {quiz.subjective && (
+              <View style={styles.tagBox}>
+                <Text style={styles.tagText}>주관식</Text>
+              </View>
+            )}
+            {quiz.objective && (
+              <View style={styles.tagBox}>
+                <Text style={styles.tagText}>객관식</Text>
+              </View>
+            )}
+            {quiz.ox && (
+              <View style={styles.tagBox}>
+                <Text style={styles.tagText}>OX</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        {!isEditing && (
+          <TouchableOpacity onPress={() => setModalVisibleId(quiz.id)}>
+            <Feather name="more-horizontal" size={20} color="#A9A9A9" />
+          </TouchableOpacity>
+        )}
+
+        <Modal
+          transparent
+          visible={modalVisibleId === quiz.id}
+          animationType="fade"
+          onRequestClose={() => setModalVisibleId(null)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            onPress={() => setModalVisibleId(null)}
+            activeOpacity={1}
+          >
+            <View style={styles.modalMenu}>
+              <TouchableOpacity onPress={() => handleEdit(quiz.id, quiz.name)}>
+                <Text style={styles.modalItem}>이름 변경</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(quiz.id)}>
+                <Text style={styles.modalItem}>삭제</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      </TouchableOpacity>
+    );
   };
 
   const CreateQuizButton = () => (
@@ -191,7 +235,26 @@ export default function QuizScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[styles.container, { paddingHorizontal: 20 }]}
     >
-      <Text style={styles.title}>퀴즈</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={styles.title}>퀴즈</Text>
+        {!isEditing ? (
+          <TouchableOpacity onPress={() => setIsEditing(true)}>
+            <Text style={{ fontSize: 16, color: "#7D6DAF" }}>편집</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TouchableOpacity onPress={() => setMoveModalVisible(true)}>
+              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>이동</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleBulkDelete}>
+              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>삭제</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={cancelEditing}>
+              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
       {quizList.length === 0 ? (
         <ScrollView contentContainerStyle={styles.scrollContentEmpty} style={{ flex: 1 }}>
@@ -251,6 +314,30 @@ export default function QuizScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
+      <Modal
+        visible={moveModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoveModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => setMoveModalVisible(false)}
+        >
+          <View style={styles.modalMenu}>
+            {["폴더1", "폴더2", "폴더3"].map((folder) => (
+              <TouchableOpacity
+                key={folder}
+                onPress={() => handleMoveToFolder(folder)}
+              >
+                <Text style={styles.modalItem}>{folder}로 이동</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
