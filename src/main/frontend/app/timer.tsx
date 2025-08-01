@@ -7,31 +7,16 @@ export default function TimerScreen() {
   const [selectedTab, setSelectedTab] = useState("일반");
 
   const subjects = [
-    { name: "고급기계학습", time: "00:21:09" },
+    { name: "고급기계학습", time: "00:00:00" },
     { name: "심층학습", time: "00:00:00" },
-    { name: "클라우드 컴퓨팅", time: "00:56:21" },
-    { name: "알고리즘", time: "01:05:50" },
-    { name: "추천시스템", time: "02:12:33" },
+    { name: "클라우드 컴퓨팅", time: "00:00:00" },
+    { name: "알고리즘", time: "00:00:00" },
+    { name: "추천시스템", time: "00:00:00" },
   ];
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>타이머</Text>
-
-      {/* 탭 선택 버튼 */}
-      <View style={styles.tabContainer}>
-        {["일반", "뽀모도로"].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, selectedTab === tab && styles.selectedTab]}
-            onPress={() => setSelectedTab(tab)}
-          >
-            <Text style={[styles.tabText, selectedTab === tab && styles.selectedTabText]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       {/* 메인 타이머 */}
       <View style={styles.timerContainer}>
@@ -50,9 +35,13 @@ export default function TimerScreen() {
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <View style={styles.subjectRow}>
-            <Text style={styles.subjectText}>{item.name}</Text>
-            <Text style={styles.subjectText}>{item.time}</Text>
-            <View style={styles.buttonGroup}>
+            <View style={styles.cell}>
+              <Text style={styles.subjectText}>{item.name}</Text>
+            </View>
+            <View style={styles.cell}>
+              <Text style={styles.subjectText}>{item.time}</Text>
+            </View>
+            <View style={[styles.cell, styles.buttonGroup]}>
               <TouchableOpacity style={styles.circleButton}>
                 <Text style={styles.buttonSymbol}>⏸</Text>
               </TouchableOpacity>
@@ -77,28 +66,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 12,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  tab: {
-    borderColor: "#B491DD",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginRight: 10,
-  },
-  selectedTab: {
-    backgroundColor: "#B491DD",
-  },
-  tabText: {
-    color: "#B491DD",
-    fontWeight: "500",
-  },
-  selectedTabText: {
-    color: "#fff",
   },
   timerContainer: {
     alignItems: "center",
@@ -133,12 +100,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
     borderRadius: 8,
   },
-  subjectText: {
+  cell: {
     flex: 1,
+    justifyContent: "center",
+  },
+  subjectText: {
     textAlign: "center",
   },
   buttonGroup: {
     flexDirection: "row",
+    justifyContent: "center",
     gap: 8,
   },
   circleButton: {
