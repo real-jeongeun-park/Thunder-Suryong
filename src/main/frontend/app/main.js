@@ -341,13 +341,13 @@ export default function HomeScreen() {
 
               {/* 타이머 + 캐릭터 나란히 배치 */}
               <View style={styles.rowContainer}>
-                <TouchableOpacity
-                  style={styles.timerButton}
-                  //onPress={() => router.push("/timer")}
-                >
-                  <Ionicons name="time-outline" size={30} color="#B491DD" />
-                  <Text style={styles.timerText}>Timer</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.timerButton}
+                onPress={() => router.push("/timer")}  // ✅ 추가된 부분
+              >
+<              Ionicons name="time-outline" size={30} color="#B491DD" />
+              <Text style={styles.timerText}>Timer</Text>
+              </TouchableOpacity>
 
                 <Image
                   source={require("../assets/images/main.png")}
