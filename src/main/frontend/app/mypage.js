@@ -26,6 +26,8 @@ export default function MyPageScreen() {
     getMarkedDatesForMonth(formatMonth(today))
   );
 
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+
   const tabs = [
     { name: "홈", label: "홈", path: "/main" },
     { name: "노트", label: "노트", path: "/note" },
@@ -149,10 +151,36 @@ export default function MyPageScreen() {
       {/* 하단 배경 */}
       <View style={styles.footerContainer}>
         <View style={styles.handleBar} />
-        <TouchableOpacity style={styles.logoutButton} onPress={() => console.log("로그아웃")}> <Text style={styles.logoutText}>로그아웃</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => console.log("회원 탈퇴하기")}> <Text style={styles.withdrawText}>회원 탈퇴하기</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => console.log("로그아웃")}>
+          <Text style={styles.logoutText}>로그아웃</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
+          <Text style={styles.withdrawText}>회원 탈퇴하기</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* 탈퇴 확인 모달 */}
+      {showWithdrawModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>회원 탈퇴하시겠습니까?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
+                <Text style={styles.modalCancel}>아니요</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                // 탈퇴 처리 로직
+                console.log("탈퇴 완료");
+                setShowWithdrawModal(false);
+              }}>
+                <Text style={styles.modalConfirm}>예</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 하단 네비게이션 */}
       <View style={styles.bottomNav}>
         {tabs.map((tab, index) => (
           <TouchableOpacity
@@ -235,4 +263,35 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 4, marginBottom: 8 },
   dotActive: { backgroundColor: "#222" },
   dotInactive: { backgroundColor: "#ccc" },
+
+  // 🔽 모달 관련 스타일
+  modalOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', zIndex: 999,
+  },
+  modalContent: {
+    backgroundColor: '#fff', padding: 30, borderRadius: 12, alignItems: 'center', width: '80%',
+  },
+  modalText: {
+    fontSize: 16, fontWeight: 'bold', marginBottom: 20,
+  },
+ modalButtonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'center', // 가운데 정렬
+  gap: 100, // 버튼 사이 간격 조절 (필요시 10~12로도 변경 가능)
+},
+
+modalCancel: {
+  color: '#C0C0C0',
+  fontSize: 16,
+  textAlign: 'center',
+  paddingHorizontal: 16,
+},
+
+modalConfirm: {
+  color: '#8D5ACF',
+  fontSize: 16,
+  textAlign: 'center',
+  paddingHorizontal: 16,
+},
 });
