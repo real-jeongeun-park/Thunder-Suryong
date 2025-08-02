@@ -30,34 +30,33 @@ export default function ExamDatePicker() {
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-      const checkLogin = async () => {
-        try{
-          let token;
+    const checkLogin = async () => {
+      try {
+        let token;
 
-          if(Platform.OS === 'web'){
-              token = localStorage.getItem("accessToken");
-          } else{
-             // 앱
-             token = await SecureStore.getItemAsync("accessToken");
-          }
-
-          if(!token) throw new Error("Token not found");
-
-          const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-              headers: {
-                  Authorization: `Bearer ${token}`,
-              },
-          });
-
-        } catch(e){
-          console.log(e);
-          setUserInfo(null);
-          router.push("/"); // 처음으로 돌아감
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          // 앱
+          token = await SecureStore.getItemAsync("accessToken");
         }
-      };
 
-      checkLogin();
-    }, [])
+        if (!token) throw new Error("Token not found");
+
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (e) {
+        console.log(e);
+        setUserInfo(null);
+        router.push("/"); // 처음으로 돌아감
+      }
+    };
+
+    checkLogin();
+  }, []);
 
   const handleDateSelect = (dateString) => {
     setSelectedDate(dateString);
@@ -237,9 +236,12 @@ export default function ExamDatePicker() {
           if (!startDate || !endDate) {
             alert("시작일과 종료일을 모두 선택해주세요.");
             return;
-          }
-          else{
-            setData((prev)=> ({...prev, startDate: startDate, endDate: endDate}));
+          } else {
+            setData((prev) => ({
+              ...prev,
+              startDate: startDate,
+              endDate: endDate,
+            }));
             router.push("/exam_schedule2");
           }
         }}
