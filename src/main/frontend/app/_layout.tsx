@@ -10,7 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
-import { DataProvider } from '@/context/DataContext';
+import { DataProvider } from "@/context/DataContext";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -23,16 +23,16 @@ export default function RootLayout() {
   }
 
   return (
-  <DataProvider>
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      {/* ✅ 전체 화면에서 header 숨기기 */}
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  </DataProvider>
+    <DataProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        {/* ✅ 전체 화면에서 header 숨기기 */}
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </DataProvider>
   );
 }

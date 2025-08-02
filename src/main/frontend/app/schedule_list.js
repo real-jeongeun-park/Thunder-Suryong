@@ -21,33 +21,32 @@ export default function ExamListScreen() {
   const [exams, setExams] = useState([]);
 
   useEffect(() => {
-    async function checkLogin(){
-        try{
-            let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-            if(Platform.OS === 'web'){
-                token = localStorage.getItem("accessToken");
-            }
-            else{
-                token = await SecureStore.getItemAsync("accessToken");
-            }
-
-            if(!token){
-                throw new Error("Token not found");
-            }
-
-            const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            setUserInfo(res.data);
-        } catch(err){
-            console.log(err);
-            setUserInfo(null);
-            router.push("/");
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
         }
+
+        if (!token) {
+          throw new Error("Token not found");
+        }
+
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
     }
 
     checkLogin();
@@ -56,39 +55,39 @@ export default function ExamListScreen() {
   // 시험 가져오기
   useEffect(() => {
     const getExams = async () => {
-        try{
-            const response = await axios.post(`${API_BASE_URL}/api/exam/get`, {
-                nickname: userInfo.nickname,
-            });
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/exam/get`, {
+          nickname: userInfo.nickname,
+        });
 
-            const { examIds, examNames, defaultExams } = response.data;
-            // 리스트
+        const { examIds, examNames, defaultExams } = response.data;
+        // 리스트
 
-            const newExamList = examIds.map((examId, index) => ({
-                id: examId,
-                name: examNames[index],
-                isDefault: defaultExams[index]
-            }));
+        const newExamList = examIds.map((examId, index) => ({
+          id: examId,
+          name: examNames[index],
+          isDefault: defaultExams[index],
+        }));
 
-            setExams((prev) => [...prev, ...newExamList]);
-        } catch(err){
-            console.log(err);
-        }
+        setExams((prev) => [...prev, ...newExamList]);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    if (userInfo && userInfo.nickname) {
+      getExams();
     }
-
-    if(userInfo && userInfo.nickname){
-        getExams();
-    }
-  }, [userInfo])
+  }, [userInfo]);
 
   const handleExamPress = async (id) => {
-    try{
+    try {
       const response = await axios.get(`${API_BASE_URL}/api/exam/id`, {
-        params: { id }
+        params: { id },
       });
 
       router.push("/main");
-    } catch(e){
+    } catch (e) {
       console.log(e);
     }
   };
@@ -130,7 +129,7 @@ export default function ExamListScreen() {
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -140,11 +139,12 @@ const styles = StyleSheet.create({
   },
   backButtonContainer: {
     position: "absolute",
-    top: 10,
+    top: 45,
     left: 10,
-    zIndex: 10,
+    //zIndex: 10,
   },
   titleContainer: {
+    paddingTop: "10%",
     backgroundColor: "#F2E9FE",
     paddingBottom: 15,
   },
