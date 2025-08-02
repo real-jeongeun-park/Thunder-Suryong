@@ -21,8 +21,7 @@ import { differenceInDays, parseISO } from "date-fns";
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-
-import SpeechBalloon from "../components/SpeechBalloon.js";
+import { Dimensions } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -32,6 +31,7 @@ export default function HomeScreen() {
   const [sheetHeight] = useState(new Animated.Value(280));
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
+  const { height: screenHeight } = Dimensions.get("window");
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -135,7 +135,7 @@ export default function HomeScreen() {
         console.log("userInfo.nickname:", userInfo?.nickname);
 
         const res = await axios.post(
-          "http://localhost:8080/api/exam/get",
+          `${API_BASE_URL}/api/exam/get`,
           { nickname: userInfo.nickname },
           {
             headers: {
@@ -185,7 +185,7 @@ export default function HomeScreen() {
   };
 
   const toggleSheet = () => {
-    const toValue = isExpanded ? 280 : 730;
+    const toValue = isExpanded ? 280 : screenHeight * 0.83;
     Animated.timing(sheetHeight, {
       toValue,
       duration: 300,
@@ -247,25 +247,34 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <View contentContainerStyle={styles.container}>
           <LinearGradient
             colors={["#F4EDFF", "#FFFFFF"]}
             style={styles.gradient}
           >
             <View style={styles.contentWrapper}>
-              {/* 상단 제목 */}
               {userInfo && (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                   {selectedExam && selectedExam.examName ? (
-                    // 시험이 선택된 경우: 시험 이름만 표시
-                    <Text style={styles.title}>{selectedExam.examName}</Text>
+                    <>
+                      <Text style={styles.title}>{selectedExam.examName}</Text>
+                      {/* 삭제 버튼 */}
+                      <TouchableOpacity
+                        onPress={() => setSelectedExam(null)}
+                        style={{
+                          marginLeft: 10,
+                          backgroundColor: "#e57373",
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "bold" }}>
+                          시험 삭제
+                        </Text>
+                      </TouchableOpacity>
+                    </>
                   ) : (
-                    // 시험이 선택되지 않은 경우: 어서오세요 표시
                     <Text style={styles.title}>
                       {userInfo.nickname}님, 어서오세요!
                     </Text>
@@ -320,34 +329,36 @@ export default function HomeScreen() {
                     />
                   </View>
                 </TouchableOpacity>
-                {/* 일정 버튼 */}
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => router.push("/schedule_list")}
-                  >
-                    <Text style={styles.buttonText}>일정 불러오기</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      router.push("/exam_schedule");
-                    }}
-                  >
-                    <Text style={styles.buttonText}>새로운 일정 생성</Text>
-                  </TouchableOpacity>
-                </View>
+                {/* 시험이 없을 때만 일정 버튼 노출 */}
+                {!selectedExam && (
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => router.push("/schedule_list")}
+                    >
+                      <Text style={styles.buttonText}>일정 불러오기</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        router.push("/exam_schedule");
+                      }}
+                    >
+                      <Text style={styles.buttonText}>새로운 일정 생성</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
 
               {/* 타이머 + 캐릭터 나란히 배치 */}
               <View style={styles.rowContainer}>
-              <TouchableOpacity
-                style={styles.timerButton}
-                onPress={() => router.push("/timer")}  // ✅ 추가된 부분
-              >
-<              Ionicons name="time-outline" size={30} color="#B491DD" />
-              <Text style={styles.timerText}>Timer</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.timerButton}
+                  onPress={() => router.push("/timer")} // ✅ 추가된 부분
+                >
+                  <Ionicons name="time-outline" size={30} color="#B491DD" />
+                  <Text style={styles.timerText}>Timer</Text>
+                </TouchableOpacity>
 
                 <Image
                   source={require("../assets/images/main.png")}
@@ -357,7 +368,7 @@ export default function HomeScreen() {
               </View>
             </View>
           </LinearGradient>
-        </ScrollView>
+        </View>
 
         {/* 말풍선 */}
         <View style={styles.speechContainer}>
@@ -527,7 +538,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontWeight: "bold",
-    marginTop: 5,
+    marginTop: "10%",
     marginBottom: 10,
     alignSelf: "flex-start",
   },
@@ -596,6 +607,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     width: "100%",
+    height: "100%",
   },
   contentWrapper: {
     paddingHorizontal: 20,
@@ -751,6 +763,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: "flex-start", // 텍스트 너비만큼 박스 크기 조정
     marginVertical: 10,
+    marginTop: "10%",
   },
   ddayText: {
     color: "#fff", // 흰색 텍스트

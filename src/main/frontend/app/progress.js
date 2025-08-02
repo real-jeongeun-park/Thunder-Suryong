@@ -77,9 +77,9 @@ export default function CalendarTimetableScreen() {
 
         // 서버에 yyyy-MM-dd 형식 날짜로 요청
         const response = await axios.post(`${API_BASE_URL}/api/plan/date`, {
-            nickname: userInfo.nickname,
-            date: selectedDate,
-        })
+          nickname: userInfo.nickname,
+          date: selectedDate,
+        });
 
         // 변환: {subject: todos[]} → 배열 [{id,title,isExpanded,todos:[]}]
         const result = response.data;
@@ -104,8 +104,8 @@ export default function CalendarTimetableScreen() {
       }
     }
 
-    if(activeTab === "Planner"){
-        fetchPlans();
+    if (activeTab === "Planner") {
+      fetchPlans();
     }
   }, [selectedDate, activeTab, userInfo]);
 
@@ -121,12 +121,10 @@ export default function CalendarTimetableScreen() {
   // 체크박스 변경시 서버에 PATCH 요청 및 상태 반영
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
-      await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`,
-        {
-          learned: newValue,
-          nickname: userInfo.nickname
-        }
-      );
+      await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`, {
+        learned: newValue,
+        nickname: userInfo.nickname,
+      });
 
       // 프론트 상태도 업데이트
       setPlans((prevPlans) =>
@@ -190,7 +188,7 @@ export default function CalendarTimetableScreen() {
                   {plan.todos.map((todo) => (
                     <View key={todo.id} style={styles.subTodoItem}>
                       <Checkbox
-                        style={{marginRight: 8}}
+                        style={{ marginRight: 8 }}
                         value={todo.checked}
                         onValueChange={(newValue) =>
                           handleCheckboxChange(plan.id, todo.id, newValue)
@@ -240,14 +238,17 @@ export default function CalendarTimetableScreen() {
   return (
     <View style={styles.container}>
       {/* 뒤로가기 버튼 */}
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={32} color="#535353" />
-        </TouchableOpacity>
-      </View>
 
       {/* 상단 제목 */}
-      <Text style={styles.headerText}>통계</Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={32} color="#535353" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>통계</Text>
+      </View>
 
       {/* Calendar */}
       <Calendar
@@ -334,18 +335,30 @@ const styles = StyleSheet.create({
     //flex: 1,
     backgroundColor: "#fff",
   },
-  backButtonContainer: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    zIndex: 10,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: "15%",
+    paddingHorizontal: 10,
+    justifyContent: "center", // 가로 가운데 정렬
+    position: "relative", // 절대 위치 요소들 있으면 컨텍스트 유지용(필요에 따라)
+    // 또는 flex: 1 추가해서 전체 너비 차지하게 할 수도 있음
+    marginBottom: 10,
   },
   headerText: {
     fontSize: 20,
     fontWeight: "500",
     textAlign: "center",
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 0,
+    //marginBottom: 8,
+    flex: 1, // 텍스트가 headerRow 내에서 공간을 넓게 차지하게
+    // flexGrow: 1, flexShrink: 1 으로도 가능
+  },
+  backButton: {
+    position: "absolute",
+    left: 10,
+    // top값은 headerRow의 height와 marginTop에 맞게 적절히 조절
+    // 또는 flexBasis, width를 지정 가능
   },
   calendar: {
     marginHorizontal: 30,
@@ -504,7 +517,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   subTodoText: {
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     flexShrink: 1,
-  }
+  },
 });
