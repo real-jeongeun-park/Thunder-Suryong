@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -20,6 +21,7 @@ import { useData } from "@/context/DataContext";
 
 export default function ExamDatePicker() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(null);
   const [monthList, setMonthList] = useState([startOfMonth(new Date())]);
   const [startDate, setStartDate] = useState(null);
@@ -187,74 +189,111 @@ export default function ExamDatePicker() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity
-          onPress={() => {
-            router.back();
-          }}
-        >
-          <Ionicons name="chevron-back" size={32} color="#535353" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.headerContainer}>
-        <View style={styles.headerRow}>
-          <Text style={styles.header}>
-            {!startDate
-              ? "시험 시작 일자를\n선택해 주세요."
-              : !endDate
-              ? "시험 종료 일자를\n선택해 주세요."
-              : "시험 기간이\n맞나요?\n"}
-          </Text>
-          {startDate && (
-            <Text style={styles.selectedDateText}>
-              {format(new Date(startDate), "yyyy.MM.dd")} ~{" "}
-              {endDate ? format(new Date(endDate), "yyyy.MM.dd") : ""}
-            </Text>
-          )}
-        </View>
-        <View style={styles.weekRow}>
-          {["일", "월", "화", "수", "목", "금", "토"].map((day, idx) => (
-            <Text key={idx} style={styles.dayText}>
-              {day}
-            </Text>
-          ))}
-        </View>
-      </View>
-      <FlatList
-        data={monthList}
-        keyExtractor={(item) => item.toString()}
-        renderItem={renderMonth}
-        onEndReached={() => loadMoreMonths("next")}
-        onEndReachedThreshold={0.8}
-        onScrollBeginDrag={() => loadMoreMonths("prev")}
-        style={styles.monthList}
-        showsVerticalScrollIndicator={false}
+      {/* SafeArea 위쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: "#EFE5FF", //F4EDFF
+          zIndex: 10,
+        }}
       />
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          if (!startDate || !endDate) {
-            alert("시작일과 종료일을 모두 선택해주세요.");
-            return;
-          } else {
-            setData((prev) => ({
-              ...prev,
-              startDate: startDate,
-              endDate: endDate,
-            }));
-            router.push("/exam_schedule2");
-          }
+
+      {/* SafeArea 아래쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: insets.bottom,
+          backgroundColor: "#ffffffff",
+          zIndex: 10,
+        }}
+      />
+
+      {/* 본문 */}
+      <View
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
         }}
       >
-        <Text style={styles.buttonText}>입력 완료</Text>
-      </TouchableOpacity>
+        <View style={styles.backButtonContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              router.back();
+            }}
+          >
+            <Ionicons name="chevron-back" size={32} color="#535353" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerColumn}>
+            <Text style={styles.header}>
+              {!startDate
+                ? "시험 시작 일자를\n선택해 주세요."
+                : !endDate
+                ? "시험 종료 일자를\n선택해 주세요."
+                : "시험 기간이\n맞나요?"}
+            </Text>
+            {startDate && (
+              <View style={styles.dateRow}>
+                <Text style={styles.selectedDateText}>
+                  {format(new Date(startDate), "yyyy.MM.dd")} ~{" "}
+                  {endDate ? format(new Date(endDate), "yyyy.MM.dd") : ""}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.weekRow}>
+            {["일", "월", "화", "수", "목", "금", "토"].map((day, idx) => (
+              <Text key={idx} style={styles.dayText}>
+                {day}
+              </Text>
+            ))}
+          </View>
+        </View>
+        <FlatList
+          data={monthList}
+          keyExtractor={(item) => item.toString()}
+          renderItem={renderMonth}
+          onEndReached={() => loadMoreMonths("next")}
+          onEndReachedThreshold={0.8}
+          onScrollBeginDrag={() => loadMoreMonths("prev")}
+          style={styles.monthList}
+          showsVerticalScrollIndicator={false}
+        />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            if (!startDate || !endDate) {
+              alert("시작일과 종료일을 모두 선택해주세요.");
+              return;
+            } else {
+              setData((prev) => ({
+                ...prev,
+                startDate: startDate,
+                endDate: endDate,
+              }));
+              router.push("/exam_schedule2");
+            }
+          }}
+        >
+          <Text style={styles.buttonText}>입력 완료</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   backButtonContainer: {
-    position: "absolute",
+    //position: "absolute",
     top: 10,
     left: 10,
     zIndex: 10,
@@ -266,7 +305,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     //paddingBottom: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     //marginBottom: 10,
     backgroundColor: "#EFE5FF",
   },
@@ -275,22 +314,27 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "left",
     //paddingLeft: 20,
-    marginBottom: 20,
+    //marginBottom: 20,
     paddingBottom: 10,
     color: "#535353",
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
+  headerColumn: {
+    flexDirection: "column",
+    //justifyContent: "space-between",
+    //alignItems: "flex-end",
     paddingHorizontal: 30,
     marginBottom: 10,
   },
+  dateRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end", // 오른쪽 정렬
+  },
   selectedDateText: {
+    flexDirection: "row",
     fontSize: 18,
     color: "#535353",
     fontWeight: "500",
-    paddingBottom: 8,
+    marginRight: 1,
   },
 
   weekRow: {

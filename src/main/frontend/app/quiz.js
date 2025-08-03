@@ -14,9 +14,11 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function QuizScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { newQuizName, subjective, objective, ox } = useLocalSearchParams();
 
   const [quizList, setQuizList] = useState([]);
@@ -93,7 +95,9 @@ export default function QuizScreen() {
   };
 
   const handleBulkDelete = () => {
-    setQuizList((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
+    setQuizList((prev) =>
+      prev.filter((item) => !selectedIds.includes(item.id))
+    );
     cancelEditing();
   };
 
@@ -107,7 +111,9 @@ export default function QuizScreen() {
         ),
       },
     });
-    setQuizList((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
+    setQuizList((prev) =>
+      prev.filter((item) => !selectedIds.includes(item.id))
+    );
     cancelEditing();
   };
 
@@ -130,7 +136,11 @@ export default function QuizScreen() {
     return (
       <TouchableOpacity
         key={quiz.id}
-        style={[styles.quizItem, isSelected && { backgroundColor: "#D3C1E5" }]}
+        style={[
+          styles.quizItem,
+          isSelected && { backgroundColor: "#D3C1E5" },
+          { flex: 1 },
+        ]}
         onPress={() => isEditing && toggleSelect(quiz.id)}
         activeOpacity={isEditing ? 0.7 : 1}
       >
@@ -231,119 +241,175 @@ export default function QuizScreen() {
   ];
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { paddingHorizontal: 20 }]}
-    >
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={styles.title}>퀴즈</Text>
-        {!isEditing ? (
-          <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={{ fontSize: 16, color: "#7D6DAF" }}>편집</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ flexDirection: "row", gap: 12 }}>
-            <TouchableOpacity onPress={() => setMoveModalVisible(true)}>
-              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>이동</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleBulkDelete}>
-              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>삭제</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={cancelEditing}>
-              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>취소</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+    <>
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: "#ffffffff",
+          zIndex: 10,
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: insets.bottom,
+          backgroundColor: "#ffffffff",
+          zIndex: 10,
+        }}
+      />
 
-      {quizList.length === 0 ? (
-        <ScrollView contentContainerStyle={styles.scrollContentEmpty} style={{ flex: 1 }}>
-          <Image
-            source={require("../assets/images/emptynote.png")}
-            style={styles.emptyImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.emptyMessage}>
-            아직 생성된 문제가 없어요!{"\n"}학습한 내용을 점검해보세요!
-          </Text>
-          <CreateQuizButton />
-        </ScrollView>
-      ) : (
-        <FlatList
-          data={quizList}
-          keyExtractor={(item) => item.id}
-          renderItem={renderQuizItem}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ListFooterComponent={<CreateQuizButton />}
-        />
-      )}
-
-      <View style={styles.floatingButtons}>
-        <TouchableOpacity style={styles.circleButton} onPress={handleAddFolder}>
-          <Feather name="folder-plus" size={24} color="#B9A4DA" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.bottomNav}>
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.navItem}
-            onPress={() => {
-              setActiveTab(tab.name);
-              if (tab.name === "노트") router.push("/note");
-              else if (tab.name === "퀴즈") router.push("/quiz");
-              else if (tab.name === "마이페이지") router.push("/mypage");
-              else if (tab.name === "홈") router.push("/main");
-            }}
-          >
-            <View
-              style={[
-                styles.dot,
-                activeTab === tab.name ? styles.dotActive : styles.dotInactive,
-              ]}
-            />
-            <Text
-              style={[
-                styles.navText,
-                activeTab === tab.name ? styles.navTextActive : styles.navTextInactive,
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Modal
-        visible={moveModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMoveModalVisible(false)}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+            paddingHorizontal: 20,
+          },
+        ]}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPressOut={() => setMoveModalVisible(false)}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
-          <View style={styles.modalMenu}>
-            {["폴더1", "폴더2", "폴더3"].map((folder) => (
-              <TouchableOpacity
-                key={folder}
-                onPress={() => handleMoveToFolder(folder)}
-              >
-                <Text style={styles.modalItem}>{folder}로 이동</Text>
+          <Text style={styles.title}>퀴즈</Text>
+          {!isEditing ? (
+            <TouchableOpacity onPress={() => setIsEditing(true)}>
+              <Text style={{ fontSize: 16, color: "#7D6DAF" }}>편집</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <TouchableOpacity onPress={() => setMoveModalVisible(true)}>
+                <Text style={{ fontSize: 16, color: "#7D6DAF" }}>이동</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </KeyboardAvoidingView>
+              <TouchableOpacity onPress={handleBulkDelete}>
+                <Text style={{ fontSize: 16, color: "#7D6DAF" }}>삭제</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={cancelEditing}>
+                <Text style={{ fontSize: 16, color: "#7D6DAF" }}>취소</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {quizList.length === 0 ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContentEmpty}
+            style={{ flex: 1 }}
+          >
+            <Image
+              source={require("../assets/images/emptynote.png")}
+              style={styles.emptyImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyMessage}>
+              아직 생성된 문제가 없어요!{"\n"}학습한 내용을 점검해보세요!
+            </Text>
+            <CreateQuizButton />
+          </ScrollView>
+        ) : (
+          <FlatList
+            data={quizList}
+            keyExtractor={(item) => item.id}
+            renderItem={renderQuizItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            ListFooterComponent={<CreateQuizButton />}
+          />
+        )}
+
+        <View style={styles.floatingButtons}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={handleAddFolder}
+          >
+            <Feather name="folder-plus" size={24} color="#B9A4DA" />
+          </TouchableOpacity>
+        </View>
+
+        <View
+          style={[
+            styles.bottomNav,
+            {
+              paddingBottom: insets.bottom,
+              height: 70 + insets.bottom,
+            },
+          ]}
+        >
+          {tabs.map((tab, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.navItem}
+              onPress={() => {
+                setActiveTab(tab.name);
+                if (tab.name === "노트") router.push("/note");
+                else if (tab.name === "퀴즈") router.push("/quiz");
+                else if (tab.name === "마이페이지") router.push("/mypage");
+                else if (tab.name === "홈") router.push("/main");
+              }}
+            >
+              <View
+                style={[
+                  styles.dot,
+                  activeTab === tab.name
+                    ? styles.dotActive
+                    : styles.dotInactive,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.navText,
+                  activeTab === tab.name
+                    ? styles.navTextActive
+                    : styles.navTextInactive,
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Modal
+          visible={moveModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMoveModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPressOut={() => setMoveModalVisible(false)}
+          >
+            <View style={styles.modalMenu}>
+              {["폴더1", "폴더2", "폴더3"].map((folder) => (
+                <TouchableOpacity
+                  key={folder}
+                  onPress={() => handleMoveToFolder(folder)}
+                >
+                  <Text style={styles.modalItem}>{folder}로 이동</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 70 },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   title: {
     fontFamily: "Abhaya Libre ExtraBold",
     fontSize: 32,
@@ -351,6 +417,7 @@ const styles = StyleSheet.create({
     color: "#3C3C3C",
     marginLeft: 3,
     marginBottom: 20,
+    paddingTop: 20,
   },
   scrollContentEmpty: {
     flexGrow: 1,
@@ -456,9 +523,6 @@ const styles = StyleSheet.create({
   dotInactive: {
     backgroundColor: "#ccc",
   },
-  quizListContainer: {
-    paddingBottom: 20,
-  },
   quizItem: {
     width: "100%",
     height: 65,
@@ -518,7 +582,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     color: "#3C3C3C",
   },
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.2)",
     justifyContent: "center",

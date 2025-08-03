@@ -10,12 +10,14 @@ import {
   Image,
   Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, usePathname } from "expo-router";
 
 export default function MyPageScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const today = new Date();
 
@@ -88,144 +90,188 @@ export default function MyPageScreen() {
 
   return (
     <View style={{ backgroundColor: "#fff", flex: 1 }}>
-      <LinearGradient colors={["#F4EDFB", "#FFFFFF"]} style={styles.gradient}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>나의 시험</Text>
+      {/* SafeArea 위쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: "#EFE5FF", //위쪽 색상과 맞추기
+          zIndex: 10,
+        }}
+      />
 
-          <View style={styles.examCardWhiteRow}>
-            <Text style={styles.examText}>{examInfo.name}</Text>
-            <View style={styles.ddayTagSmallInside}>
-              <Text style={styles.ddayText}>{getDDay(examInfo.date)}</Text>
-            </View>
-          </View>
+      {/* SafeArea 아래쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: insets.bottom,
+          backgroundColor: "#ffffffff", //아래쪽 색상과 맞추기
+          zIndex: 10,
+        }}
+      />
 
-          <TouchableOpacity
-            style={styles.historyButton}
-            onPress={() => router.push("/past-exams")}
-          >
-            <Text style={styles.historyText}>지난 시험 보기 &gt;</Text>
-          </TouchableOpacity>
+      {/* 본문 */}
+      <View
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+        }}
+      >
+        <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.title}>나의 시험</Text>
 
-          <Text style={styles.subTitle}>시간표</Text>
-
-          <View style={styles.timetableBox}>
-            <Image
-              source={require("../assets/images/emptynote.png")}
-              style={styles.timetableImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.emptyMessage}>
-              아직 시간표를 불러오지 않았어요!{"\n"}사진으로 시간표를
-              불러와주세요.
-            </Text>
-            <TouchableOpacity style={styles.uploadButton}>
-              <Text style={styles.uploadText}>사진으로 시간표 불러오기</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.studyTitle}>나의 공부 시간</Text>
-          <View style={styles.calendarWrapper}>
-            <Calendar
-              current={formatMonth(today) + "-01"}
-              markingType="custom"
-              markedDates={markedDates}
-              onMonthChange={(month) => {
-                const newMonth = `${month.year}-${String(month.month).padStart(
-                  2,
-                  "0"
-                )}`;
-                setMarkedDates(getMarkedDatesForMonth(newMonth));
-              }}
-              theme={{
-                calendarBackground: "#fff",
-                textMonthFontWeight: "bold",
-                monthTextColor: "#000",
-                arrowColor: "#663399",
-                textSectionTitleColor: "#000",
-                dayTextColor: "#000",
-                textDayFontWeight: "500",
-                textDayFontSize: 16,
-              }}
-            />
-            <View style={styles.legendContainer}>
-              <View style={[styles.legendItem, { backgroundColor: "#E4D7F5" }]}>
-                {" "}
-                <Text style={styles.legendText}>1-3h</Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: "#BFA1E2" }]}>
-                {" "}
-                <Text style={styles.legendText}>3-6h</Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: "#8D5ACF" }]}>
-                {" "}
-                <Text style={styles.legendText}>6h-</Text>
+            <View style={styles.examCardWhiteRow}>
+              <Text style={styles.examText}>{examInfo.name}</Text>
+              <View style={styles.ddayTagSmallInside}>
+                <Text style={styles.ddayText}>{getDDay(examInfo.date)}</Text>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </LinearGradient>
 
-      <View style={styles.footerContainer}>
-        <View style={styles.handleBar} />
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => console.log("로그아웃")}
-        >
-          {" "}
-          <Text style={styles.logoutText}>로그아웃</Text>{" "}
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
-          {" "}
-          <Text style={styles.withdrawText}>회원 탈퇴하기</Text>{" "}
-        </TouchableOpacity>
-      </View>
-
-      {showWithdrawModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>회원 탈퇴하시겠습니까?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
-                <Text style={styles.modalCancel}>아니요</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log("탈퇴 완료");
-                  setShowWithdrawModal(false);
-                }}
-              >
-                <Text style={styles.modalConfirm}>예</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      <View style={styles.bottomNav}>
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.navItem}
-            onPress={() => router.push(tab.path)}
-          >
-            <View
-              style={[
-                styles.dot,
-                activeTab === tab.name ? styles.dotActive : styles.dotInactive,
-              ]}
-            />
-            <Text
-              style={[
-                styles.navText,
-                activeTab === tab.name
-                  ? styles.navTextActive
-                  : styles.navTextInactive,
-              ]}
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => router.push("/past-exams")}
             >
-              {tab.label}
-            </Text>
+              <Text style={styles.historyText}>지난 시험 보기 &gt;</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.subTitle}>시간표</Text>
+
+            <View style={styles.timetableBox}>
+              <Image
+                source={require("../assets/images/emptynote.png")}
+                style={styles.timetableImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.emptyMessage}>
+                아직 시간표를 불러오지 않았어요!{"\n"}사진으로 시간표를
+                불러와주세요.
+              </Text>
+              <TouchableOpacity style={styles.uploadButton}>
+                <Text style={styles.uploadText}>사진으로 시간표 불러오기</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.studyTitle}>나의 공부 시간</Text>
+            <View style={styles.calendarWrapper}>
+              <Calendar
+                current={formatMonth(today) + "-01"}
+                markingType="custom"
+                markedDates={markedDates}
+                onMonthChange={(month) => {
+                  const newMonth = `${month.year}-${String(
+                    month.month
+                  ).padStart(2, "0")}`;
+                  setMarkedDates(getMarkedDatesForMonth(newMonth));
+                }}
+                theme={{
+                  calendarBackground: "#fff",
+                  textMonthFontWeight: "bold",
+                  monthTextColor: "#000",
+                  arrowColor: "#663399",
+                  textSectionTitleColor: "#000",
+                  dayTextColor: "#000",
+                  textDayFontWeight: "500",
+                  textDayFontSize: 16,
+                }}
+              />
+              <View style={styles.legendContainer}>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#E4D7F5" }]}
+                >
+                  <Text style={styles.legendText}>1-3h</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#BFA1E2" }]}
+                >
+                  <Text style={styles.legendText}>3-6h</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#8D5ACF" }]}
+                >
+                  <Text style={styles.legendText}>6h-</Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </LinearGradient>
+
+        <View style={styles.footerContainer}>
+          <View style={styles.handleBar} />
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => console.log("로그아웃")}
+          >
+            <Text style={styles.logoutText}>로그아웃</Text>
           </TouchableOpacity>
-        ))}
+          <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
+            <Text style={styles.withdrawText}>회원 탈퇴하기</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showWithdrawModal && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>회원 탈퇴하시겠습니까?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
+                  <Text style={styles.modalCancel}>아니요</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    console.log("탈퇴 완료");
+                    setShowWithdrawModal(false);
+                  }}
+                >
+                  <Text style={styles.modalConfirm}>예</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View
+          style={[
+            styles.bottomNav,
+            {
+              paddingBottom: insets.bottom,
+              height: 70 + insets.bottom,
+            },
+          ]}
+        >
+          {tabs.map((tab, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.navItem}
+              onPress={() => router.push(tab.path)}
+            >
+              <View
+                style={[
+                  styles.dot,
+                  activeTab === tab.name
+                    ? styles.dotActive
+                    : styles.dotInactive,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.navText,
+                  activeTab === tab.name
+                    ? styles.navTextActive
+                    : styles.navTextInactive,
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -238,7 +284,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    marginTop: "15%",
+    //marginTop: "15%",
   },
   examCardWhiteRow: {
     flexDirection: "row",
@@ -339,11 +385,11 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
-    height: 100,
+    //height: 100,
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderColor: "#eee",
-    paddingBottom: 30,
+    //paddingBottom: 30,
   },
   navItem: { alignItems: "center", justifyContent: "center", flex: 1 },
   navText: { fontSize: 12 },
