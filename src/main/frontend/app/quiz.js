@@ -15,10 +15,10 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 
 export default function QuizScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { newQuizName, subjective, objective, ox } = useLocalSearchParams();
 
   const [quizList, setQuizList] = useState([]);
@@ -241,37 +241,12 @@ export default function QuizScreen() {
   ];
 
   return (
-    <>
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-
+    <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={[
           styles.container,
           {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
             paddingHorizontal: 20,
           },
         ]}
@@ -341,8 +316,7 @@ export default function QuizScreen() {
           style={[
             styles.bottomNav,
             {
-              paddingBottom: insets.bottom,
-              height: 70 + insets.bottom,
+              height: 70,
             },
           ]}
         >
@@ -404,7 +378,7 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </Modal>
       </KeyboardAvoidingView>
-    </>
+    </SafeAreaWrapper>
   );
 }
 
@@ -494,7 +468,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderColor: "#eee",
-    paddingBottom: 30,
+    //paddingBottom: 30,
   },
   navItem: {
     alignItems: "center",

@@ -2,7 +2,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import {
   Keyboard,
   FlatList,
@@ -23,7 +23,6 @@ import * as SecureStore from "expo-secure-store";
 export default function NoteFolder() {
   const { folderId, openAddNote } = useLocalSearchParams();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   const [notes, setNotes] = useState([]);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
@@ -139,34 +138,7 @@ export default function NoteFolder() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          //position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#ffffffff", //위쪽 색상과 맞추기
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff", //아래쪽 색상과 맞추기
-          zIndex: 10,
-        }}
-      />
-
-      {/* 본문 */}
+    <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
       <TouchableWithoutFeedback
         onPress={() => {
           if (Platform.OS !== "web") Keyboard.dismiss();
@@ -241,7 +213,7 @@ export default function NoteFolder() {
           </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 

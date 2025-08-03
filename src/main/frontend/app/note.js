@@ -21,6 +21,7 @@ import {
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 
 export default function NoteScreen() {
   const router = useRouter();
@@ -117,44 +118,10 @@ export default function NoteScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#ffffffff", // 상단 배경색
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff", // 하단 배경색
-          zIndex: 10,
-        }}
-      />
-
-      {/* 전체 본문에 SafeAreaInsets 적용! */}
+    <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[
-          styles.container,
-          {
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-            //paddingHorizontal: 20,
-          },
-        ]}
+        style={styles.container}
       >
         <Text style={styles.title}>학습 폴더</Text>
 
@@ -275,8 +242,7 @@ export default function NoteScreen() {
               bottom: 0,
               left: 0,
               right: 0,
-              paddingBottom: insets.bottom,
-              height: 70 + insets.bottom,
+              height: 70,
             },
           ]}
         >
@@ -314,7 +280,7 @@ export default function NoteScreen() {
           ))}
         </View>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import {
   View,
   Text,
@@ -28,7 +28,6 @@ const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data, setData } = useData();
   const { startDate, endDate, examName, subjects } = data;
 
@@ -286,41 +285,8 @@ export default function ExamInfoInput() {
 
   return (
     <PaperProvider>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#EFE5FF", //F4EDFF
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-
-      {/* 본문 */}
-      <View style={styles.container}>
-        <View
-          style={{
-            flex: 1,
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-          }}
-        >
+      <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+        <View style={styles.container}>
           {loading && (
             <View style={styles.loadingOverlay}>
               <Image
@@ -527,7 +493,7 @@ export default function ExamInfoInput() {
             <Text style={styles.submitBtnText}>입력 완료</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaWrapper>
     </PaperProvider>
   );
 }
@@ -599,7 +565,8 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
-    borderRadius: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: "#fff",
     paddingTop: 10,
   },
@@ -637,7 +604,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   input: {
-    height: 35,
+    //height: 45,
+    padding: 14,
     backgroundColor: "#FAF8FD",
     borderColor: "#F4F1F5",
     borderWidth: 0.2,
