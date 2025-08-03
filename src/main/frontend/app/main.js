@@ -4,6 +4,7 @@ import Checkbox from "expo-checkbox";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Animated,
   Image,
@@ -25,6 +26,7 @@ import { Dimensions } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState("홈");
   const [date, setDate] = useState(new Date());
   const [calendarVisible, setCalendarVisible] = useState(false);
@@ -246,10 +248,43 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
+      {/* SafeArea 위쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: "#EFE5FF", //F4EDFF
+          zIndex: 10,
+        }}
+      />
+
+      {/* SafeArea 아래쪽 배경 */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: insets.bottom,
+          backgroundColor: "#ffffffff",
+          zIndex: 10,
+        }}
+      />
+
+      {/* 본문 */}
+      <View
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        }}
+      >
         <View contentContainerStyle={styles.container}>
           <LinearGradient
-            colors={["#F4EDFF", "#FFFFFF"]}
+            colors={["#EFE5FF", "#FFFFFF"]}
             style={styles.gradient}
           >
             <View style={styles.contentWrapper}>
@@ -257,7 +292,9 @@ export default function HomeScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   {selectedExam && selectedExam.examName ? (
                     <>
-                      <Text style={styles.title}>{selectedExam.examName}</Text>
+                      <Text style={[styles.title]}>
+                        {selectedExam.examName}
+                      </Text>
                       {/* 삭제 버튼 */}
                       <TouchableOpacity
                         onPress={() => setSelectedExam(null)}
@@ -269,13 +306,18 @@ export default function HomeScreen() {
                           borderRadius: 6,
                         }}
                       >
-                        <Text style={{ color: "white", fontWeight: "bold" }}>
+                        <Text
+                          style={{
+                            color: "white",
+                            fontWeight: "bold",
+                          }}
+                        >
                           시험 삭제
                         </Text>
                       </TouchableOpacity>
                     </>
                   ) : (
-                    <Text style={styles.title}>
+                    <Text style={[styles.title]}>
                       {userInfo.nickname}님, 어서오세요!
                     </Text>
                   )}
@@ -302,36 +344,48 @@ export default function HomeScreen() {
               )}
 
               {/* 상단 버튼 */}
-              <View style={styles.topButtons}>
+              <View
+                style={selectedExam ? styles.topButtons : styles.topButtons2}
+              >
                 {/* 달성률 Touch 영역 */}
-                <TouchableOpacity
-                  style={styles.achievementRate}
-                  onPress={() => {
-                    router.push("/progress");
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Text
-                      style={{
-                        color: "#6c4ed5",
-                        fontWeight: "bold",
-                        fontSize: 15,
-                      }}
+                {selectedExam && (
+                  <TouchableOpacity
+                    style={styles.achievementRate}
+                    onPress={() => {
+                      router.push("/progress");
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
                     >
-                      오늘 계획 {rate}% 달성!
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={15}
-                      color="#6c4ed5"
-                      style={{ marginLeft: 4, marginTop: 2 }}
-                    />
-                  </View>
-                </TouchableOpacity>
+                      <Text
+                        style={{
+                          color: "#6c4ed5",
+                          fontWeight: "bold",
+                          fontSize: 15,
+                        }}
+                      >
+                        오늘 계획 {rate}% 달성!
+                      </Text>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={15}
+                        color="#6c4ed5"
+                        style={{ marginLeft: 4, marginTop: 2 }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                )}
                 {/* 시험이 없을 때만 일정 버튼 노출 */}
                 {!selectedExam && (
-                  <View style={{ flexDirection: "row", gap: 10 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 10,
+                      justifyContent: "flex-end",
+                    }}
+                  >
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => router.push("/schedule_list")}
@@ -354,7 +408,7 @@ export default function HomeScreen() {
               <View style={styles.rowContainer}>
                 <TouchableOpacity
                   style={styles.timerButton}
-                  onPress={() => router.push("/timer")} // ✅ 추가된 부분
+                  onPress={() => router.push("/timer")}
                 >
                   <Ionicons name="time-outline" size={30} color="#B491DD" />
                   <Text style={styles.timerText}>Timer</Text>
@@ -494,7 +548,15 @@ export default function HomeScreen() {
           </Modal>
         </Animated.View>
       </View>
-      <View style={styles.bottomNav}>
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            paddingBottom: insets.bottom,
+            height: 70 + insets.bottom,
+          },
+        ]}
+      >
         {tabs.map((tab, index) => (
           <TouchableOpacity
             key={index}
@@ -538,13 +600,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontWeight: "bold",
-    marginTop: "10%",
+    //marginTop: "10%",
     marginBottom: 10,
     alignSelf: "flex-start",
   },
   topButtons: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    //justifyContent: "flex-end",
+    width: "100%",
+    //gap: 10,
+    marginBottom: 20,
+    //alignSelf: "flex-end",
+  },
+  topButtons2: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     width: "100%",
     //gap: 10,
     marginBottom: 20,
@@ -723,11 +793,11 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
-    height: 100,
+    //height: 70 + insets.bottom,
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderColor: "#eee",
-    paddingBottom: 30,
+    //paddingBottom: 30,
   },
   navItem: {
     alignItems: "center",
@@ -763,7 +833,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: "flex-start", // 텍스트 너비만큼 박스 크기 조정
     marginVertical: 10,
-    marginTop: "10%",
+    //marginTop: "10%",
   },
   ddayText: {
     color: "#fff", // 흰색 텍스트
