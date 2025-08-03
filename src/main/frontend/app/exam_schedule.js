@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import {
   View,
   Text,
@@ -21,7 +21,6 @@ import { useData } from "@/context/DataContext";
 
 export default function ExamDatePicker() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState(null);
   const [monthList, setMonthList] = useState([startOfMonth(new Date())]);
   const [startDate, setStartDate] = useState(null);
@@ -188,39 +187,10 @@ export default function ExamDatePicker() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#EFE5FF", //F4EDFF
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-
-      {/* 본문 */}
+    <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
         style={{
           flex: 1,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
         }}
       >
         <View style={styles.backButtonContainer}>
@@ -287,13 +257,13 @@ export default function ExamDatePicker() {
           <Text style={styles.buttonText}>입력 완료</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 
 const styles = StyleSheet.create({
   backButtonContainer: {
-    //position: "absolute",
+    position: "absolute",
     top: 10,
     left: 10,
     zIndex: 10,
@@ -305,7 +275,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     //paddingBottom: 20,
-    paddingTop: 20,
+    paddingTop: 50,
     //marginBottom: 10,
     backgroundColor: "#EFE5FF",
   },
@@ -357,7 +327,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 10, // 원하는 만큼 좌우 여백
   },
   monthList: {
-    borderRadius: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: "#fff",
     paddingTop: 20,
   },
@@ -376,16 +347,14 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   button: {
-    backgroundColor: "#000",
-    padding: 20,
-    borderRadius: 8,
-    margin: 20,
     position: "absolute",
     bottom: 30,
-    shadowColor: "#000",
-    zIndex: 100,
-    alignSelf: "center",
-    width: "90%",
+    left: 20,
+    right: 20,
+    backgroundColor: "#000",
+    borderRadius: 8,
+    padding: 20,
+    alignItems: "center",
   },
   buttonText: {
     color: "#fff",

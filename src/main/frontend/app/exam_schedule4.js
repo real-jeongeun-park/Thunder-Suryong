@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import {
   View,
   Text,
@@ -26,7 +26,6 @@ const { width } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data, setData } = useData();
 
   const [loading, setLoading] = useState(false);
@@ -262,236 +261,215 @@ export default function ExamInfoInput() {
 
   return (
     <PaperProvider>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#EFE5FF", //F4EDFF
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-
-      {/* 본문 */}
-      <View style={styles.container}>
-        <View
-          style={{
-            flex: 1,
-            paddingTop: insets.top,
-            paddingBottom: insets.bottom,
-          }}
-        >
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <Image
-                source={require("../assets/images/main.png")}
-                style={styles.character}
-                resizeMode="contain"
-              />
-              <Text style={styles.loadingText}>로딩 중입니다....</Text>
-            </View>
-          )}
-          {/* 뒤로가기 버튼 */}
-          <View style={styles.backButtonContainer}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={32} color="#535353" />
-            </TouchableOpacity>
-          </View>
-          {/* 상단 날짜 및 안내 */}
-          <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>계획을 등록해주세요.</Text>
-            <Text style={styles.subHeaderText}>
-              생성된 계획을 확인하고 등록해주세요!
-            </Text>
-          </View>
-          <View style={styles.inputContainer}>
-            <View style={styles.formBox}>
-              {/* 기간 */}
-              <Text style={styles.inputText}>기간</Text>
-              <Text style={styles.periodText}>
-                {startDate} ~ {endDate}
-              </Text>
-              {/* 시험명 */}
-              <Text style={styles.inputText}>시험명</Text>
-              <Text style={styles.periodText}>{examName}</Text>
-              {/* 일정 */}
-              <Text style={styles.inputText}>일정</Text>
-              <View style={styles.subjectScrollContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-                  {newSubjectList.map((subject, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.subjectBadge,
-                        selectedSubject === subject &&
-                          styles.subjectBadgeSelected,
-                      ]}
-                      onPress={() => setSelectedSubject(subject)}
-                    >
-                      <Text
-                        style={[
-                          styles.subjectBadgeText,
-                          selectedSubject === subject &&
-                            styles.subjectBadgeTextSelected,
-                        ]}
-                      >
-                        {subject}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+      <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+        <View style={styles.container}>
+          <View
+            style={{
+              flex: 1,
+            }}
+          >
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <Image
+                  source={require("../assets/images/main.png")}
+                  style={styles.character}
+                  resizeMode="contain"
+                />
+                <Text style={styles.loadingText}>로딩 중입니다....</Text>
               </View>
-
-              <View style={styles.scheduleListContainer}>
-                {loading ? (
-                  <Text style={styles.noScheduleText}>
-                    일정을 불러오는 중입니다...
-                  </Text>
-                ) : selectedPlans.length === 0 ? (
-                  <Text style={styles.noScheduleText}>
-                    선택한 과목의 일정이 없습니다.
-                  </Text>
-                ) : (
-                  <ScrollView
-                    style={{ maxHeight: 300 }}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {selectedPlans.map((plan, idx) => (
-                      <View key={idx} style={styles.scheduleItem}>
-                        <Text style={styles.scheduleWeek}>
-                          날짜: {plan.date}
+            )}
+            {/* 뒤로가기 버튼 */}
+            <View style={styles.backButtonContainer}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={32} color="#535353" />
+              </TouchableOpacity>
+            </View>
+            {/* 상단 날짜 및 안내 */}
+            <View style={styles.headerContainer}>
+              <Text style={styles.headerTitle}>계획을 등록해주세요.</Text>
+              <Text style={styles.subHeaderText}>
+                생성된 계획을 확인하고 등록해주세요!
+              </Text>
+            </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.formBox}>
+                {/* 기간 */}
+                <Text style={styles.inputText}>기간</Text>
+                <Text style={styles.periodText}>
+                  {startDate} ~ {endDate}
+                </Text>
+                {/* 시험명 */}
+                <Text style={styles.inputText}>시험명</Text>
+                <Text style={styles.periodText}>{examName}</Text>
+                {/* 일정 */}
+                <Text style={styles.inputText}>일정</Text>
+                <View style={styles.subjectScrollContainer}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+                    {newSubjectList.map((subject, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.subjectBadge,
+                          selectedSubject === subject &&
+                            styles.subjectBadgeSelected,
+                        ]}
+                        onPress={() => setSelectedSubject(subject)}
+                      >
+                        <Text
+                          style={[
+                            styles.subjectBadgeText,
+                            selectedSubject === subject &&
+                              styles.subjectBadgeTextSelected,
+                          ]}
+                        >
+                          {subject}
                         </Text>
-                        <Text style={styles.scheduleWeek}>
-                          주차/단원: {plan.week}
-                        </Text>
-                        <Text style={styles.scheduleContent}>
-                          내용: {plan.content}
-                        </Text>
-
-                        <View style={{ flexDirection: "row", marginTop: 8 }}>
-                          <TouchableOpacity
-                            style={[
-                              styles.actionButton,
-                              { backgroundColor: "#b6a3dbff" },
-                            ]}
-                            onPress={() => openEditModal(idx)}
-                          >
-                            <Text
-                              style={{
-                                color: "white",
-                                paddingHorizontal: 8,
-                                paddingVertical: 2,
-                              }}
-                            >
-                              수정
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.actionButton,
-                              { backgroundColor: "#7c66a8ff", marginLeft: 10 },
-                            ]}
-                            onPress={() => {
-                              //if (confirm("정말 삭제하시겠습니까?")) {
-                              handleDeletePlan(idx);
-                              //}
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: "white",
-                                paddingHorizontal: 8,
-                                paddingVertical: 2,
-                              }}
-                            >
-                              삭제
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </ScrollView>
-                )}
-              </View>
-            </View>
-          </View>
-          <Modal
-            visible={editModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setEditModalVisible(false)}
-          >
-            <View style={styles.modalBackground}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>계획 수정하기</Text>
+                </View>
 
-                <TextInput
-                  style={styles.modalInput}
-                  value={editDate}
-                  onChangeText={setEditDate}
-                  placeholder="날짜 (YYYY-MM-DD)"
-                />
-                <TextInput
-                  style={styles.modalInput}
-                  value={editWeek}
-                  onChangeText={setEditWeek}
-                  placeholder="주차/단원"
-                />
-                <TextInput
-                  style={[styles.modalInput, { height: 80 }]}
-                  value={editContent}
-                  onChangeText={setEditContent}
-                  multiline
-                  placeholder="내용"
-                />
+                <View style={styles.scheduleListContainer}>
+                  {loading ? (
+                    <Text style={styles.noScheduleText}>
+                      일정을 불러오는 중입니다...
+                    </Text>
+                  ) : selectedPlans.length === 0 ? (
+                    <Text style={styles.noScheduleText}>
+                      선택한 과목의 일정이 없습니다.
+                    </Text>
+                  ) : (
+                    <ScrollView
+                      style={{ maxHeight: 300 }}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {selectedPlans.map((plan, idx) => (
+                        <View key={idx} style={styles.scheduleItem}>
+                          <Text style={styles.scheduleWeek}>
+                            날짜: {plan.date}
+                          </Text>
+                          <Text style={styles.scheduleWeek}>
+                            주차/단원: {plan.week}
+                          </Text>
+                          <Text style={styles.scheduleContent}>
+                            내용: {plan.content}
+                          </Text>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.modalButton,
-                      { backgroundColor: "#ccc", marginRight: 10 },
-                    ]}
-                    onPress={() => setEditModalVisible(false)}
-                  >
-                    <Text>취소</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: "#7A4DD6" }]}
-                    onPress={handleSaveEdit}
-                  >
-                    <Text style={{ color: "white" }}>저장</Text>
-                  </TouchableOpacity>
+                          <View style={{ flexDirection: "row", marginTop: 8 }}>
+                            <TouchableOpacity
+                              style={[
+                                styles.actionButton,
+                                { backgroundColor: "#b6a3dbff" },
+                              ]}
+                              onPress={() => openEditModal(idx)}
+                            >
+                              <Text
+                                style={{
+                                  color: "white",
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 2,
+                                }}
+                              >
+                                수정
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.actionButton,
+                                {
+                                  backgroundColor: "#7c66a8ff",
+                                  marginLeft: 10,
+                                },
+                              ]}
+                              onPress={() => {
+                                //if (confirm("정말 삭제하시겠습니까?")) {
+                                handleDeletePlan(idx);
+                                //}
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: "white",
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 2,
+                                }}
+                              >
+                                삭제
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  )}
                 </View>
               </View>
             </View>
-          </Modal>
-          {/* 입력 완료 버튼 */}
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-            <Text style={styles.submitBtnText}>입력 완료</Text>
-          </TouchableOpacity>
+            <Modal
+              visible={editModalVisible}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={() => setEditModalVisible(false)}
+            >
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>계획 수정하기</Text>
+
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editDate}
+                    onChangeText={setEditDate}
+                    placeholder="날짜 (YYYY-MM-DD)"
+                  />
+                  <TextInput
+                    style={styles.modalInput}
+                    value={editWeek}
+                    onChangeText={setEditWeek}
+                    placeholder="주차/단원"
+                  />
+                  <TextInput
+                    style={[styles.modalInput, { height: 80 }]}
+                    value={editContent}
+                    onChangeText={setEditContent}
+                    multiline
+                    placeholder="내용"
+                  />
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.modalButton,
+                        { backgroundColor: "#ccc", marginRight: 10 },
+                      ]}
+                      onPress={() => setEditModalVisible(false)}
+                    >
+                      <Text>취소</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalButton,
+                        { backgroundColor: "#7A4DD6" },
+                      ]}
+                      onPress={handleSaveEdit}
+                    >
+                      <Text style={{ color: "white" }}>저장</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+            {/* 입력 완료 버튼 */}
+            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+              <Text style={styles.submitBtnText}>입력 완료</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </SafeAreaWrapper>
     </PaperProvider>
   );
 }
@@ -573,7 +551,8 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
-    borderRadius: 30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: "#fff",
     paddingTop: 10,
   },

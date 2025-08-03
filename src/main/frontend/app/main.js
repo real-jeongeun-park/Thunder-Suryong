@@ -4,7 +4,8 @@ import Checkbox from "expo-checkbox";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
+
 import {
   Animated,
   Image,
@@ -26,7 +27,6 @@ import { Dimensions } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState("홈");
   const [date, setDate] = useState(new Date());
   const [calendarVisible, setCalendarVisible] = useState(false);
@@ -247,39 +247,10 @@ export default function HomeScreen() {
   }, [userInfo]);
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* SafeArea 위쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: "#EFE5FF", //F4EDFF
-          zIndex: 10,
-        }}
-      />
-
-      {/* SafeArea 아래쪽 배경 */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: insets.bottom,
-          backgroundColor: "#ffffffff",
-          zIndex: 10,
-        }}
-      />
-
-      {/* 본문 */}
+    <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
         style={{
           flex: 1,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
         }}
       >
         <View contentContainerStyle={styles.container}>
@@ -552,8 +523,7 @@ export default function HomeScreen() {
         style={[
           styles.bottomNav,
           {
-            paddingBottom: insets.bottom,
-            height: 70 + insets.bottom,
+            height: 70,
           },
         ]}
       >
@@ -587,7 +557,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 
@@ -793,11 +763,9 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
-    //height: 70 + insets.bottom,
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderColor: "#eee",
-    //paddingBottom: 30,
   },
   navItem: {
     alignItems: "center",
