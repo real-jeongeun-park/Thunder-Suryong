@@ -22,6 +22,7 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import BottomNavigation from "../components/BottomNavigation";
 
 export default function NoteScreen() {
   const router = useRouter();
@@ -233,52 +234,8 @@ export default function NoteScreen() {
           </TouchableWithoutFeedback>
         </Modal>
 
-        {/* 하단 네비게이션 바 (안전영역 인셋 반영) */}
-        <View
-          style={[
-            styles.bottomNav,
-            {
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 70,
-            },
-          ]}
-        >
-          {tabs.map((tab, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.navItem}
-              onPress={() => {
-                setActiveTab(tab.name);
-                if (tab.name === "노트") router.push("/note");
-                else if (tab.name === "퀴즈") router.push("/quiz");
-                else if (tab.name === "마이페이지") router.push("/mypage");
-                else if (tab.name === "홈") router.push("/main");
-              }}
-            >
-              <View
-                style={[
-                  styles.dot,
-                  activeTab === tab.name
-                    ? styles.dotActive
-                    : styles.dotInactive,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navText,
-                  activeTab === tab.name
-                    ? styles.navTextActive
-                    : styles.navTextInactive,
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* 하단 네비게이션 바 */}
+        <BottomNavigation />
       </KeyboardAvoidingView>
     </SafeAreaWrapper>
   );

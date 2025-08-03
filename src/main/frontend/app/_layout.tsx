@@ -25,8 +25,8 @@ export default function RootLayout() {
   return (
     <DataProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        {/* ✅ 전체 화면에서 header 숨기기 */}
-        <Stack screenOptions={{ headerShown: false }}>
+        {/* 전체 화면에서 header 숨기기 */}
+        <Stack screenOptions={{ headerShown: false, animation: "none" }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="+not-found" />

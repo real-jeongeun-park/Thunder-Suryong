@@ -14,8 +14,8 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import BottomNavigation from "../components/BottomNavigation";
 
 export default function QuizScreen() {
   const router = useRouter();
@@ -312,47 +312,7 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </View>
 
-        <View
-          style={[
-            styles.bottomNav,
-            {
-              height: 70,
-            },
-          ]}
-        >
-          {tabs.map((tab, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.navItem}
-              onPress={() => {
-                setActiveTab(tab.name);
-                if (tab.name === "노트") router.push("/note");
-                else if (tab.name === "퀴즈") router.push("/quiz");
-                else if (tab.name === "마이페이지") router.push("/mypage");
-                else if (tab.name === "홈") router.push("/main");
-              }}
-            >
-              <View
-                style={[
-                  styles.dot,
-                  activeTab === tab.name
-                    ? styles.dotActive
-                    : styles.dotInactive,
-                ]}
-              />
-              <Text
-                style={[
-                  styles.navText,
-                  activeTab === tab.name
-                    ? styles.navTextActive
-                    : styles.navTextInactive,
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <BottomNavigation />
 
         <Modal
           visible={moveModalVisible}
