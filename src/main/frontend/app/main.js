@@ -4,7 +4,9 @@ import Checkbox from "expo-checkbox";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import BottomNavigation from "../components/BottomNavigation";
 
 import {
   Animated,
@@ -27,13 +29,15 @@ import { Dimensions } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState("홈");
   const [date, setDate] = useState(new Date());
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [sheetHeight] = useState(new Animated.Value(280));
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const { height: screenHeight } = Dimensions.get("window");
+  const { width: screenWidth } = Dimensions.get("window");
+  const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.4));
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -187,7 +191,9 @@ export default function HomeScreen() {
   };
 
   const toggleSheet = () => {
-    const toValue = isExpanded ? 280 : screenHeight * 0.83;
+    const toValue = isExpanded
+      ? screenHeight * 0.4
+      : screenHeight * 0.95 - insets.bottom; // safe area bottom 제외
     Animated.timing(sheetHeight, {
       toValue,
       duration: 300,
@@ -387,7 +393,10 @@ export default function HomeScreen() {
 
                 <Image
                   source={require("../assets/images/main.png")}
-                  style={styles.character}
+                  style={[
+                    styles.character,
+                    { width: screenWidth * 0.6, height: screenHeight * 0.3 },
+                  ]}
                   resizeMode="contain"
                 />
               </View>
@@ -398,7 +407,7 @@ export default function HomeScreen() {
         {/* 말풍선 */}
         <View style={styles.speechContainer}>
           <Text style={styles.characterText}>
-            시험이 얼마 남지 않았네요! {"\n"} 오늘도 파이팅!
+            시험이 얼마 남지 않았네요! {"\n"}오늘도 파이팅!
           </Text>
         </View>
 
@@ -518,44 +527,7 @@ export default function HomeScreen() {
             </View>
           </Modal>
         </Animated.View>
-      </View>
-      <View
-        style={[
-          styles.bottomNav,
-          {
-            height: 70,
-          },
-        ]}
-      >
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.navItem}
-            onPress={() => {
-              setActiveTab(tab.name);
-              if (tab.name === "노트") router.push("/note");
-              else if (tab.name === "퀴즈") router.push("/quiz");
-              else if (tab.name === "마이페이지") router.push("/mypage");
-            }}
-          >
-            <View
-              style={[
-                styles.dot,
-                activeTab === tab.name ? styles.dotActive : styles.dotInactive,
-              ]}
-            />
-            <Text
-              style={[
-                styles.navText,
-                activeTab === tab.name
-                  ? styles.navTextActive
-                  : styles.navTextInactive,
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <BottomNavigation />
       </View>
     </SafeAreaWrapper>
   );
@@ -623,9 +595,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   character: {
-    width: 250,
-    height: 250,
+    //width: 250,
+    //height: 250,
     marginTop: 20,
+  },
+  speechContainer: {
+    position: "absolute",
+    width: "100%",
+    top: "30%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
+    //backgroundColor: "#6c4ed5",
+    padding: 20,
+    //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정
   },
   characterText: {
     backgroundColor: "#c9c4dfff",
@@ -807,14 +787,6 @@ const styles = StyleSheet.create({
     color: "#fff", // 흰색 텍스트
     fontWeight: "bold",
     fontSize: 16,
-  },
-  speechContainer: {
-    position: "absolute",
-    width: "100%",
-    top: "30%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
-    //backgroundColor: "#6c4ed5",
-    padding: 20,
-    //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정
   },
   bubble: {
     backgroundColor: "#6c4ed5", // 말풍선 배경색

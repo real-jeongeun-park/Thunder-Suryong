@@ -62,13 +62,13 @@ export default function Home() {
       <Animated.View style={{ opacity: fadeButtons, marginTop: 30 }}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/main")}
+          onPress={() => router.replace("/main")}
         >
           <Text style={styles.buttonText}>로그인</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/signup")}
+          onPress={() => router.replace("/signup")}
         >
           <Text style={styles.buttonText}>회원가입</Text>
         </TouchableOpacity>

@@ -191,6 +191,7 @@ export default function ExamDatePicker() {
       <View
         style={{
           flex: 1,
+          backgroundColor: "#EFE5FF",
         }}
       >
         <View style={styles.backButtonContainer}>
@@ -211,6 +212,11 @@ export default function ExamDatePicker() {
                 ? "시험 종료 일자를\n선택해 주세요."
                 : "시험 기간이\n맞나요?"}
             </Text>
+            {!startDate && (
+              <View style={styles.dateRow}>
+                <Text style={styles.selectedDateText}> </Text>
+              </View>
+            )}
             {startDate && (
               <View style={styles.dateRow}>
                 <Text style={styles.selectedDateText}>

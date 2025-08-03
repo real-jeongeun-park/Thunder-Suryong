@@ -14,6 +14,7 @@ import { Calendar } from "react-native-calendars";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, usePathname } from "expo-router";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import BottomNavigation from "../components/BottomNavigation";
 
 export default function MyPageScreen() {
   const router = useRouter();
@@ -90,146 +91,121 @@ export default function MyPageScreen() {
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       {/* 본문 */}
-      <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>나의 시험</Text>
+      <View style={{ flex: 1 }}>
+        <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.title}>나의 시험</Text>
 
-          <View style={styles.examCardWhiteRow}>
-            <Text style={styles.examText}>{examInfo.name}</Text>
-            <View style={styles.ddayTagSmallInside}>
-              <Text style={styles.ddayText}>{getDDay(examInfo.date)}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.historyButton}
-            onPress={() => router.push("/past-exams")}
-          >
-            <Text style={styles.historyText}>지난 시험 보기 &gt;</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.subTitle}>시간표</Text>
-
-          <View style={styles.timetableBox}>
-            <Image
-              source={require("../assets/images/emptynote.png")}
-              style={styles.timetableImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.emptyMessage}>
-              아직 시간표를 불러오지 않았어요!{"\n"}사진으로 시간표를
-              불러와주세요.
-            </Text>
-            <TouchableOpacity style={styles.uploadButton}>
-              <Text style={styles.uploadText}>사진으로 시간표 불러오기</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.studyTitle}>나의 공부 시간</Text>
-          <View style={styles.calendarWrapper}>
-            <Calendar
-              current={formatMonth(today) + "-01"}
-              markingType="custom"
-              markedDates={markedDates}
-              onMonthChange={(month) => {
-                const newMonth = `${month.year}-${String(month.month).padStart(
-                  2,
-                  "0"
-                )}`;
-                setMarkedDates(getMarkedDatesForMonth(newMonth));
-              }}
-              theme={{
-                calendarBackground: "#fff",
-                textMonthFontWeight: "bold",
-                monthTextColor: "#000",
-                arrowColor: "#663399",
-                textSectionTitleColor: "#000",
-                dayTextColor: "#000",
-                textDayFontWeight: "500",
-                textDayFontSize: 16,
-              }}
-            />
-            <View style={styles.legendContainer}>
-              <View style={[styles.legendItem, { backgroundColor: "#E4D7F5" }]}>
-                <Text style={styles.legendText}>1-3h</Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: "#BFA1E2" }]}>
-                <Text style={styles.legendText}>3-6h</Text>
-              </View>
-              <View style={[styles.legendItem, { backgroundColor: "#8D5ACF" }]}>
-                <Text style={styles.legendText}>6h-</Text>
+            <View style={styles.examCardWhiteRow}>
+              <Text style={styles.examText}>{examInfo.name}</Text>
+              <View style={styles.ddayTagSmallInside}>
+                <Text style={styles.ddayText}>{getDDay(examInfo.date)}</Text>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </LinearGradient>
 
-      <View style={styles.footerContainer}>
-        <View style={styles.handleBar} />
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => console.log("로그아웃")}
-        >
-          <Text style={styles.logoutText}>로그아웃</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
-          <Text style={styles.withdrawText}>회원 탈퇴하기</Text>
-        </TouchableOpacity>
-      </View>
-
-      {showWithdrawModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>회원 탈퇴하시겠습니까?</Text>
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
-                <Text style={styles.modalCancel}>아니요</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log("탈퇴 완료");
-                  setShowWithdrawModal(false);
-                }}
-              >
-                <Text style={styles.modalConfirm}>예</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      <View
-        style={[
-          styles.bottomNav,
-          {
-            height: 70,
-          },
-        ]}
-      >
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.navItem}
-            onPress={() => router.push(tab.path)}
-          >
-            <View
-              style={[
-                styles.dot,
-                activeTab === tab.name ? styles.dotActive : styles.dotInactive,
-              ]}
-            />
-            <Text
-              style={[
-                styles.navText,
-                activeTab === tab.name
-                  ? styles.navTextActive
-                  : styles.navTextInactive,
-              ]}
+            <TouchableOpacity
+              style={styles.historyButton}
+              onPress={() => router.push("/past-exams")}
             >
-              {tab.label}
-            </Text>
+              <Text style={styles.historyText}>지난 시험 보기 &gt;</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.subTitle}>시간표</Text>
+
+            <View style={styles.timetableBox}>
+              <Image
+                source={require("../assets/images/emptynote.png")}
+                style={styles.timetableImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.emptyMessage}>
+                아직 시간표를 불러오지 않았어요!{"\n"}사진으로 시간표를
+                불러와주세요.
+              </Text>
+              <TouchableOpacity style={styles.uploadButton}>
+                <Text style={styles.uploadText}>사진으로 시간표 불러오기</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.studyTitle}>나의 공부 시간</Text>
+            <View style={styles.calendarWrapper}>
+              <Calendar
+                current={formatMonth(today) + "-01"}
+                markingType="custom"
+                markedDates={markedDates}
+                onMonthChange={(month) => {
+                  const newMonth = `${month.year}-${String(
+                    month.month
+                  ).padStart(2, "0")}`;
+                  setMarkedDates(getMarkedDatesForMonth(newMonth));
+                }}
+                theme={{
+                  calendarBackground: "#fff",
+                  textMonthFontWeight: "bold",
+                  monthTextColor: "#000",
+                  arrowColor: "#663399",
+                  textSectionTitleColor: "#000",
+                  dayTextColor: "#000",
+                  textDayFontWeight: "500",
+                  textDayFontSize: 16,
+                }}
+              />
+              <View style={styles.legendContainer}>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#E4D7F5" }]}
+                >
+                  <Text style={styles.legendText}>1-3h</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#BFA1E2" }]}
+                >
+                  <Text style={styles.legendText}>3-6h</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { backgroundColor: "#8D5ACF" }]}
+                >
+                  <Text style={styles.legendText}>6h-</Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </LinearGradient>
+
+        <View style={styles.footerContainer}>
+          <View style={styles.handleBar} />
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => console.log("로그아웃")}
+          >
+            <Text style={styles.logoutText}>로그아웃</Text>
           </TouchableOpacity>
-        ))}
+          <TouchableOpacity onPress={() => setShowWithdrawModal(true)}>
+            <Text style={styles.withdrawText}>회원 탈퇴하기</Text>
+          </TouchableOpacity>
+        </View>
+
+        {showWithdrawModal && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>회원 탈퇴하시겠습니까?</Text>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
+                  <Text style={styles.modalCancel}>아니요</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    console.log("탈퇴 완료");
+                    setShowWithdrawModal(false);
+                  }}
+                >
+                  <Text style={styles.modalConfirm}>예</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <BottomNavigation />
       </View>
     </SafeAreaWrapper>
   );
