@@ -112,14 +112,6 @@ export default function HomeScreen() {
         }));
 
         setPlans(transformed);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        console.log("계획 불러오기 성공");
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-        console.log("계획 불러오기 성공");
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       } catch (err) {
         console.log("계획 불러오기 실패", err);
       } finally {
@@ -143,19 +135,6 @@ export default function HomeScreen() {
         } else {
           token = await SecureStore.getItemAsync("accessToken");
         }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        console.log("Fetching default exam with token:", token);
-        console.log("userInfo.nickname:", userInfo?.nickname);
-
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-        console.log("Fetching default exam with token:", token);
-        console.log("userInfo.nickname:", userInfo?.nickname);
-
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
         const res = await axios.post(
           `${API_BASE_URL}/api/exam/get`,
           { nickname: userInfo.nickname },
@@ -166,16 +145,6 @@ export default function HomeScreen() {
           }
         );
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        console.log("기본 시험 API 응답:", res.data);
-
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-        console.log("기본 시험 API 응답:", res.data);
-
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
         const data = res.data;
         const defaultIndex = data.defaultExams.findIndex((v) => v === true);
 
@@ -188,15 +157,6 @@ export default function HomeScreen() {
         } else {
           setSelectedExam(null);
         }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        console.log(selectedExam);
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-        console.log(selectedExam);
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       } catch (err) {
         console.log(
           "기본 시험 정보 불러오기 실패!",
@@ -282,11 +242,6 @@ export default function HomeScreen() {
       getAchievementRate();
     }
   }, [userInfo]);
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-
   const handleRemoveExam = async () => {
     try{
       const response = await axios.post(`${API_BASE_URL}/api/exam/allFalse`, {
@@ -299,11 +254,6 @@ export default function HomeScreen() {
         console.log(err);
     }
   };
-
-=======
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
@@ -326,15 +276,7 @@ export default function HomeScreen() {
                       </Text>
                       {/* 삭제 버튼 */}
                       <TouchableOpacity
-<<<<<<< HEAD
-<<<<<<< HEAD
                         onPress={handleRemoveExam}
-=======
-                        onPress={() => setSelectedExam(null)}
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-                        onPress={() => setSelectedExam(null)}
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
                         style={{
                           marginLeft: 10,
                           backgroundColor: "#e57373",
@@ -369,19 +311,11 @@ export default function HomeScreen() {
                           new Date()
                         ) + 1;
                       const displayText =
-<<<<<<< HEAD
-<<<<<<< HEAD
                         diff === 0
                           ? "D-DAY"
                           : diff > 0
                           ? `D-${diff}`
                           : `D+${Math.abs(diff)}`;
-=======
-                        diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-                        diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 
                       return (
                         <View style={[styles.ddayBox, { marginLeft: 12 }]}>
@@ -439,15 +373,7 @@ export default function HomeScreen() {
                       style={styles.actionButton}
                       onPress={() => router.push("/schedule_list")}
                     >
-<<<<<<< HEAD
-<<<<<<< HEAD
                       <Text style={styles.buttonText}>시험 불러오기</Text>
-=======
-                      <Text style={styles.buttonText}>일정 불러오기</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-                      <Text style={styles.buttonText}>일정 불러오기</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionButton}
@@ -455,15 +381,7 @@ export default function HomeScreen() {
                         router.push("/exam_schedule");
                       }}
                     >
-<<<<<<< HEAD
-<<<<<<< HEAD
                       <Text style={styles.buttonText}>새로운 시험 생성</Text>
-=======
-                      <Text style={styles.buttonText}>새로운 일정 생성</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-                      <Text style={styles.buttonText}>새로운 일정 생성</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
                     </TouchableOpacity>
                   </View>
                 )}
@@ -528,15 +446,7 @@ export default function HomeScreen() {
               <Text style={{ alignSelf: "center", marginTop: 10 }}>
                 불러오는 중...
               </Text>
-<<<<<<< HEAD
-<<<<<<< HEAD
             ) : !plans || plans.length === 0 ? (
-=======
-            ) : plans.length === 0 ? (
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-            ) : plans.length === 0 ? (
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
               <Text style={{ alignSelf: "center", marginTop: 10 }}>
                 계획이 없습니다.
               </Text>

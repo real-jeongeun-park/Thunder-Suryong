@@ -119,15 +119,7 @@ export default function ExamListScreen() {
             <Ionicons name="chevron-back" size={32} color="#535353" />
           </TouchableOpacity>
         </View>
-<<<<<<< HEAD
-<<<<<<< HEAD
         <Text style={styles.title}>시험 목록</Text>
-=======
-        <Text style={styles.title}>나의 시험</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-        <Text style={styles.title}>나의 시험</Text>
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       </View>
       <FlatList
         data={exams}
