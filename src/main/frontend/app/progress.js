@@ -328,3 +328,195 @@ export default function CalendarTimetableScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    //flex: 1,
+    backgroundColor: "#fff",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: "15%",
+    paddingHorizontal: 10,
+    justifyContent: "center", // 가로 가운데 정렬
+    position: "relative", // 절대 위치 요소들 있으면 컨텍스트 유지용(필요에 따라)
+    // 또는 flex: 1 추가해서 전체 너비 차지하게 할 수도 있음
+    marginBottom: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: "500",
+    textAlign: "center",
+    marginTop: 0,
+    //marginBottom: 8,
+    flex: 1, // 텍스트가 headerRow 내에서 공간을 넓게 차지하게
+    // flexGrow: 1, flexShrink: 1 으로도 가능
+  },
+  backButton: {
+    position: "absolute",
+    left: 10,
+    // top값은 headerRow의 height와 marginTop에 맞게 적절히 조절
+    // 또는 flexBasis, width를 지정 가능
+  },
+  calendar: {
+    marginHorizontal: 30,
+    marginBottom: 14,
+  },
+  tagRow: {
+    flexDirection: "row",
+    marginLeft: 18,
+    marginBottom: 12,
+  },
+  tagBase: {
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  tagText: {
+    fontWeight: "bold",
+    fontSize: 10,
+  },
+  tabRow: {
+    //backgroundColor: "#9B73D2",
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    maxHeight: 40,
+    alignItems: "center",
+  },
+  tabButton: {
+    marginRight: 30,
+  },
+  activeTab: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#B493C3",
+  },
+  inactiveTab: {
+    fontSize: 18,
+    color: "#ccc",
+  },
+  underline: {
+    marginTop: 4,
+    height: 2,
+    marginBottom: 2,
+    width: "100%",
+    backgroundColor: "#B493C3",
+  },
+  contentContainer: {
+    padding: 20,
+    // backgroundColor: "#B493C3",
+    //alignItems: "stretch",
+    minHeight: 500,
+    flexDirection: "column",
+    justifyContent: "center", // 세로 가운데 정렬
+    alignItems: "center",
+  },
+  timeTableBox: {
+    marginHorizontal: 27,
+    //borderRadius: 10,
+    height: 200,
+    backgroundColor: "#fff",
+  },
+  timeTableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 39,
+  },
+  timeTableHour: {
+    width: 30,
+    fontWeight: "bold",
+    fontSize: 12,
+    color: "#B493C3",
+    textAlign: "center",
+    marginRight: 8,
+  },
+  timeTableCell: {
+    width: 41.7,
+    height: 39,
+    backgroundColor: "#FAF8FD",
+    borderColor: "#B493C3",
+    borderWidth: 0.6,
+    //borderRadius: 4,
+    //marginRight: 1,
+  },
+  plannerBox: {
+    width: "100%",
+  },
+  card: {
+    backgroundColor: "#f5f0ff", // 연한 보라 배경
+    borderRadius: 10, // 둥근 모서리
+    padding: 16, // 안쪽 여백
+    //shadowColor: "#000", // 그림자 색
+    //shadowOffset: { width: 0, height: 2 }, // 그림자 위치
+    //shadowOpacity: 0.1, // 그림자 투명도
+    //shadowRadius: 4, // 그림자 퍼짐
+    elevation: 5, // 안드로이드용 그림자 효과
+    width: "100%",
+  },
+  toDoTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    alignSelf: "center",
+    marginBottom: 12,
+    color: "#533a99", // 약간 진한 보라색
+  },
+  planItem: {
+    flexDirection: "row", // 가로 정렬
+    alignItems: "center",
+    //justifyContent: "space-between", // 좌우 끝 정렬
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: "#faf5ff",
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#d3c5f7",
+  },
+  planText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#4b3a99",
+    flex: 1,
+  },
+  subTodoContainer: {
+    marginLeft: 24,
+    marginBottom: 10,
+  },
+  subTodoItem: {
+    flexDirection: "row", // 가로 정렬
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  subTodoText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#333",
+  },
+  addButton: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: "#d7ccf9",
+  },
+  addButtonText: {
+    color: "#5e43c2",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  subTodoTextContainer: {
+    flex: 1,
+  },
+  subTodoWeek: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: 500,
+    flexShrink: 0,
+  },
+  subTodoText: {
+    flexWrap: "wrap",
+    flexShrink: 1,
+  },
+});
