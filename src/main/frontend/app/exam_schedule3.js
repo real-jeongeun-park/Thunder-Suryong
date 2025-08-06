@@ -283,6 +283,29 @@ export default function ExamInfoInput() {
     });
   };
 
+  const handleToggleImportant = (filteredIdx) => {
+    // 현재 subjectInfo에서 해당 filteredIdx(=같은 subject의 filtered idx → 실제 인덱스 변환 필요)
+    const info = filteredSubjectInfo[filteredIdx];
+    if (!info) return;
+
+    const realIndex = subjectInfo.findIndex(
+      (item) =>
+        item.subject === info.subject &&
+        item.week === info.week &&
+        item.content === info.content
+    );
+    if (realIndex === -1) return;
+
+    setSubjectInfo((prev) => {
+      const newArr = [...prev];
+      newArr[realIndex] = {
+        ...newArr[realIndex],
+        important: !newArr[realIndex].important, // 토글
+      };
+      return newArr;
+    });
+  };
+
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
@@ -417,6 +440,17 @@ export default function ExamInfoInput() {
                       <View
                         style={{ flexDirection: "row", alignItems: "center" }}
                       >
+                        {/* 별 icon */}
+                        <TouchableOpacity
+                          onPress={() => handleToggleImportant(idx)}
+                          style={{ marginRight: 6 }} // 여유
+                        >
+                          <Ionicons
+                            name={info.important ? "star" : "star-outline"}
+                            size={22}
+                            color={info.important ? "#ffc23dff" : "#BDBDBD"}
+                          />
+                        </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => openEditModal(idx)}
                           style={styles.editButton}
