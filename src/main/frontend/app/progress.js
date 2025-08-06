@@ -15,6 +15,7 @@ import Checkbox from "expo-checkbox";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 
 const tabs = ["Time table", "Planner", "Completion rate"];
 const studyTags = [
@@ -68,10 +69,13 @@ export default function CalendarTimetableScreen() {
   useEffect(() => {
     const getTotalTimes = async () => {
       try {
-        const response = await axios.post(`${API_BASE_URL}/api/totalTime/getByMonth`, {
-          nickname: userInfo.nickname,
-          month: selectedMonth,
-        });
+        const response = await axios.post(
+          `${API_BASE_URL}/api/totalTime/getByMonth`,
+          {
+            nickname: userInfo.nickname,
+            month: selectedMonth,
+          }
+        );
         setDailyTotalTimes(response.data);
       } catch (err) {
         console.log("failed to load total times ", err);
@@ -177,11 +181,19 @@ export default function CalendarTimetableScreen() {
 
   const renderPlans = () => {
     if (isLoading) {
-      return <Text style={{ textAlign: "center", marginTop: 10 }}>계획 불러오는 중...</Text>;
+      return (
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          계획 불러오는 중...
+        </Text>
+      );
     }
 
     if (!plans || plans.length === 0) {
-      return <Text style={{ textAlign: "center", marginTop: 10 }}>등록된 계획이 없습니다.</Text>;
+      return (
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          등록된 계획이 없습니다.
+        </Text>
+      );
     }
 
     return (
@@ -249,83 +261,95 @@ export default function CalendarTimetableScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={32} color="#535353" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>통계</Text>
-      </View>
+    <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={32} color="#535353" />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>통계</Text>
+        </View>
 
-      <View style={styles.calendarWrapper}>
-        <Calendar
-          current={selectedDate}
-          onDayPress={(day) => setSelectedDate(day.dateString)}
-          onMonthChange={(monthInfo) =>
-            setSelectedMonth(monthInfo.dateString.slice(0, 7))
-          }
-          markedDates={getMarkedDates()}
-          theme={{
-            calendarBackground: "#fff",
-            textMonthFontWeight: "bold",
-            monthTextColor: "#000",
-            arrowColor: "#663399",
-            textSectionTitleColor: "#000",
-            dayTextColor: "#000",
-            textDayFontWeight: "500",
-            textDayFontSize: 16,
-          }}
-          style={styles.calendar}
-        />
-        <View style={styles.tagRow}>
-          {studyTags.map(({ text, bgColor, textColor }, idx) => (
-            <View
-              key={text}
-              style={[
-                styles.tagBase,
-                { backgroundColor: bgColor },
-                idx !== studyTags.length - 1 && { marginRight: 6 },
-              ]}
+        <View style={styles.calendarWrapper}>
+          <Calendar
+            current={selectedDate}
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+            onMonthChange={(monthInfo) =>
+              setSelectedMonth(monthInfo.dateString.slice(0, 7))
+            }
+            markedDates={getMarkedDates()}
+            theme={{
+              calendarBackground: "#fff",
+              textMonthFontWeight: "bold",
+              monthTextColor: "#000",
+              arrowColor: "#663399",
+              textSectionTitleColor: "#000",
+              dayTextColor: "#000",
+              textDayFontWeight: "500",
+              textDayFontSize: 16,
+            }}
+            style={styles.calendar}
+          />
+          <View style={styles.tagRow}>
+            {studyTags.map(({ text, bgColor, textColor }, idx) => (
+              <View
+                key={text}
+                style={[
+                  styles.tagBase,
+                  { backgroundColor: bgColor },
+                  idx !== studyTags.length - 1 && { marginRight: 6 },
+                ]}
+              >
+                <Text style={[styles.tagText, { color: textColor }]}>
+                  {text}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabRow}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                style={styles.tabButton}
+                activeOpacity={0.7}
+              >
+                <Text style={isActive ? styles.activeTab : styles.inactiveTab}>
+                  {tab}
+                </Text>
+                {isActive && <View style={styles.underline} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <View style={styles.contentContainer}>
+          {activeTab === "Time table" && (
+            <ScrollView
+              style={styles.timeTableBox}
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={[styles.tagText, { color: textColor }]}>{text}</Text>
-            </View>
-          ))}
+              {renderTimeTable()}
+            </ScrollView>
+          )}
+          {activeTab === "Planner" && (
+            <ScrollView style={styles.plannerBox}>{renderPlans()}</ScrollView>
+          )}
+          {activeTab === "Completion rate" && <Text>완성도 내용</Text>}
         </View>
       </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabRow}
-      >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab;
-          return (
-            <TouchableOpacity
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={styles.tabButton}
-              activeOpacity={0.7}
-            >
-              <Text style={isActive ? styles.activeTab : styles.inactiveTab}>{tab}</Text>
-              {isActive && <View style={styles.underline} />}
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.contentContainer}>
-        {activeTab === "Time table" && (
-          <ScrollView style={styles.timeTableBox} showsVerticalScrollIndicator={false}>
-            {renderTimeTable()}
-          </ScrollView>
-        )}
-        {activeTab === "Planner" && (
-          <ScrollView style={styles.plannerBox}>{renderPlans()}</ScrollView>
-        )}
-        {activeTab === "Completion rate" && <Text>완성도 내용</Text>}
-      </View>
-    </View>
+    </SafeAreaWrapper>
   );
 }
 
@@ -337,7 +361,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: "15%",
+    marginTop: 10,
     paddingHorizontal: 10,
     justifyContent: "center", // 가로 가운데 정렬
     position: "relative", // 절대 위치 요소들 있으면 컨텍스트 유지용(필요에 따라)

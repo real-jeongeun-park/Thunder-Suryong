@@ -7,7 +7,7 @@ import {
   FlatList,
   Modal,
   TextInput,
-  Platform
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +17,7 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 
 import { format } from "date-fns";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
 
 export default function TimerScreen() {
   const router = useRouter();
@@ -34,7 +35,10 @@ export default function TimerScreen() {
 
   const handleAddSubject = () => {
     if (newSubjectName.trim()) {
-      setSubjects([...subjects, { name: newSubjectName.trim(), time: "00:00:00", isRunning: false,}]);
+      setSubjects([
+        ...subjects,
+        { name: newSubjectName.trim(), time: "00:00:00", isRunning: false },
+      ]);
       setNewSubjectName("");
       setModalVisible(false);
     }
@@ -70,44 +74,45 @@ export default function TimerScreen() {
     checkLogin();
   }, []);
 
-
   // 과목 받아오기
   useEffect(() => {
     const getSubject = async () => {
-        try{
-            const response = await axios.post(`${API_BASE_URL}/api/subject/get`, {
-                nickname: userInfo.nickname,
-            });
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/subject/get`, {
+          nickname: userInfo.nickname,
+        });
 
-            const { subjectNameList, subjectIdList } = response.data;
+        const { subjectNameList, subjectIdList } = response.data;
 
-            const response2 = await axios.post(`${API_BASE_URL}/api/totalTime/get`, {
-                subjectIdList,
-                date: today,
-            });
+        const response2 = await axios.post(
+          `${API_BASE_URL}/api/totalTime/get`,
+          {
+            subjectIdList,
+            date: today,
+          }
+        );
 
-            const totalTimeList = response2.data;
+        const totalTimeList = response2.data;
 
-            if(subjectIdList && subjectIdList.length > 0){
-              const subjectList = subjectIdList.map((id, idx) => ({
-                  id,
-                  name: subjectNameList[idx],
-                  time: totalTimeList[idx],
-                  isRunning: false,
-              }));
+        if (subjectIdList && subjectIdList.length > 0) {
+          const subjectList = subjectIdList.map((id, idx) => ({
+            id,
+            name: subjectNameList[idx],
+            time: totalTimeList[idx],
+            isRunning: false,
+          }));
 
-              setSubjects(subjectList);
-            }
-        } catch(err){
-            console.log("failed to load subjects ", err);
+          setSubjects(subjectList);
         }
+      } catch (err) {
+        console.log("failed to load subjects ", err);
+      }
     };
 
-    if(userInfo !== null){
-        getSubject();
+    if (userInfo !== null) {
+      getSubject();
     }
   }, [userInfo]);
-
 
   const handleDeleteModeToggle = () => {
     if (isDeleteMode && selectedForDelete.length > 0) {
@@ -120,43 +125,44 @@ export default function TimerScreen() {
   // 현재 시간 받아오기
   const getNow = () => {
     const now = new Date();
-    return now.toTimeString().slice(0,8);
-  }
+    return now.toTimeString().slice(0, 8);
+  };
 
   // 시간 기록
   const saveTimer = async (subject, endTime) => {
-    try{
-        const response = await axios.post(`${API_BASE_URL}/api/timer/create`, {
-            nickname: userInfo.nickname,
-            subjectId: subject.id,
-            date: today,
-            startTime: startTime,
-            endTime,
-        });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/timer/create`, {
+        nickname: userInfo.nickname,
+        subjectId: subject.id,
+        date: today,
+        startTime: startTime,
+        endTime,
+      });
 
-        const response2 = await axios.post(`${API_BASE_URL}/api/totalTime/create`, {
-            subjectId: subject.id,
-            date: today,
-            totalTime: subject.time,
-        });
+      const response2 = await axios.post(
+        `${API_BASE_URL}/api/totalTime/create`,
+        {
+          subjectId: subject.id,
+          date: today,
+          totalTime: subject.time,
+        }
+      );
 
-        setStartTime(null);
-    } catch(err){
-        console.log("failed to save time ", err);
+      setStartTime(null);
+    } catch (err) {
+      console.log("failed to save time ", err);
     }
   };
 
   // 타이머 시작 상태 제어
   const handleStart = (name) => {
-    if(runningSubjectName && runningSubjectName !== name){
-        alert("다른 과목의 타이머가 이미 실행 중입니다. 먼저 멈춰주세요.");
-        return;
+    if (runningSubjectName && runningSubjectName !== name) {
+      alert("다른 과목의 타이머가 이미 실행 중입니다. 먼저 멈춰주세요.");
+      return;
     }
 
     const updatedSubjects = subjects.map((subject) =>
-        subject.name === name
-        ? {...subject, isRunning: true}
-        : subject
+      subject.name === name ? { ...subject, isRunning: true } : subject
     );
 
     setSubjects(updatedSubjects);
@@ -164,22 +170,20 @@ export default function TimerScreen() {
 
     // 시작 시간 먼저 기록
     setStartTime(getNow());
-  }
+  };
 
   // 타이머 종료 상태 제어
   const handleStop = (name) => {
-    if(!runningSubject) return;
+    if (!runningSubject) return;
 
-    if(runningSubjectName !== name){
+    if (runningSubjectName !== name) {
       // 실제로는 걸리는 부분 없음
       alert("다른 과목의 타이머가 이미 실행 중입니다. 먼저 멈춰주세요.");
       return;
     }
 
     const updatedSubjects = subjects.map((subject) =>
-        subject.name === name
-        ? {...subject, isRunning: false}
-        : subject
+      subject.name === name ? { ...subject, isRunning: false } : subject
     );
 
     setSubjects(updatedSubjects); // 리스트
@@ -187,7 +191,7 @@ export default function TimerScreen() {
 
     const selectedSubject = subjects.find((s) => s.name === name);
     saveTimer(selectedSubject, getNow());
-  }
+  };
 
   // 타이머 시간 증가
   useEffect(() => {
@@ -202,8 +206,13 @@ export default function TimerScreen() {
                 const [h, m, sec] = s.time.split(":").map(Number);
                 let totalSec = h * 3600 + m * 60 + sec + 1;
 
-                const hours = String(Math.floor(totalSec / 3600)).padStart(2, "0");
-                const minutes = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+                const hours = String(Math.floor(totalSec / 3600)).padStart(
+                  2,
+                  "0"
+                );
+                const minutes = String(
+                  Math.floor((totalSec % 3600) / 60)
+                ).padStart(2, "0");
                 const seconds = String(totalSec % 60).padStart(2, "0");
 
                 return { ...s, time: `${hours}:${minutes}:${seconds}` };
@@ -223,131 +232,136 @@ export default function TimerScreen() {
   const runningSubject = subjects.find((s) => s.name === runningSubjectName);
 
   return (
-    <View style={styles.container}>
-      {/* 🔙 뒤로가기 + 타이머 타이틀 */}
-    <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={28} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.header}>타이머</Text>
-    </View>
+    <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
+      <View style={styles.container}>
+        {/* 🔙 뒤로가기 + 타이머 타이틀 */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={28} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.header}>타이머</Text>
+        </View>
 
+        {/* 메인 타이머 */}
+        <View style={styles.timerContainer}>
+          <Text style={styles.todayText}>{today}</Text>
+          <Text style={styles.timerText}>
+            {runningSubject ? runningSubject.time : "00:00:00"}
+          </Text>
+        </View>
 
-      {/* 메인 타이머 */}
-      <View style={styles.timerContainer}>
-        <Text style={styles.todayText}>{today}</Text>
-        <Text style={styles.timerText}>
-          {runningSubject ? runningSubject.time : "00:00:00"}
-        </Text>
-      </View>
+        {/* 헤더 */}
+        <View style={styles.tableHeader}>
+          <Text style={styles.tableHeaderText}>과목</Text>
+          <Text style={styles.tableHeaderText}>시간</Text>
+          <Text style={styles.tableHeaderText}>시작/일시정지</Text>
+        </View>
 
-      {/* 헤더 */}
-      <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderText}>과목</Text>
-        <Text style={styles.tableHeaderText}>시간</Text>
-        <Text style={styles.tableHeaderText}>시작/일시정지</Text>
-      </View>
-
-      {/* 과목 리스트 */}
-      <FlatList
-        data={subjects}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => {
-          return (
-            <View style={styles.subjectRow}>
-              {isDeleteMode && (
-                <TouchableOpacity
-                  style={styles.checkbox}
-                  onPress={() => {
-                    if (selectedForDelete.includes(item.name)) {
-                      setSelectedForDelete(
-                        selectedForDelete.filter((n) => n !== item.name)
-                      );
-                    } else {
-                      setSelectedForDelete([...selectedForDelete, item.name]);
+        {/* 과목 리스트 */}
+        <FlatList
+          data={subjects}
+          keyExtractor={(item) => item.name}
+          renderItem={({ item }) => {
+            return (
+              <View style={styles.subjectRow}>
+                {isDeleteMode && (
+                  <TouchableOpacity
+                    style={styles.checkbox}
+                    onPress={() => {
+                      if (selectedForDelete.includes(item.name)) {
+                        setSelectedForDelete(
+                          selectedForDelete.filter((n) => n !== item.name)
+                        );
+                      } else {
+                        setSelectedForDelete([...selectedForDelete, item.name]);
+                      }
+                    }}
+                  >
+                    {selectedForDelete.includes(item.name) && (
+                      <Text style={styles.checkboxMark}>✔️</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                <View style={styles.cell}>
+                  <Text style={styles.subjectText}>{item.name}</Text>
+                </View>
+                <View style={styles.cell}>
+                  <Text style={styles.subjectText}>{item.time}</Text>
+                </View>
+                <View style={[styles.cell, styles.buttonGroup]}>
+                  <TouchableOpacity
+                    style={styles.circleButton}
+                    onPress={() =>
+                      item.isRunning
+                        ? handleStop(item.name)
+                        : handleStart(item.name)
                     }
-                  }}
-                >
-                  {selectedForDelete.includes(item.name) && (
-                    <Text style={styles.checkboxMark}>✔️</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-              <View style={styles.cell}>
-                <Text style={styles.subjectText}>{item.name}</Text>
+                  >
+                    <Text style={styles.buttonSymbol}>
+                      {item.isRunning ? "⏸" : "▶"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={styles.cell}>
-                <Text style={styles.subjectText}>{item.time}</Text>
-              </View>
-              <View style={[styles.cell, styles.buttonGroup]}>
-                <TouchableOpacity style={styles.circleButton}
-                 onPress={() =>
-                    item.isRunning ? handleStop(item.name) : handleStart(item.name)
-                 }>
-                  <Text style={styles.buttonSymbol}>
-                    {item.isRunning ? "⏸" : "▶"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        }
+            );
+          }}
           ListEmptyComponent={
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={{ fontSize: 16, color: '#999' }}>
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Text style={{ fontSize: 16, color: "#999" }}>
                 표시할 과목이 없습니다.
               </Text>
             </View>
           }
-         ListFooterComponent={
-          <View style={styles.footerButtonGroup}>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setModalVisible(true)}
-            >
-              <Text style={styles.addButtonText}>과목 추가하기</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={handleDeleteModeToggle}
-            >
-              <Text style={styles.addButtonText}>
-                {isDeleteMode ? "선택 삭제" : "과목 삭제하기"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        }
-      />
-
-      {/* 📦 과목 추가 모달 */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>과목을 추가해주세요.</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="과목명을 입력해주세요."
-              placeholderTextColor="#B491DD"
-              value={newSubjectName}
-              onChangeText={setNewSubjectName}
-            />
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalCancel}>취소</Text>
+          ListFooterComponent={
+            <View style={styles.footerButtonGroup}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.addButtonText}>과목 추가하기</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleAddSubject}>
-                <Text style={styles.modalConfirm}>확인</Text>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDeleteModeToggle}
+              >
+                <Text style={styles.addButtonText}>
+                  {isDeleteMode ? "선택 삭제" : "과목 삭제하기"}
+                </Text>
               </TouchableOpacity>
             </View>
+          }
+        />
+
+        {/* 📦 과목 추가 모달 */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>과목을 추가해주세요.</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="과목명을 입력해주세요."
+                placeholderTextColor="#B491DD"
+                value={newSubjectName}
+                onChangeText={setNewSubjectName}
+              />
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Text style={styles.modalCancel}>취소</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleAddSubject}>
+                  <Text style={styles.modalConfirm}>확인</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaWrapper>
   );
 }
 
@@ -356,7 +370,8 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 24,
+    gap: 10,
   },
   backButton: {
     fontSize: 24,
@@ -364,12 +379,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   header: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "bold",
+    color: "#B491DD",
   },
   timerContainer: {
     alignItems: "center",
-    marginBottom: 30
+    marginBottom: 30,
   },
   todayText: {
     fontSize: 25,
