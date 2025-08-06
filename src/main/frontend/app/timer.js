@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   header: { fontSize: 22, fontWeight: "bold" },
 
-  timerContainer: { alignItems: "center", marginBottom: 24 }
+  timerContainer: { alignItems: "center", marginBottom: 24 },
   todayText: {
     fontSize: 24,
     color: "#B491DD",
