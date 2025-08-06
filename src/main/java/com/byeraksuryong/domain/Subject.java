@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+<<<<<<< HEAD
 import java.time.LocalDate;
 
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 @Entity
 @Getter
 @Setter
@@ -19,7 +22,10 @@ public class Subject {
     @Column(name = "subject_id")
     private String subjectId;
     private String subject;
+<<<<<<< HEAD
 
     @Column(name = "exam_date")
     private LocalDate examDate;
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 }

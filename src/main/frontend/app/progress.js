@@ -19,9 +19,15 @@ import * as SecureStore from "expo-secure-store";
 
 const tabs = ["Time table", "Planner", "Completion rate"];
 const studyTags = [
+<<<<<<< HEAD
   { text: "0-3h", bgColor: "rgb(228, 215, 245)", textColor: "#6D7582" },
   { text: "3-6h", bgColor: "rgb(191, 161, 226)", textColor: "#F3EEFB" },
   { text: "6h+", bgColor: "rgb(141, 90, 207)", textColor: "#F3EEFB" },
+=======
+  { text: "1-3h", bgColor: "rgba(155,115,210,0.2)", textColor: "#6D7582" },
+  { text: "3-6h", bgColor: "rgba(155,115,210,0.65)", textColor: "#F3EEFB" },
+  { text: "6h+", bgColor: "#9B73D2", textColor: "#F3EEFB" },
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 ];
 
 export default function CalendarTimetableScreen() {
@@ -29,14 +35,21 @@ export default function CalendarTimetableScreen() {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
+<<<<<<< HEAD
   const [selectedMonth, setSelectedMonth] = useState(
     format(new Date(), "yyyy-MM")
   );
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [date, setDate] = useState(new Date());
 
   const hourCount = 24;
+<<<<<<< HEAD
   const daysCount = 7;
+=======
+  const daysCount = 6;
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 
   // --- plans 상태 및 데이터 로딩 ---
   const [plans, setPlans] = useState([]);
@@ -72,6 +85,7 @@ export default function CalendarTimetableScreen() {
     checkLogin();
   }, []);
 
+<<<<<<< HEAD
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
 
   // total time 불러오기
@@ -129,6 +143,8 @@ export default function CalendarTimetableScreen() {
     return marks;
   };
 
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   // 날짜 선택시 plans 새로 불러오기
   useEffect(() => {
     async function fetchPlans() {
@@ -146,7 +162,11 @@ export default function CalendarTimetableScreen() {
         const transformed = Object.entries(result).map(([subject, todos]) => ({
           id: subject,
           title: subject,
+<<<<<<< HEAD
           isExpanded: false,
+=======
+          isExpanded: true,
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
           todos: todos.map((todo) => ({
             id: todo.id,
             week: todo.week,
@@ -311,6 +331,7 @@ export default function CalendarTimetableScreen() {
       </View>
 
       {/* Calendar */}
+<<<<<<< HEAD
       <View style={styles.calendarWrapper}>
         <Calendar
           current={selectedDate}
@@ -347,6 +368,42 @@ export default function CalendarTimetableScreen() {
             </View>
           ))}
         </View>
+=======
+      <Calendar
+        current={selectedDate}
+        onDayPress={(day) => setSelectedDate(day.dateString)}
+        hideExtraDays={true}
+        markedDates={{
+          [selectedDate]: { selected: true, selectedColor: "#ad8ecfff" },
+        }}
+        theme={{
+          todayTextColor: "#1b7255ff",
+          textDayFontWeight: "normal",
+          arrowColor: "#8a539bff",
+          textDayFontSize: 18,
+          textMonthFontWeight: "bold",
+          textDayHeaderFontWeight: "600",
+          textDayHeaderFontSize: 14,
+          selectedDayBackgroundColor: "#4c4653ff",
+        }}
+        style={styles.calendar}
+      />
+
+      {/* 공부 시간 범주 태그 */}
+      <View style={styles.tagRow}>
+        {studyTags.map(({ text, bgColor, textColor }, idx) => (
+          <View
+            key={text}
+            style={[
+              styles.tagBase,
+              { backgroundColor: bgColor },
+              idx !== studyTags.length - 1 && { marginRight: 6 },
+            ]}
+          >
+            <Text style={[styles.tagText, { color: textColor }]}>{text}</Text>
+          </View>
+        ))}
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       </View>
 
       {/* 탭 메뉴 */}
@@ -477,6 +534,10 @@ const styles = StyleSheet.create({
   },
   timeTableBox: {
     marginHorizontal: 27,
+<<<<<<< HEAD
+=======
+    //borderRadius: 10,
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     height: 200,
     backgroundColor: "#fff",
   },
@@ -581,6 +642,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flexShrink: 1,
   },
+<<<<<<< HEAD
   calendarWrapper: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -591,4 +653,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#9E73D9",
   },
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 });

@@ -5,6 +5,9 @@ create table subject (
     exam_id varchar(36),
     subject_id varchar(36),
     subject varchar(50),
+<<<<<<< HEAD
     exam_date DATE,
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     primary key (id)
 );
