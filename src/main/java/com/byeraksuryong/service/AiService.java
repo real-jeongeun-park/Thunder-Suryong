@@ -90,6 +90,24 @@ public class AiService {
         String endDate = (String)body.get("endDate");
         String request;
 
+        // 존재하는 subject names
+        Set<String> existingSubjectNamesSet = new HashSet<>();
+        for(Map<String, String> element : subjectInfo){
+            String subject = element.get("subject");
+            existingSubjectNamesSet.add(subject);
+        }
+
+        List<String> exisitngSubjectNames = new ArrayList<>(existingSubjectNamesSet);
+
+        List<String> subjectNames = (List<String>)body.get("subjects");
+        List<String> subjectDates = (List<String>)body.get("subjectDates");
+
+        // key가 subjectNames, value가 subjectDates
+        Map<String, String> subjectMap = new HashMap<>();
+        for(int i = 0; i < subjectNames.size(); i++){
+            subjectMap.put(subjectNames.get(i), subjectDates.get(i));
+        }
+
         Map<String, String> styleInfo = getStyleInfo(nickname); // 스타일 가져옴. studyTime, studySubject, studystyle
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -113,6 +131,15 @@ public class AiService {
 
         System.out.println("텍스트 길이 (char 수): " + chunkedTextBuilder.length());
 
+        StringBuilder endDates = new StringBuilder();
+        for(int i = 0; i < exisitngSubjectNames.size(); i++){
+            String name = exisitngSubjectNames.get(i);
+            endDates.append(name + "의 종료일: ");
+            endDates.append(subjectMap.get(name) + "\n");
+        }
+
+        System.out.println(endDates.toString());
+
         if(styleInfo != null && !styleInfo.isEmpty()){
             request = "너는 똑똑한 AI 공부 도우미야. 아래를 모두 고려하여 **학습 플래너, 계획표**를 세워줘.\n" +
                     "[요구사항]\n" +
@@ -120,6 +147,8 @@ public class AiService {
                     "2. 하루에 여러 과목이 적절히 분배되도록 구성해줘.\n" +
                     "3. 출력은 꼭 아래 형식만 써야 해. **앞 뒤로, 혹은 중간에 다른 설명, 요약, 문장 없이** 형식대로만 출력해.\n" +
                     "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
+                    "5. **다음은 각 과목의 시험 종료일이야. 계획을 짤 때, 각 과목에 대해 종료일 이후의 계획은 있으면 안 돼. 예를 들어 AI융합개론의 종료일이 2025-07-31이면, 2025-07-31 이후의 계획에 AI융합개론 과목과 주차는 포함되면 안 돼.**\n" +
+                    endDates.toString() +
                     "\n" +
                     "[계획표 예시]\n" +
                     "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
@@ -142,6 +171,8 @@ public class AiService {
                     "2. 하루에 여러 과목이 적절히 분배되도록 구성해줘.\n" +
                     "3. 출력은 꼭 아래 형식만 써야 해. **앞 뒤로, 혹은 중간에 다른 설명, 요약, 문장 없이** 형식대로만 출력해.\n" +
                     "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
+                    "5. **다음은 각 과목의 시험 종료일이야. 계획을 짤 때, 각 과목에 대해 종료일 이후의 계획은 있으면 안 돼. 예를 들어 AI융합개론의 종료일이 2025-07-31이면, 2025-07-31 이후의 계획에 AI융합개론 과목과 주차는 포함되면 안 돼.**\n" +
+                    endDates.toString() +
                     "\n" +
                     "[계획표 예시]\n" +
                     "2025-07-18, AI융합개론, 1주, 강의 개요\n" +

@@ -19,9 +19,9 @@ import * as SecureStore from "expo-secure-store";
 
 const tabs = ["Time table", "Planner", "Completion rate"];
 const studyTags = [
-  { text: "1-3h", bgColor: "rgba(155,115,210,0.2)", textColor: "#6D7582" },
-  { text: "3-6h", bgColor: "rgba(155,115,210,0.65)", textColor: "#F3EEFB" },
-  { text: "6h+", bgColor: "#9B73D2", textColor: "#F3EEFB" },
+  { text: "0-3h", bgColor: "rgb(228, 215, 245)", textColor: "#6D7582" },
+  { text: "3-6h", bgColor: "rgb(191, 161, 226)", textColor: "#F3EEFB" },
+  { text: "6h+", bgColor: "rgb(141, 90, 207)", textColor: "#F3EEFB" },
 ];
 
 export default function CalendarTimetableScreen() {
@@ -29,11 +29,14 @@ export default function CalendarTimetableScreen() {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
+  const [selectedMonth, setSelectedMonth] = useState(
+    format(new Date(), "yyyy-MM")
+  );
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [date, setDate] = useState(new Date());
 
   const hourCount = 24;
-  const daysCount = 6;
+  const daysCount = 7;
 
   // --- plans 상태 및 데이터 로딩 ---
   const [plans, setPlans] = useState([]);
@@ -69,6 +72,63 @@ export default function CalendarTimetableScreen() {
     checkLogin();
   }, []);
 
+  const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
+
+  // total time 불러오기
+  useEffect(() => {
+    const getTotalTimes = async () => {
+        try{
+            const response = await axios.post(`${API_BASE_URL}/api/totalTime/getByMonth`, {
+                nickname: userInfo.nickname,
+                month: selectedMonth,
+            });
+
+            setDailyTotalTimes(response.data);
+        } catch(err){
+            console.log("failed to load total times ", err);
+        }
+    };
+
+    if(userInfo !== null){
+        getTotalTimes();
+    }
+  }, [userInfo, selectedMonth]);
+
+  // 날짜 별로 공부한 양에 따라 컬러 바꾸기
+  const getColorFromTime = (timeString) => {
+    if (!timeString) return undefined;
+
+    const [hours, minutes, seconds] = timeString.split(":").map(Number);
+    const totalHours = hours + minutes / 60 + seconds / 3600;
+
+    if (0 < totalHours && totalHours < 3) return "rgb(228, 215, 245)";        // 연보라
+    else if (3 <= totalHours && totalHours < 6) return "rgb(191, 161, 226)";       // 중간 보라
+    else if(totalHours >= 6) return "rgb(141, 90, 207)"; // 진한 보라
+  };
+
+  const getMarkedDates = () => {
+    const marks = {};
+
+    for (const [date, time] of Object.entries(dailyTotalTimes)) {
+      const color = getColorFromTime(time);
+      if (color) {
+        marks[date] = {
+          selected: true,
+          selectedColor: color,
+        };
+      }
+    }
+
+    // 현재 선택한 날짜는 덮어쓰기
+    marks[selectedDate] = {
+      ...(marks[selectedDate] || {}),
+      selected: true,
+      selectedColor: "grey",
+    };
+
+    return marks;
+  };
+
   // 날짜 선택시 plans 새로 불러오기
   useEffect(() => {
     async function fetchPlans() {
@@ -86,7 +146,7 @@ export default function CalendarTimetableScreen() {
         const transformed = Object.entries(result).map(([subject, todos]) => ({
           id: subject,
           title: subject,
-          isExpanded: true,
+          isExpanded: false,
           todos: todos.map((todo) => ({
             id: todo.id,
             week: todo.week,
@@ -251,40 +311,42 @@ export default function CalendarTimetableScreen() {
       </View>
 
       {/* Calendar */}
-      <Calendar
-        current={selectedDate}
-        onDayPress={(day) => setSelectedDate(day.dateString)}
-        hideExtraDays={true}
-        markedDates={{
-          [selectedDate]: { selected: true, selectedColor: "#ad8ecfff" },
-        }}
-        theme={{
-          todayTextColor: "#1b7255ff",
-          textDayFontWeight: "normal",
-          arrowColor: "#8a539bff",
-          textDayFontSize: 18,
-          textMonthFontWeight: "bold",
-          textDayHeaderFontWeight: "600",
-          textDayHeaderFontSize: 14,
-          selectedDayBackgroundColor: "#4c4653ff",
-        }}
-        style={styles.calendar}
-      />
-
-      {/* 공부 시간 범주 태그 */}
-      <View style={styles.tagRow}>
-        {studyTags.map(({ text, bgColor, textColor }, idx) => (
-          <View
-            key={text}
-            style={[
-              styles.tagBase,
-              { backgroundColor: bgColor },
-              idx !== studyTags.length - 1 && { marginRight: 6 },
-            ]}
-          >
-            <Text style={[styles.tagText, { color: textColor }]}>{text}</Text>
-          </View>
-        ))}
+      <View style={styles.calendarWrapper}>
+        <Calendar
+          current={selectedDate}
+          onDayPress={(day) => setSelectedDate(day.dateString)}
+          onMonthChange={(monthInfo) => {
+              const month = monthInfo.dateString.slice(0,7);
+              setSelectedMonth(month);
+          }}
+          markedDates={getMarkedDates()}
+          theme={{
+                    calendarBackground: "#fff",
+                    textMonthFontWeight: "bold",
+                    monthTextColor: "#000",
+                    arrowColor: "#663399",
+                    textSectionTitleColor: "#000",
+                    dayTextColor: "#000",
+                    textDayFontWeight: "500",
+                    textDayFontSize: 16,
+          }}
+          style={styles.calendar}
+        />
+        {/* 공부 시간 범주 태그 */}
+        <View style={styles.tagRow}>
+          {studyTags.map(({ text, bgColor, textColor }, idx) => (
+            <View
+              key={text}
+              style={[
+                styles.tagBase,
+                { backgroundColor: bgColor },
+                idx !== studyTags.length - 1 && { marginRight: 6 },
+              ]}
+            >
+              <Text style={[styles.tagText, { color: textColor }]}>{text}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* 탭 메뉴 */}
@@ -415,7 +477,6 @@ const styles = StyleSheet.create({
   },
   timeTableBox: {
     marginHorizontal: 27,
-    //borderRadius: 10,
     height: 200,
     backgroundColor: "#fff",
   },
@@ -519,5 +580,15 @@ const styles = StyleSheet.create({
   subTodoText: {
     flexWrap: "wrap",
     flexShrink: 1,
+  },
+  calendarWrapper: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 5,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#9E73D9",
   },
 });

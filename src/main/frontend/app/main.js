@@ -112,7 +112,6 @@ export default function HomeScreen() {
         }));
 
         setPlans(transformed);
-        console.log("계획 불러오기 성공");
       } catch (err) {
         console.log("계획 불러오기 실패", err);
       } finally {
@@ -137,9 +136,6 @@ export default function HomeScreen() {
           token = await SecureStore.getItemAsync("accessToken");
         }
 
-        console.log("Fetching default exam with token:", token);
-        console.log("userInfo.nickname:", userInfo?.nickname);
-
         const res = await axios.post(
           `${API_BASE_URL}/api/exam/get`,
           { nickname: userInfo.nickname },
@@ -149,8 +145,6 @@ export default function HomeScreen() {
             },
           }
         );
-
-        console.log("기본 시험 API 응답:", res.data);
 
         const data = res.data;
         const defaultIndex = data.defaultExams.findIndex((v) => v === true);
@@ -165,7 +159,6 @@ export default function HomeScreen() {
           setSelectedExam(null);
         }
 
-        console.log(selectedExam);
       } catch (err) {
         console.log(
           "기본 시험 정보 불러오기 실패!",
@@ -252,6 +245,21 @@ export default function HomeScreen() {
     }
   }, [userInfo]);
 
+
+
+  const handleRemoveExam = async () => {
+    try{
+      const response = await axios.post(`${API_BASE_URL}/api/exam/allFalse`, {
+        nickname: userInfo.nickname,
+      });
+
+      setSelectedExam(null);
+      setPlans(null);
+    } catch(err){
+        console.log(err);
+    }
+  };
+
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
@@ -274,7 +282,7 @@ export default function HomeScreen() {
                       </Text>
                       {/* 삭제 버튼 */}
                       <TouchableOpacity
-                        onPress={() => setSelectedExam(null)}
+                        onPress={handleRemoveExam}
                         style={{
                           marginLeft: 10,
                           backgroundColor: "#e57373",
@@ -309,7 +317,11 @@ export default function HomeScreen() {
                           new Date()
                         ) + 1;
                       const displayText =
-                        diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+                        diff === 0
+                          ? "D-DAY"
+                          : diff > 0
+                          ? `D-${diff}`
+                          : `D+${Math.abs(diff)}`;
 
                       return (
                         <View style={[styles.ddayBox, { marginLeft: 12 }]}>
@@ -367,7 +379,7 @@ export default function HomeScreen() {
                       style={styles.actionButton}
                       onPress={() => router.push("/schedule_list")}
                     >
-                      <Text style={styles.buttonText}>일정 불러오기</Text>
+                      <Text style={styles.buttonText}>시험 불러오기</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionButton}
@@ -375,7 +387,7 @@ export default function HomeScreen() {
                         router.push("/exam_schedule");
                       }}
                     >
-                      <Text style={styles.buttonText}>새로운 일정 생성</Text>
+                      <Text style={styles.buttonText}>새로운 시험 생성</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -440,7 +452,7 @@ export default function HomeScreen() {
               <Text style={{ alignSelf: "center", marginTop: 10 }}>
                 불러오는 중...
               </Text>
-            ) : plans.length === 0 ? (
+            ) : !plans || plans.length === 0 ? (
               <Text style={{ alignSelf: "center", marginTop: 10 }}>
                 계획이 없습니다.
               </Text>
