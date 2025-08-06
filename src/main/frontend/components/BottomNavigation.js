@@ -11,7 +11,7 @@ export default function BottomNavigation() {
     { name: "홈", label: "홈", path: "/main" },
     { name: "노트", label: "노트", path: "/note" },
     { name: "퀴즈", label: "퀴즈", path: "/quiz" },
-    { name: "마이페이지", label: "마이페이지", path: "/mypage" },
+    { name: "마이페이지", label: "마이페이지", path: "/exam" },
   ];
 
   const [activeTab, setActiveTab] = useState("홈");
