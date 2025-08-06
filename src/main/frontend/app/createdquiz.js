@@ -311,14 +311,13 @@ export default function CreatedQuizScreen() {
         </ScrollView>
 
         {!isSubmitted ? (
-          <TouchableOpacity
-            onPress={handleNextOrSubmit}
-            style={styles.bottomButton}
-          >
-            <Text style={styles.bottomButtonText}>
-              {currentQuestionIndex === questions.length - 1 ? "정답 확인하기" : "다음"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.bottomButtonGroup}>
+            <TouchableOpacity onPress={handleNextOrSubmit} style={{ ...styles.bottomButton, flex: 1 }}>
+              <Text style={styles.bottomButtonText}>
+                {currentQuestionIndex === questions.length - 1 ? "정답 확인하기" : "다음"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.bottomButtonGroup}>
             <TouchableOpacity

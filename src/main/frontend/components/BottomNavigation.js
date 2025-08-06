@@ -26,7 +26,7 @@ export default function BottomNavigation() {
 
   const handleTabPress = (tabName, path) => {
     setActiveTab(tabName);
-    router.push(path);
+    router.replace(path);
   };
 
   return (

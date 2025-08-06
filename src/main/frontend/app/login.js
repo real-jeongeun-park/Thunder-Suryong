@@ -2,7 +2,7 @@
 import Checkbox from "expo-checkbox";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 
 import {
   Platform,
@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 
-import axios from 'axios';
+import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 
 export default function LoginScreen() {
@@ -27,38 +27,39 @@ export default function LoginScreen() {
   const [loginFail, setLoginFail] = useState(false);
 
   const tryLogin = () => {
-        if(!email.trim()){
-            // 이메일 입력 x
-            setEmptyEmail(true);
-        }
+    if (!email.trim()) {
+      // 이메일 입력 x
+      setEmptyEmail(true);
+    }
 
-        if(!password.trim()){
-            // 패스워드 입력 x
-            setEmptyPassword(true);
-        }
+    if (!password.trim()) {
+      // 패스워드 입력 x
+      setEmptyPassword(true);
+    }
 
-        if(email.trim() && password.trim()){
-            // 둘 다 입력됨
-            axios.post(`${API_BASE_URL}/api/login`, {email, password})
-            .then(async (res) => {
-                console.log(API_BASE_URL);
+    if (email.trim() && password.trim()) {
+      // 둘 다 입력됨
+      axios
+        .post(`${API_BASE_URL}/api/login`, { email, password })
+        .then(async (res) => {
+          console.log(API_BASE_URL);
 
-                const token = res.data.token;
+          const token = res.data.token;
 
-                if(Platform.OS === 'web'){
-                    localStorage.setItem("accessToken", token);
-                } else{
-                    await SecureStore.setItemAsync("accessToken", token);
-                }
+          if (Platform.OS === "web") {
+            localStorage.setItem("accessToken", token);
+          } else {
+            await SecureStore.setItemAsync("accessToken", token);
+          }
 
-                router.push("/main");
-            })
-            .catch((err) => {
-                console.log(err);
-                setLoginFail(true);
-            })
-        }
-  }
+          router.replace("/main");
+        })
+        .catch((err) => {
+          console.log(err);
+          setLoginFail(true);
+        });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -70,13 +71,17 @@ export default function LoginScreen() {
         placeholderTextColor="#aaa"
         value={email}
         onChangeText={(text) => {
-            setEmail(text);
-            setEmptyEmail(false);
-            setLoginFail(false);
+          setEmail(text);
+          setEmptyEmail(false);
+          setLoginFail(false);
         }}
       />
 
-      {emptyEmail && <Text style={{color: "red", marginBottom: 15, marginLeft: 5}}>이메일을 입력하세요.</Text>}
+      {emptyEmail && (
+        <Text style={{ color: "red", marginBottom: 15, marginLeft: 5 }}>
+          이메일을 입력하세요.
+        </Text>
+      )}
 
       <TextInput
         style={styles.input}
@@ -85,13 +90,17 @@ export default function LoginScreen() {
         secureTextEntry
         value={password}
         onChangeText={(text) => {
-            setPassword(text);
-            setEmptyPassword(false);
-            setLoginFail(false);
+          setPassword(text);
+          setEmptyPassword(false);
+          setLoginFail(false);
         }}
       />
 
-      {emptyPassword && <Text style={{color: "red", marginBottom: 15, marginLeft: 5}}>비밀번호를 입력하세요.</Text>}
+      {emptyPassword && (
+        <Text style={{ color: "red", marginBottom: 15, marginLeft: 5 }}>
+          비밀번호를 입력하세요.
+        </Text>
+      )}
 
       <View style={styles.checkboxRow}>
         <Checkbox
@@ -109,12 +118,13 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      {loginFail && <Text style={{color: "red", marginBottom: 15, marginLeft: 5}}>이메일 또는 비밀번호가 틀립니다.</Text>}
+      {loginFail && (
+        <Text style={{ color: "red", marginBottom: 15, marginLeft: 5 }}>
+          이메일 또는 비밀번호가 틀립니다.
+        </Text>
+      )}
 
-      <TouchableOpacity
-        style={styles.loginBtn}
-        onPress={tryLogin}
-      >
+      <TouchableOpacity style={styles.loginBtn} onPress={tryLogin}>
         <Text style={styles.loginText}>로그인</Text>
       </TouchableOpacity>
 
