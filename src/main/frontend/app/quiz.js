@@ -115,6 +115,7 @@ export default function QuizScreen() {
       prev.filter((item) => !selectedIds.includes(item.id))
     );
     cancelEditing();
+    setMoveModalVisible(false);
   };
 
   const handleAddFolder = () => {
@@ -330,8 +331,9 @@ export default function QuizScreen() {
                 <TouchableOpacity
                   key={folder}
                   onPress={() => handleMoveToFolder(folder)}
+                  style={styles.modalItem} 
                 >
-                  <Text style={styles.modalItem}>{folder}로 이동</Text>
+                  <Text style={{ color: "#3C3C3C", fontSize: 16 }}>{folder}로 이동</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -523,15 +525,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalMenu: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 15,
-    elevation: 5,
-    width: 150,
+  backgroundColor: "#fff",     
+  borderRadius: 15,
+  paddingVertical: 20,
+  paddingHorizontal: 25,
+  elevation: 5,
+  width: 250,                           
   },
+
   modalItem: {
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     fontSize: 16,
-    color: "#3C3C3C",
+    color: "#3C3C3C",               
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#B493C3",         
+    backgroundColor: "#F4EDFD",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });

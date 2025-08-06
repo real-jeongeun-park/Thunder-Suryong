@@ -70,13 +70,43 @@ public class ExamService {
     }
 
     public void changeDefaultExam(String id){
-        Exam previousExam = examRepository.findByDefaultExam(true).get(0);
+        List<Exam> previousExam = examRepository.findByDefaultExam(true);
         Exam newExam = examRepository.findByExamId(id).get(0);
 
-        if(previousExam.equals(newExam)) return;
+        if(previousExam.isEmpty()){
+            newExam.setDefaultExam(true);
+            examRepository.save(newExam);
+        }
+        else{
+            previousExam.get(0).setDefaultExam(false);
+            newExam.setDefaultExam(true);
+            examRepository.save(newExam);
+        }
+    }
 
-        previousExam.setDefaultExam(false);
-        newExam.setDefaultExam(true);
-        examRepository.save(newExam);
+    public void unsetDefaultExam(Map<String, String> body) {
+        String nickname = body.get("nickname");
+        List<Exam> exam = examRepository.findByNicknameAndDefaultExam(nickname, true);
+
+        if (!exam.isEmpty()) {
+            Exam trueExam = exam.get(0);
+            trueExam.setDefaultExam(false);
+            examRepository.save(trueExam);
+        }
+    }
+
+    public Map<String, String> getExamByNickname(Map<String, String> body){
+        String nickname = body.get("nickname");
+
+        return examRepository.findByNicknameAndDefaultExam(nickname, true)
+                .stream()
+                .findFirst()
+                .map(e -> {
+                    Map<String, String> examInfo = new HashMap<>();
+                    examInfo.put("name", e.getExamName());
+                    examInfo.put("date", e.getStartDate().toString());
+                    return examInfo;
+                })
+                .orElse(null);
     }
 }
