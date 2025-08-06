@@ -20,9 +20,15 @@ import * as SecureStore from "expo-secure-store";
 const tabs = ["Time table", "Planner", "Completion rate"];
 const studyTags = [
 <<<<<<< HEAD
+<<<<<<< HEAD
   { text: "0-3h", bgColor: "rgb(228, 215, 245)", textColor: "#6D7582" },
   { text: "3-6h", bgColor: "rgb(191, 161, 226)", textColor: "#F3EEFB" },
   { text: "6h+", bgColor: "rgb(141, 90, 207)", textColor: "#F3EEFB" },
+=======
+  { text: "1-3h", bgColor: "rgba(155,115,210,0.2)", textColor: "#6D7582" },
+  { text: "3-6h", bgColor: "rgba(155,115,210,0.65)", textColor: "#F3EEFB" },
+  { text: "6h+", bgColor: "#9B73D2", textColor: "#F3EEFB" },
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
   { text: "1-3h", bgColor: "rgba(155,115,210,0.2)", textColor: "#6D7582" },
   { text: "3-6h", bgColor: "rgba(155,115,210,0.65)", textColor: "#F3EEFB" },
@@ -36,9 +42,12 @@ export default function CalendarTimetableScreen() {
     format(new Date(), "yyyy-MM-dd")
   );
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [selectedMonth, setSelectedMonth] = useState(
     format(new Date(), "yyyy-MM")
   );
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   const [activeTab, setActiveTab] = useState(tabs[0]);
@@ -46,7 +55,11 @@ export default function CalendarTimetableScreen() {
 
   const hourCount = 24;
 <<<<<<< HEAD
+<<<<<<< HEAD
   const daysCount = 7;
+=======
+  const daysCount = 6;
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
   const daysCount = 6;
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -85,6 +98,7 @@ export default function CalendarTimetableScreen() {
     checkLogin();
   }, []);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
 
@@ -145,6 +159,8 @@ export default function CalendarTimetableScreen() {
 
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   // 날짜 선택시 plans 새로 불러오기
   useEffect(() => {
     async function fetchPlans() {
@@ -163,7 +179,11 @@ export default function CalendarTimetableScreen() {
           id: subject,
           title: subject,
 <<<<<<< HEAD
+<<<<<<< HEAD
           isExpanded: false,
+=======
+          isExpanded: true,
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
           isExpanded: true,
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -332,6 +352,7 @@ export default function CalendarTimetableScreen() {
 
       {/* Calendar */}
 <<<<<<< HEAD
+<<<<<<< HEAD
       <View style={styles.calendarWrapper}>
         <Calendar
           current={selectedDate}
@@ -369,6 +390,8 @@ export default function CalendarTimetableScreen() {
           ))}
         </View>
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       <Calendar
         current={selectedDate}
         onDayPress={(day) => setSelectedDate(day.dateString)}
@@ -403,6 +426,9 @@ export default function CalendarTimetableScreen() {
             <Text style={[styles.tagText, { color: textColor }]}>{text}</Text>
           </View>
         ))}
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       </View>
 
@@ -535,6 +561,10 @@ const styles = StyleSheet.create({
   timeTableBox: {
     marginHorizontal: 27,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    //borderRadius: 10,
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
     //borderRadius: 10,
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -643,6 +673,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
   calendarWrapper: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -653,6 +684,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#9E73D9",
   },
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 });

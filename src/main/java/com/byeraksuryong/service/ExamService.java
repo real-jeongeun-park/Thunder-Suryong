@@ -71,6 +71,7 @@ public class ExamService {
 
     public void changeDefaultExam(String id){
 <<<<<<< HEAD
+<<<<<<< HEAD
         List<Exam> previousExam = examRepository.findByDefaultExam(true);
         Exam newExam = examRepository.findByExamId(id).get(0);
 
@@ -110,6 +111,8 @@ public class ExamService {
                 })
                 .orElse(null);
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
         Exam previousExam = examRepository.findByDefaultExam(true).get(0);
         Exam newExam = examRepository.findByExamId(id).get(0);
 
@@ -118,6 +121,9 @@ public class ExamService {
         previousExam.setDefaultExam(false);
         newExam.setDefaultExam(true);
         examRepository.save(newExam);
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     }
 }
