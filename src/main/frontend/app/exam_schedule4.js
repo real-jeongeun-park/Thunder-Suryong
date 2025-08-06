@@ -31,15 +31,7 @@ export default function ExamInfoInput() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
-=======
-  const { startDate, endDate, examName, subjects, subjectInfo } = data;
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
-  const { startDate, endDate, examName, subjects, subjectInfo } = data;
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   const parsedSubjectInfo = JSON.parse(subjectInfo);
   const newSubjectList = [
     ...new Set(parsedSubjectInfo.map((item) => item.subject)),
@@ -249,13 +241,7 @@ export default function ExamInfoInput() {
       const response2 = await axios.post(`${API_BASE_URL}/api/subject/create`, {
         examId,
         subjects: JSON.parse(subjects),
-<<<<<<< HEAD
-<<<<<<< HEAD
         subjectDates: JSON.parse(subjectDates),
-=======
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
-=======
->>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       });
 
       const transformedPlans = {
