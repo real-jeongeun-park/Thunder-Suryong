@@ -6,20 +6,15 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Entity
 @Getter
 @Setter
-public class Subject {
+@Entity
+public class TotalTime {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "exam_id")
-    private String examId;
-
     @Column(name = "subject_id")
     private String subjectId;
-    private String subject;
-
-    @Column(name = "exam_date")
-    private LocalDate examDate;
+    private LocalDate date;
+    private String total; // 전체 시간
 }

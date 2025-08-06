@@ -221,8 +221,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputTextLabel: {
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
   },
   inputTextArea: {
     backgroundColor: "#fff",

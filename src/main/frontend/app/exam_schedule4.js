@@ -31,7 +31,7 @@ export default function ExamInfoInput() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  const { startDate, endDate, examName, subjects, subjectInfo } = data;
+  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
   const parsedSubjectInfo = JSON.parse(subjectInfo);
   const newSubjectList = [
     ...new Set(parsedSubjectInfo.map((item) => item.subject)),
@@ -81,6 +81,8 @@ export default function ExamInfoInput() {
           subjectInfo: parsedSubjectInfo,
           nickname: userInfo.nickname,
           endDate,
+          subjects: JSON.parse(subjects),
+          subjectDates: JSON.parse(subjectDates),
         });
 
         const { date, subject, week, content } = response.data;
@@ -239,6 +241,7 @@ export default function ExamInfoInput() {
       const response2 = await axios.post(`${API_BASE_URL}/api/subject/create`, {
         examId,
         subjects: JSON.parse(subjects),
+        subjectDates: JSON.parse(subjectDates),
       });
 
       const transformedPlans = {

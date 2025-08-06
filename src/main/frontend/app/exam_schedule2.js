@@ -108,7 +108,11 @@ export default function ExamInfoInput() {
     setDatePickerDialogVisible(true);
   };
   const closeDatePicker = () => {
+    setSelectedDateIndex(false);
+    setSelectedDate(false);
     setDatePickerDialogVisible(false);
+
+    console.log(selectedDates);
   };
 
   // 날짜 선택 시 동작
@@ -229,22 +233,31 @@ export default function ExamInfoInput() {
   };
 
   const handleSubmit = async () => {
-    if (!examName.trim()) {
-      setEmptyExamName(true);
+    const isExamnameEmpty = !examName.trim();
+    const isSubjectsEmpty = subjects.length === 0;
+    const isInvalidDates =
+        selectedDates.length === 0 ||
+        selectedDates.length !== subjects.length ||
+        Array.from(selectedDates).some(date => !date || date.trim() === "");
+
+    if(isExamnameEmpty){
+        setEmptyExamName(true);
+    }
+    if(isSubjectsEmpty){
+        setEmptySubjects(true);
+    }
+    if(isInvalidDates){
+        alert("입력되지 않은 시험 날짜가 있습니다.");
     }
 
-    if (subjects.length === 0) {
-      setEmptySubjects(true);
-    }
-
-    if (examName.trim() && subjects.length !== 0) {
-      // data 존재
-      setData((prev) => ({
-        ...prev,
-        examName,
-        subjects: JSON.stringify(subjects),
-      }));
-      router.push("/exam_schedule3");
+    if(!isExamnameEmpty && !isSubjectsEmpty && !isInvalidDates){
+        setData((prev) => ({
+            ...prev,
+            examName,
+            subjects: JSON.stringify(subjects),
+            subjectDates: JSON.stringify(selectedDates),
+        }));
+        router.push("/exam_schedule3");
     }
   };
 
@@ -534,7 +547,7 @@ export default function ExamInfoInput() {
                           onPress={closeDatePicker}
                           labelStyle={{ color: "#7A4DD6" }}
                         >
-                          닫기
+                          저장
                         </Button>
                       </Dialog.Actions>
                     </Dialog>

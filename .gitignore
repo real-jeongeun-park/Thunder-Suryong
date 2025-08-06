@@ -40,3 +40,5 @@ node_modules/
 
 *.json
 /src/main/resources/vision-key.json
+
+src/main/java/com/byeraksuryong/api/AiApi.java

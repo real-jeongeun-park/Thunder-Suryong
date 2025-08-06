@@ -10,4 +10,5 @@ import java.util.List;
 public class SubjectRequest {
     private String examId;
     private List<String> subjects;
+    private List<String> subjectDates;
 }
