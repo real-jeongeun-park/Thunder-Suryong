@@ -109,11 +109,15 @@ export default function ExamInfoInput() {
   };
   const closeDatePicker = () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
     setSelectedDateIndex(false);
     setSelectedDate(false);
     setDatePickerDialogVisible(false);
 
     console.log(selectedDates);
+=======
+    setDatePickerDialogVisible(false);
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
     setDatePickerDialogVisible(false);
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -238,6 +242,7 @@ export default function ExamInfoInput() {
 
   const handleSubmit = async () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
     const isExamnameEmpty = !examName.trim();
     const isSubjectsEmpty = subjects.length === 0;
     const isInvalidDates =
@@ -282,6 +287,25 @@ export default function ExamInfoInput() {
       router.push("/exam_schedule3");
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     }
+=======
+    if (!examName.trim()) {
+      setEmptyExamName(true);
+    }
+
+    if (subjects.length === 0) {
+      setEmptySubjects(true);
+    }
+
+    if (examName.trim() && subjects.length !== 0) {
+      // data 존재
+      setData((prev) => ({
+        ...prev,
+        examName,
+        subjects: JSON.stringify(subjects),
+      }));
+      router.push("/exam_schedule3");
+    }
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   };
 
   // 내용 수정
@@ -571,7 +595,11 @@ export default function ExamInfoInput() {
                           labelStyle={{ color: "#7A4DD6" }}
                         >
 <<<<<<< HEAD
+<<<<<<< HEAD
                           저장
+=======
+                          닫기
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
                           닫기
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2

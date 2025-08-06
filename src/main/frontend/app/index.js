@@ -63,7 +63,11 @@ export default function Home() {
         <TouchableOpacity
           style={styles.button}
 <<<<<<< HEAD
+<<<<<<< HEAD
           onPress={() => router.replace("/login")}
+=======
+          onPress={() => router.replace("/main")}
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
           onPress={() => router.replace("/main")}
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2

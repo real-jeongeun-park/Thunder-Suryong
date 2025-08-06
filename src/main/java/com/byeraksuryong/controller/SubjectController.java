@@ -1,7 +1,10 @@
 package com.byeraksuryong.controller;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.byeraksuryong.dto.Response;
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 import com.byeraksuryong.dto.SubjectRequest;
@@ -13,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.util.Map;
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 
@@ -35,6 +41,7 @@ public class SubjectController {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     @PostMapping("/get")
     public ResponseEntity<?> getSubjects(@RequestBody Map<String, String> body){
@@ -44,6 +51,8 @@ public class SubjectController {
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 }

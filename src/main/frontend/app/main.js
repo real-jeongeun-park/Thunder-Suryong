@@ -113,6 +113,10 @@ export default function HomeScreen() {
 
         setPlans(transformed);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        console.log("계획 불러오기 성공");
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
         console.log("계획 불러오기 성공");
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -141,6 +145,12 @@ export default function HomeScreen() {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        console.log("Fetching default exam with token:", token);
+        console.log("userInfo.nickname:", userInfo?.nickname);
+
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
         console.log("Fetching default exam with token:", token);
         console.log("userInfo.nickname:", userInfo?.nickname);
@@ -157,6 +167,11 @@ export default function HomeScreen() {
         );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        console.log("기본 시험 API 응답:", res.data);
+
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
         console.log("기본 시험 API 응답:", res.data);
 
@@ -175,6 +190,10 @@ export default function HomeScreen() {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        console.log(selectedExam);
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
         console.log(selectedExam);
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -265,6 +284,7 @@ export default function HomeScreen() {
   }, [userInfo]);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
   const handleRemoveExam = async () => {
@@ -280,6 +300,8 @@ export default function HomeScreen() {
     }
   };
 
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   return (
@@ -305,7 +327,11 @@ export default function HomeScreen() {
                       {/* 삭제 버튼 */}
                       <TouchableOpacity
 <<<<<<< HEAD
+<<<<<<< HEAD
                         onPress={handleRemoveExam}
+=======
+                        onPress={() => setSelectedExam(null)}
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
                         onPress={() => setSelectedExam(null)}
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -344,11 +370,15 @@ export default function HomeScreen() {
                         ) + 1;
                       const displayText =
 <<<<<<< HEAD
+<<<<<<< HEAD
                         diff === 0
                           ? "D-DAY"
                           : diff > 0
                           ? `D-${diff}`
                           : `D+${Math.abs(diff)}`;
+=======
+                        diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
                         diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -410,7 +440,11 @@ export default function HomeScreen() {
                       onPress={() => router.push("/schedule_list")}
                     >
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <Text style={styles.buttonText}>시험 불러오기</Text>
+=======
+                      <Text style={styles.buttonText}>일정 불러오기</Text>
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
                       <Text style={styles.buttonText}>일정 불러오기</Text>
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -422,7 +456,11 @@ export default function HomeScreen() {
                       }}
                     >
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <Text style={styles.buttonText}>새로운 시험 생성</Text>
+=======
+                      <Text style={styles.buttonText}>새로운 일정 생성</Text>
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
                       <Text style={styles.buttonText}>새로운 일정 생성</Text>
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -491,7 +529,11 @@ export default function HomeScreen() {
                 불러오는 중...
               </Text>
 <<<<<<< HEAD
+<<<<<<< HEAD
             ) : !plans || plans.length === 0 ? (
+=======
+            ) : plans.length === 0 ? (
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
             ) : plans.length === 0 ? (
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2

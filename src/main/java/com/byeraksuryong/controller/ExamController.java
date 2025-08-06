@@ -46,6 +46,7 @@ public class ExamController {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     @PostMapping("/allFalse")
     public ResponseEntity<?> changeToFalse(@RequestBody Map<String, String> body){
@@ -66,6 +67,8 @@ public class ExamController {
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 }

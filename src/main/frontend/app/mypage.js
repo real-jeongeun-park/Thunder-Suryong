@@ -1,5 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
+=======
+// MyPageScreen.js
+import React, { useState } from "react";
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 // MyPageScreen.js
 import React, { useState } from "react";
@@ -11,6 +16,10 @@ import {
   TouchableOpacity,
   ScrollView,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+  Image,
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
   Image,
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -22,6 +31,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, usePathname } from "expo-router";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import BottomNavigation from "../components/BottomNavigation";
+<<<<<<< HEAD
 <<<<<<< HEAD
 import { format } from "date-fns";
 import axios from "axios";
@@ -245,10 +255,89 @@ export default function MyPageScreen() {
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       {/* 본문 */}
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
+
+export default function MyPageScreen() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const today = new Date();
+
+  const [examInfo, setExamInfo] = useState({
+    name: "2025 1학기 기말고사",
+    date: "2025-09-05",
+  });
+
+  const [markedDates, setMarkedDates] = useState(
+    getMarkedDatesForMonth(formatMonth(today))
+  );
+
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+
+  const tabs = [
+    { name: "홈", label: "홈", path: "/main" },
+    { name: "노트", label: "노트", path: "/note" },
+    { name: "퀴즈", label: "퀴즈", path: "/quiz" },
+    { name: "마이페이지", label: "마이페이지", path: "/mypage" },
+  ];
+
+  const activeTab = tabs.find((t) => pathname === t.path)?.name;
+
+  function formatMonth(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+  }
+
+  function getMarkedDatesForMonth(month) {
+    const dates = {};
+    for (let day = 1; day <= 31; day++) {
+      const date = `${month}-${String(day).padStart(2, "0")}`;
+      const hours = Math.floor(Math.random() * 7);
+      if (hours === 0) continue;
+      let color = "";
+      if (hours >= 6) color = "#8D5ACF";
+      else if (hours >= 3) color = "#BFA1E2";
+      else color = "#E4D7F5";
+
+      dates[date] = {
+        customStyles: {
+          container: {
+            backgroundColor: color,
+            borderRadius: 18,
+            width: 36,
+            height: 36,
+            justifyContent: "center",
+            alignItems: "center",
+          },
+          text: {
+            color: "#FFFFFF",
+            fontWeight: "bold",
+          },
+        },
+      };
+    }
+    return dates;
+  }
+
+  function getDDay(targetDate) {
+    if (!targetDate) return "D-0";
+    const today = new Date();
+    const exam = new Date(targetDate);
+    const diffTime = exam.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return `D-${diffDays}`;
+  }
+
+  return (
+    <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+      {/* 본문 */}
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       <View style={{ flex: 1 }}>
         <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <Text style={styles.title}>나의 시험</Text>
+<<<<<<< HEAD
 <<<<<<< HEAD
             <View style={styles.examCardWhiteRow}>
               {examInfo ? (
@@ -281,6 +370,8 @@ export default function MyPageScreen() {
                 }}
                 markedDates={getMarkedDates()}
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 
             <View style={styles.examCardWhiteRow}>
               <Text style={styles.examText}>{examInfo.name}</Text>
@@ -325,6 +416,9 @@ export default function MyPageScreen() {
                   ).padStart(2, "0")}`;
                   setMarkedDates(getMarkedDatesForMonth(newMonth));
                 }}
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
                 theme={{
                   calendarBackground: "#fff",
@@ -336,6 +430,7 @@ export default function MyPageScreen() {
                   textDayFontWeight: "500",
                   textDayFontSize: 16,
                 }}
+<<<<<<< HEAD
 <<<<<<< HEAD
                 style={styles.calendar}
               />
@@ -354,6 +449,8 @@ export default function MyPageScreen() {
                   </View>
                 ))}
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
               />
               <View style={styles.legendContainer}>
                 <View
@@ -371,6 +468,9 @@ export default function MyPageScreen() {
                 >
                   <Text style={styles.legendText}>6h-</Text>
                 </View>
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
               </View>
             </View>
@@ -421,14 +521,20 @@ const styles = StyleSheet.create({
   gradient: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 80 },
 <<<<<<< HEAD
+<<<<<<< HEAD
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
     //marginTop: "15%",
   },
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   examCardWhiteRow: {
     flexDirection: "row",
@@ -451,6 +557,7 @@ const styles = StyleSheet.create({
   },
   ddayText: { fontSize: 12, color: "#663399" },
 <<<<<<< HEAD
+<<<<<<< HEAD
   listButtonRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -462,6 +569,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginRight: 8,
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   historyButton: { alignItems: "flex-end", marginTop: 8 },
   historyText: { fontSize: 12, color: "#9E73D9", fontWeight: "500" },
   subTitle: {
@@ -490,11 +599,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 12,
     marginBottom: 12,
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   },
   calendarWrapper: {
     backgroundColor: "#fff",
     borderRadius: 12,
+<<<<<<< HEAD
 <<<<<<< HEAD
     padding: 5,
     borderWidth: 1,
@@ -519,6 +632,8 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     padding: 10,
     borderWidth: 1,
     borderColor: "#9E73D9",
@@ -531,6 +646,9 @@ const styles = StyleSheet.create({
   },
   legendItem: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
   legendText: { fontSize: 12, color: "#000" },
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   footerContainer: {
     backgroundColor: "#F6F2FC",
@@ -540,11 +658,17 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 60,
     borderTopRightRadius: 60,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
     ...Platform.select({
       ios: { shadowColor: " " },
       android: { elevation: 0 },
     }),
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   },
   handleBar: {
@@ -568,7 +692,10 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -585,6 +712,9 @@ const styles = StyleSheet.create({
   dot: { width: 12, height: 12, borderRadius: 4, marginBottom: 8 },
   dotActive: { backgroundColor: "#222" },
   dotInactive: { backgroundColor: "#ccc" },
+<<<<<<< HEAD
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
+=======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
   modalOverlay: {
     position: "absolute",

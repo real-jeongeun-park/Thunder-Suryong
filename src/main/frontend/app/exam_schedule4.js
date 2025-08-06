@@ -32,7 +32,11 @@ export default function ExamInfoInput() {
   const [userInfo, setUserInfo] = useState(null);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
+=======
+  const { startDate, endDate, examName, subjects, subjectInfo } = data;
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
   const { startDate, endDate, examName, subjects, subjectInfo } = data;
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
@@ -246,7 +250,10 @@ export default function ExamInfoInput() {
         examId,
         subjects: JSON.parse(subjects),
 <<<<<<< HEAD
+<<<<<<< HEAD
         subjectDates: JSON.parse(subjectDates),
+=======
+>>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
 =======
 >>>>>>> d449e8b54cce5adfec3e19fc3ec4346c523ae4c2
       });
