@@ -16,13 +16,12 @@ import {
 } from "react-native";
 
 import axios from "axios";
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
 
 import { useData } from "../context/DataContext";
 
 export default function StudyOptionScreen() {
-
   const navigation = useNavigation();
   const [hours, setHours] = useState("");
   const router = useRouter();
@@ -35,7 +34,7 @@ export default function StudyOptionScreen() {
 
   const { data, setData } = useData();
 
-  const [ userInfo, setUserInfo ] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   const options = [
     "하루에 한 과목씩 집중한다.",
@@ -44,34 +43,34 @@ export default function StudyOptionScreen() {
     "개념노트를 만든다.",
   ];
 
- useEffect(() => {
-     async function checkLogin(){
-         try{
-             let token;
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
 
-             if(Platform.OS === 'web') token = localStorage.getItem("accessToken");
-             else token = await SecureStore.getItemAsync("accessToken");
+        if (Platform.OS === "web") token = localStorage.getItem("accessToken");
+        else token = await SecureStore.getItemAsync("accessToken");
 
-             if(!token) throw new Error("Token not found");
+        if (!token) throw new Error("Token not found");
 
-             const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-                   headers: {
-                     Authorization: `Bearer ${token}`
-                   }
-             });
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-             setUserInfo(res.data);
-         } catch(err){
-             console.log(err);
-             router.push("/");
-         }
-     }
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        router.push("/");
+      }
+    }
 
-     checkLogin();
-   }, []);
+    checkLogin();
+  }, []);
 
   const toggleOption = (text) => {
-  /* 옵션 list 객체에 넣음 */
+    /* 옵션 list 객체에 넣음 */
 
     if (selected.includes(text)) {
       setSelected(selected.filter((item) => item !== text));
@@ -96,19 +95,24 @@ export default function StudyOptionScreen() {
       return;
     }
 
-    const newData = {...data, studyStyle: newSelected, nickname: userInfo.nickname};
+    const newData = {
+      ...data,
+      studyStyle: newSelected,
+      nickname: userInfo.nickname,
+    };
 
     setSelected(newSelected);
     console.log(newData);
 
-    axios.post("http://localhost:8080/api/style", newData)
-    .then((res) => {
+    axios
+      .post("http://localhost:8080/api/style", newData)
+      .then((res) => {
         router.push("/main");
-    })
-    .catch((err) => {
+      })
+      .catch((err) => {
         console.log(err);
         // 오류가 생겼습니다 띄우기
-    })
+      });
   };
 
   return (
@@ -164,26 +168,27 @@ export default function StudyOptionScreen() {
             ))}
 
             {/* 기타 입력란도 여기에 포함 */}
-            <TouchableOpacity style={{ flexDirection: "row", alignItems: "center"}}>
-              <View
-                style={[styles.circle, styles.circleCustom]}
-              />
+            <TouchableOpacity
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
+              <View style={[styles.circle, styles.circleCustom]} />
               <TextInput
                 placeholder="기타 : 나의 학습 스타일을 입력해 주세요."
                 placeholderTextColor="#ccc"
                 value={customStyle}
                 onChangeText={(text) => {
-                    setCustomStyle(text);
-                    setEmptySelected(false);
+                  setCustomStyle(text);
+                  setEmptySelected(false);
                 }}
-                style={[
-                  styles.textInput,
-                  styles.optionTextSelected,
-                ]}
+                style={[styles.textInput, styles.optionTextSelected]}
               />
             </TouchableOpacity>
 
-            {emptySelected && <Text style={{color: "red", marginTop: 15}}>학습 스타일을 최소 한 개 이상 선택해 주세요.</Text>}
+            {emptySelected && (
+              <Text style={{ color: "red", marginTop: 15 }}>
+                학습 스타일을 최소 한 개 이상 선택해 주세요.
+              </Text>
+            )}
           </ScrollView>
 
           {/* 하단 버튼들 */}
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   textInput: {
-    flex:1
+    flex: 1,
   },
   optionsContainer: {
     flex: 1,
