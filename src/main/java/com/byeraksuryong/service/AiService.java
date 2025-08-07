@@ -97,7 +97,7 @@ public class AiService {
             existingSubjectNamesSet.add(subject);
         }
 
-        List<String> exisitngSubjectNames = new ArrayList<>(existingSubjectNamesSet);
+        List<String> existingSubjectNames = new ArrayList<>(existingSubjectNamesSet);
 
         List<String> subjectNames = (List<String>)body.get("subjects");
         List<String> subjectDates = (List<String>)body.get("subjectDates");
@@ -132,8 +132,8 @@ public class AiService {
         System.out.println("텍스트 길이 (char 수): " + chunkedTextBuilder.length());
 
         StringBuilder endDates = new StringBuilder();
-        for(int i = 0; i < exisitngSubjectNames.size(); i++){
-            String name = exisitngSubjectNames.get(i);
+        for(int i = 0; i < existingSubjectNames.size(); i++){
+            String name = existingSubjectNames.get(i);
             endDates.append(name + "의 종료일: ");
             endDates.append(subjectMap.get(name) + "\n");
         }
@@ -178,7 +178,7 @@ public class AiService {
                     "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
                     "2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n" +
                     "2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n" +
-                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
+                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
                     "\n" +
                     "[계획표에 대한 정보]\n" +
                     "- 공부 시작일: " + startDate + "\n" +
@@ -188,7 +188,6 @@ public class AiService {
 
         try{
             String response = ai.requestAnswer(request).getResponse();
-            System.out.println(response);
 
             List<String> resultList = Arrays.stream(response.split("\n"))
                     .map(String::trim)
