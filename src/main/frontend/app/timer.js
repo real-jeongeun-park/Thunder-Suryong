@@ -168,6 +168,19 @@ export default function TimerScreen() {
 
   const runningSubject = subjects.find((s) => s.name === runningSubjectName);
 
+  const getTotalTime = () => {
+  const totalSeconds = subjects.reduce((acc, subject) => {
+    const [h, m, s] = subject.time.split(":").map(Number);
+    return acc + h * 3600 + m * 60 + s;
+  }, 0);
+
+  const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+    const ss = String(totalSeconds % 60).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+  };
+
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + 6 }]}>
       {/* 🔙 뒤로가기 + 타이틀 */}
@@ -178,12 +191,13 @@ export default function TimerScreen() {
         <Text style={styles.header}>타이머</Text>
       </View>
 
-        {/* 헤더 */}
-        <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>과목</Text>
-          <Text style={styles.tableHeaderText}>시간</Text>
-          <Text style={styles.tableHeaderText}>시작/일시정지</Text>
-        </View>
+    <View style={styles.timerContainer}>
+      <Text style={styles.todayText}>{today}</Text>
+      <Text style={styles.timerText}>{getTotalTime()}</Text>
+    </View>
+
+
+
 
       {/* 표 헤더 */}
       <View style={styles.tableHeader}>
