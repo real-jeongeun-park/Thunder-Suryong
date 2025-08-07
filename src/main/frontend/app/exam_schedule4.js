@@ -31,7 +31,8 @@ export default function ExamInfoInput() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
+  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } =
+    data;
   const parsedSubjectInfo = JSON.parse(subjectInfo);
   const newSubjectList = [
     ...new Set(parsedSubjectInfo.map((item) => item.subject)),
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
   },
   subjectBadge: {
     width: 100,
-    backgroundColor: "#BEBEBE",
+    backgroundColor: "#b8aebdff",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
