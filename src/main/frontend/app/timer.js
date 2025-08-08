@@ -224,10 +224,7 @@ export default function TimerScreen() {
                   name={item.isRunning ? "pause-circle-outline" : "play-circle-outline"}
                   size={28}
                   color="#8D5ACF"
-<<<<<<< HEAD
                   style={{ marginTop: 2, }}
-=======
->>>>>>> a8f8fecb478c684f26cfce70a923750c76cac00b
                 />
               </TouchableOpacity>
             </View>
