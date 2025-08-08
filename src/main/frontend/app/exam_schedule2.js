@@ -404,7 +404,6 @@ export default function ExamInfoInput() {
                         <Text style={styles.subjectItemText}>{item}</Text>
                         <TouchableOpacity
                           onPress={() => openDatePicker(index)}
-                          style={styles.editButton}
                         >
                           <Text style={styles.dateSelectBox}>
                             {selectedDates[index]
@@ -416,7 +415,7 @@ export default function ExamInfoInput() {
                           onPress={() => openEditModal(index)}
                           style={styles.editButton}
                         >
-                          <Text style={{ color: "#5e43c2" }}>수정</Text>
+                          <Text style={styles.editButtonText}>수정</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleRemoveSubject(index)}
@@ -664,17 +663,25 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dateSelectBox: {
-    padding: 5,
-    borderRadius: 7,
-    color: "#85608bff",
+    padding: 8,
+    borderRadius: 12,
+    border: '1px solid #d0c4db',   /* 밝은 보라 계열 테두리 */
+    color: '#5e3e8c',              /* 좀 더 진한 보라 컬러로 텍스트 강조 */
+    backgroundColor: '#f8f6fb',    /* 밝은 배경색으로 고급스러움 추가 */
+    fontWeight: '500',             /* 글씨 두께로 가독성 개선 */
+    fontSize: 14,
+    appearance: 'none',            /* 브라우저 기본 화살표 제거 */
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,<svg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M0 0l5 6 5-6z\' fill=\'%235e3e8c\'/></svg>")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 10px center',
+    backgroundSize: '10px 6px',
     marginRight: 10,
-    shadowColor: "#535353", // 그림자 색상 (어두운 회색)
-    shadowOpacity: 0.3, // 투명도 (0~1)
-    shadowOffset: { width: 0, height: 2 }, // 그림자 위치(오프셋)
-    shadowRadius: 4, // 블러 반경
-    elevation: 5, // Android 그림자 깊이
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',  /* 부드러운 그림자 */
+    cursor: 'pointer',             /* 마우스 오버 시 포인터 변경 */
+    transition: 'border-color 0.3s, box-shadow 0.3s',
   },
-
   inputContainer: {
     flex: 1,
     borderTopLeftRadius: 30,
@@ -772,7 +779,6 @@ const styles = StyleSheet.create({
     color: "#665783ff",
     fontSize: 14,
     flex: 1,
-    maxWidth: 250,
   },
   subjectItemDelete: {
     color: "#9c73b8ff",
@@ -968,5 +974,21 @@ const styles = StyleSheet.create({
     color: "#555",
     width: "100%",
     marginBottom: 20,
+  },
+
+  editButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#5e43c2',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButtonText: {
+    color: '#5e43c2',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

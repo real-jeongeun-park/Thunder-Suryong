@@ -93,7 +93,12 @@ export default function ExamInfoInput() {
     }
     setSubjectInfo([
       ...subjectInfo,
-      { subject: selectedSubject, week, content },
+      {
+        subject: selectedSubject,
+        week,
+        content,
+        important: false,
+      },
     ]);
     setWeek("");
     setContent("");
@@ -189,6 +194,7 @@ export default function ExamInfoInput() {
           subject: selectedSubject,
           week,
           content: contentList[index],
+          important: false,
         }));
 
         setSubjectInfo([...subjectInfo, ...newSubjectInfoList]);
@@ -255,6 +261,7 @@ export default function ExamInfoInput() {
           ...newArr[editIndex],
           week: editWeek,
           content: editContent,
+          important: false,
         };
       }
       return newArr;
@@ -330,7 +337,7 @@ export default function ExamInfoInput() {
 
           {/* 상단 날짜 및 안내 */}
           <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>분량을 입력해주세요.</Text>
+            <Text style={styles.headerTitle}>분량을 입력해 주세요.</Text>
             <Text style={styles.periodText}>{examPeriod}</Text>
             <FlatList
               data={[examName, ...subjectList]}
@@ -570,7 +577,7 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     alignItems: "flex-start",
     backgroundColor: "#EFE5FF",
-    height: "24%",
+    height: "20%",
   },
   headerTitle: {
     fontSize: 30,
@@ -582,7 +589,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#535353",
     fontWeight: "500",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   subjectBadge: {
     backgroundColor: "#E5DFF5",
@@ -639,14 +646,13 @@ const styles = StyleSheet.create({
   },
   input: {
     //height: 45,
-    padding: 14,
+    padding: 10,
     backgroundColor: "#FAF8FD",
     borderColor: "#F4F1F5",
     borderWidth: 0.2,
     borderRadius: 5,
     fontSize: 15,
     color: "#717171",
-    paddingHorizontal: 10,
     marginTop: 10,
   },
   inputText: {

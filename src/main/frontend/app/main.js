@@ -242,18 +242,6 @@ export default function HomeScreen() {
       getAchievementRate();
     }
   }, [userInfo]);
-  const handleRemoveExam = async () => {
-    try{
-      const response = await axios.post(`${API_BASE_URL}/api/exam/allFalse`, {
-        nickname: userInfo.nickname,
-      });
-
-      setSelectedExam(null);
-      setPlans(null);
-    } catch(err){
-        console.log(err);
-    }
-  };
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
@@ -274,26 +262,6 @@ export default function HomeScreen() {
                       <Text style={[styles.title]}>
                         {selectedExam.examName}
                       </Text>
-                      {/* 삭제 버튼 */}
-                      <TouchableOpacity
-                        onPress={handleRemoveExam}
-                        style={{
-                          marginLeft: 10,
-                          backgroundColor: "#e57373",
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          시험 삭제
-                        </Text>
-                      </TouchableOpacity>
                     </>
                   ) : (
                     <Text style={[styles.title]}>
@@ -412,9 +380,12 @@ export default function HomeScreen() {
 
         {/* 말풍선 */}
         <View style={styles.speechContainer}>
-          <Text style={styles.characterText}>
-            시험이 얼마 남지 않았네요! {"\n"}오늘도 파이팅!
-          </Text>
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>
+              시험이 얼마 남지 않았네요! 오늘도 파이팅!
+            </Text>
+          </View>
+          <View style={styles.bubbleTail} />
         </View>
 
         {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
@@ -496,11 +467,6 @@ export default function HomeScreen() {
                   </View>
                 ))
             )}
-
-            {/* 과목 추가 버튼 (터치 기능은 별도 구현 필요) */}
-            <TouchableOpacity style={styles.addButton}>
-              <Text style={styles.addButtonText}>+ 과목</Text>
-            </TouchableOpacity>
           </View>
 
           <Modal visible={calendarVisible} transparent animationType="none">
@@ -557,7 +523,7 @@ const styles = StyleSheet.create({
     //justifyContent: "flex-end",
     width: "100%",
     //gap: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     //alignSelf: "flex-end",
   },
   topButtons2: {
@@ -565,16 +531,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     width: "100%",
     //gap: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     //alignSelf: "flex-end",
   },
   achievementRate: {
     //backgroundColor: "#e5ddff",
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    //borderRadius: 30,
+    paddingHorizontal: 5,
     alignSelf: "flex-start",
-    //marginTop: 4,
   },
   actionButton: {
     backgroundColor: "#E7DDF3",
@@ -597,7 +561,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     backgroundColor: "#F6F0FF",
-    padding: 16,
+    padding: 5,
     borderRadius: 20,
   },
   character: {
@@ -607,24 +571,38 @@ const styles = StyleSheet.create({
   },
   speechContainer: {
     position: "absolute",
-    width: "100%",
-    top: "30%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
-    //backgroundColor: "#6c4ed5",
-    padding: 20,
-    //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정
+    width: "60%",              // 적당한 가로폭
+    top: "30%",                // 원하는 위치
+    left: "20%",               // 중앙 정렬용
+    alignItems: "center",
   },
-  characterText: {
-    backgroundColor: "#c9c4dfff",
-    width: "50%",
-    color: "#fff",
-    padding: 10,
-    paddingLeft: 15,
-    borderRadius: 20,
-    marginTop: 80,
-    //shadowOpacity: 0.3,
-    //shadowOffset: { width: 0, height: 2 },
-    //shadowRadius: 4,
-    //elevation: 5,
+  bubble: {
+    backgroundColor: "#ffffff",
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  bubbleTail: {
+    width: 20,
+    height: 20,
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    position: "absolute",
+    bottom: -8,       // 본체에 더 가깝게
+    left: "50%",
+    marginLeft: -10, // 꼬리 width의 절반 음수로 중앙 정렬
+    transform: [{ rotate: "45deg" }],
+  },
+  bubbleText: {
+    color: "#5e3e8c",
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
   },
   timerText: {
     marginTop: 4,
@@ -720,18 +698,6 @@ const styles = StyleSheet.create({
   subTodoText: {
     flexWrap: "wrap",
     flexShrink: 1,
-  },
-  addButton: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: "#e5ddff",
-  },
-  addButtonText: {
-    color: "#6c4ed5",
-    fontWeight: "bold",
   },
   modalBackground: {
     flex: 1,

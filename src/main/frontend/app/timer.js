@@ -178,12 +178,13 @@ export default function TimerScreen() {
         <Text style={styles.header}>타이머</Text>
       </View>
 
-        {/* 헤더 */}
-        <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>과목</Text>
-          <Text style={styles.tableHeaderText}>시간</Text>
-          <Text style={styles.tableHeaderText}>시작/일시정지</Text>
-        </View>
+      {/* 메인 타이머 */}
+      <View style={styles.timerContainer}>
+        <Text style={styles.todayText}>{today}</Text>
+        <Text style={styles.timerText}>
+          {runningSubject ? runningSubject.time : "00:00:00"}
+        </Text>
+      </View>
 
       {/* 표 헤더 */}
       <View style={styles.tableHeader}>
@@ -215,6 +216,7 @@ export default function TimerScreen() {
                   name={item.isRunning ? "pause-circle-outline" : "play-circle-outline"}
                   size={28}
                   color="#8D5ACF"
+                  style={{ marginTop: 2, }}
                 />
               </TouchableOpacity>
             </View>
