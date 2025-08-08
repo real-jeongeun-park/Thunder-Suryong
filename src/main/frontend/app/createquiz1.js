@@ -1,4 +1,5 @@
 // creatquiz_selectnote.js
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,20 +12,20 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import * as SecureStore from 'expo-secure-store';
-import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+import { useData } from "@/context/DataContext";
 
 export default function CreateQuizSelectNote() {
   const router = useRouter();
   const [openFolder, setOpenFolder] = useState(null);
   const [inputText, setInputText] = useState("");
   const [selectedNotes, setSelectedNotes] = useState([]);
-  const [userInfo, setUserInfo] = useState(null);
   const [folders, setFolders] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+  const { data, setData } = useData();
 
-  // 로그인 여부 체크
   useEffect(() => {
     async function checkLogin() {
       try {
@@ -54,36 +55,38 @@ export default function CreateQuizSelectNote() {
     checkLogin();
   }, []);
 
- useEffect(() => {
-     async function getFolders() {
-       try {
-         const response = await axios.post(`${API_BASE_URL}/api/note/getByNickname`, {
-            nickname: userInfo.nickname,
-         })
-         setFolders(response.data);
-       } catch (err) {
-         console.log("failed to load folders ", err);
-         setFolders(null);
-       }
-     }
+  useEffect(() => {
+    const getFoldersAndNotes = async() => {
+        try{
+            const response = await axios.post(`${API_BASE_URL}/api/folder/getFolderAndNote`, {
+                nickname: userInfo.nickname,
+            });
 
-     if(userInfo !== null){
-        getFolders();
-     }
-   }, [userInfo]);
+            setFolders(response.data);
+        } catch(err){
+            console.log("failed to load folders and notes ", err);
+        }
+    }
+
+    if(userInfo !== null){
+        getFoldersAndNotes();
+    }
+  }, [userInfo])
+
+
 
   // 노트 선택 토글 함수
-  const toggleNoteSelection = (noteId) => {
-    if (selectedNotes.includes(noteId)) {
-      setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
-    } else {
-      setSelectedNotes([...selectedNotes, noteId]);
+  const toggleNoteSelection = (folderName, noteTitle, noteId) => {
+    if(selectedNotes.some(note => note.noteId === noteId)){
+        setSelectedNotes(selectedNotes.filter(note => note.noteId !== noteId));
+    } else{
+        setSelectedNotes([...selectedNotes, { folderName, noteTitle, noteId }]);
     }
   };
 
   // 선택 해제 함수 (엑스 버튼)
   const removeSelectedNote = (noteId) => {
-    setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
+    setSelectedNotes(selectedNotes.filter((note) => note.noteId !== noteId));
   };
 
   return (
@@ -99,42 +102,48 @@ export default function CreateQuizSelectNote() {
       {/* 폴더와 노트 리스트 스크롤 */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 폴더 리스트 */}
-        {folders ? (
-          (folders.map((folder, idx) => (
+        {folders.map((folder, idx) => (
           <View key={idx} style={{ marginBottom: 10 }}>
             <TouchableOpacity
               style={styles.folderBox}
               onPress={() => setOpenFolder(openFolder === idx ? null : idx)}
             >
-              <Text style={styles.folderText}>{folder.name}</Text>
+              <Text style={styles.folderText}>{folder.folderName}</Text>
             </TouchableOpacity>
 
             {/* 해당 폴더가 열려 있을 때만 노트 목록 표시 */}
             {openFolder === idx &&
-              folder.notes.map((note, noteIdx) => {
-                 const selected = selectedNotes.includes(note.id);  // 숫자 기반 체크
-                  return (
-                    <TouchableOpacity
-                      key={noteIdx}
-                      style={[styles.noteBox, selected && styles.noteBoxSelected]}
-                      onPress={() => toggleNoteSelection(note.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="document-text" size={18} color="#BA94CC" style={{ marginRight: 8 }} />
-                      <Text style={styles.noteText}>{note.title}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              folder.noteTitles.map((noteTitle, noteIdx) => {
+                const noteId = folder.noteIds[noteIdx];
+                const selected = selectedNotes.some(note => note.noteId === noteId);
+                return (
+                  <TouchableOpacity
+                    key={noteIdx}
+                    style={[
+                      styles.noteBox,
+                      selected && styles.noteBoxSelected,
+                    ]}
+                    onPress={() => toggleNoteSelection(folder.folderName, noteTitle, folder.noteIds[noteIdx])}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="document-text"
+                      size={18}
+                      color="#BA94CC"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.noteText}>{noteTitle}</Text>
+                  </TouchableOpacity>
+                );
+              })}
           </View>
-          )))
-        ) : null}
-
+        ))}
 
         {/* 노트 없이 문제 생성 */}
         <View style={styles.customInputBox}>
           <Text style={styles.customInputLabel}>
-            노트 없이도 문제 생성이 가능해요!{"\n"}문제로 만들고 싶은 내용을
-            적어보세요.
+            노트 없이도 문제 생성이 가능해요!{"\n"}
+            문제로 만들고 싶은 내용을 적어보세요.
           </Text>
           <TextInput
             style={styles.input}
@@ -152,14 +161,12 @@ export default function CreateQuizSelectNote() {
           <FlatList
             horizontal
             data={selectedNotes}
-            keyExtractor={(item) => item}
+            keyExtractor={(item) => item.noteId}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => {
-              const found = folders.flatMap(f => f.notes).find(n => n.id === item);
-              const noteName = found?.title || `노트 ${item}`;
               return (
                 <View style={styles.selectedNoteBox}>
-                  <Text style={styles.selectedNoteText}>{noteName}</Text>
+                  <Text style={styles.selectedNoteText}>{item.folderName} - {item.noteTitle}</Text>
                   <TouchableOpacity
                     onPress={() => removeSelectedNote(item)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -178,22 +185,19 @@ export default function CreateQuizSelectNote() {
       <TouchableOpacity
         style={styles.selectButton}
         activeOpacity={0.8}
-        onPress={() =>
-          router.push({
-            pathname: "/createquiz_selecttype",
-            params: {
-              selectedNotesParam: JSON.stringify(
-                selectedNotes.map(id => {
-                  const found = folders.flatMap(f => f.notes).find(n => n.id === id);
-                  return { id, title: found?.title || `노트 ${id}` };
-                })
-              ),
-              inputTextParam: inputText.trim(),
-              nickname: userInfo?.nickname
-            },
-          })
-        }
+        onPress={() => {
+            if(selectedNotes.length === 0 && !inputText){
+                alert("하나 이상의 노트를 선택하거나 문제 내용을 입력하세요.");
+                return;
+            }
 
+            setData((prev) => ({
+                ...prev,
+                selectedNotes: JSON.stringify(selectedNotes),
+                inputText,
+            }));
+            router.push("/createquiz2");
+        }}
       >
         <Text style={styles.selectButtonText}>선택 완료</Text>
       </TouchableOpacity>
@@ -205,16 +209,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 50,
+    paddingTop: 30,
     paddingHorizontal: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 20,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "600",
     marginLeft: 10,
   },
@@ -256,12 +260,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF8FD",
     borderRadius: 10,
     padding: 15,
-    marginTop: 30,
+    marginTop: 10,
   },
   customInputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#3C3C3C",
     marginBottom: 10,
+    fontWeight: 600,
+    textAlign: "center",
   },
   input: {
     backgroundColor: "#fff",

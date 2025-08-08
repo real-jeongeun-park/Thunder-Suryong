@@ -26,7 +26,7 @@ public class FolderController {
             return ResponseEntity.ok(folderService.createFolder(folderRequest));
         } catch(Exception err){
             System.out.println(err.getMessage());
-            return ResponseEntity.status(404).body(err.getMessage());
+            return ResponseEntity.status(500).body(err.getMessage());
         }
     }
 
@@ -37,7 +37,7 @@ public class FolderController {
             return ResponseEntity.ok(folderService.getFolders(body));
         } catch(Exception e){
             System.out.println(e.getMessage());
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
@@ -47,7 +47,17 @@ public class FolderController {
             return ResponseEntity.ok(folderService.getFolderNameById(body));
         } catch(Exception e){
             System.out.println(e.getMessage());
-            return ResponseEntity.status(404).body(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/getFolderAndNote")
+    public ResponseEntity<?> getEach(@RequestBody Map<String, String> body){
+        try{
+            return ResponseEntity.ok(folderService.getFoldersAndNotes(body));
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 }

@@ -214,7 +214,7 @@ export default function QuizScreen() {
       <TouchableOpacity
         style={styles.createButton}
         activeOpacity={0.7}
-        onPress={() => router.push("/createquiz_selectnote")}
+        onPress={() => router.push("/createquiz1")}
       >
         <View style={styles.createButtonBackground} />
         <Feather

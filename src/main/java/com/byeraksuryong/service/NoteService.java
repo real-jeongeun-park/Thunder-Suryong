@@ -74,4 +74,23 @@ public class NoteService {
         note.setContent(content);
         return note;
     }
+
+    public List<List<String>> findByFolderId(String folderId){
+        List<Note> notes = noteRepository.findByFolderId(folderId);
+        if(notes.isEmpty()) throw new RuntimeException("no notes found");
+
+        List<String> noteIds = notes.stream()
+                .map(Note::getNoteId)
+                .collect(Collectors.toList());
+
+        List<String> noteTitles = notes.stream()
+                .map(Note::getTitle)
+                .collect(Collectors.toList());
+
+        List<List<String>> newList = new ArrayList<>();
+        newList.add(noteIds);
+        newList.add(noteTitles);
+
+        return newList;
+    }
 }

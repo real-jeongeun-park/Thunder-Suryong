@@ -386,8 +386,8 @@ export default function ExamInfoInput() {
                       >
                         <Text style={styles.addScheduleBtnText}>초기화</Text>
                       </TouchableOpacity>
+                      <Text style={styles.counter2}>{subject.length}/30</Text>
                     </View>
-                    <Text style={styles.counter2}>{subject.length}/30</Text>
                   </View>
                   {emptySubjects && (
                     <Text style={{ color: "red" }}>
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 10,
   },
-  dateSelectBox: {
+  dateSelectText: {
     padding: 8,
     borderRadius: 12,
     border: '1px solid #d0c4db',   /* 밝은 보라 계열 테두리 */
@@ -676,10 +676,9 @@ const styles = StyleSheet.create({
     MozAppearance: 'none',
     backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,<svg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M0 0l5 6 5-6z\' fill=\'%235e3e8c\'/></svg>")',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 10px center',
     backgroundSize: '10px 6px',
     marginRight: 10,
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',  /* 부드러운 그림자 */
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',  /* 부드러운 그림자 */
     cursor: 'pointer',             /* 마우스 오버 시 포인터 변경 */
     transition: 'border-color 0.3s, box-shadow 0.3s',
   },
@@ -691,7 +690,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   inputBox: {
-    marginBottom: 24,
+    marginBottom: 14,
     paddingHorizontal: 30,
   },
   label: {
@@ -735,13 +734,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   btnRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginVertical: 10,
-    flex: 1,
+    marginVertical: 15,
   },
   addScheduleBtn: {
-    //width: 100,
     backgroundColor: "#e0e0e0ff",
     paddingVertical: 8,
     borderRadius: 8,

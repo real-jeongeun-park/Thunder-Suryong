@@ -17,13 +17,10 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
-
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
-
 import { useData } from "@/context/DataContext";
-
 const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {

@@ -7,27 +7,38 @@ import {
   ScrollView,
   StyleSheet,
   Modal,
+  Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import axios from "axios";
+import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { Alert } from "react-native";
+import axios from "axios";
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from "react-native";
-
+import { API_BASE_URL } from "../src/constants";
+import { useData } from "@/context/DataContext";
 
 export default function CreateQuizSelectType() {
   const router = useRouter();
-  const { selectedNotesParam, inputTextParam, nickname: passedNickname } = useLocalSearchParams();
-
-
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [inputText, setInputText] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
   const [problemName, setProblemName] = useState("");
   const [questionCount, setQuestionCount] = useState("");
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const { data, setData } = useData();
+
+  const { selectedNotes, inputText } = data;
+
+  let parsedSelectedNotes = [];
+
+  try {
+    if (selectedNotes) {
+      parsedSelectedNotes = JSON.parse(selectedNotes);
+    }
+  } catch (e) {
+    console.error("JSON 파싱 실패:", e);
+    parsedSelectedNotes = [];
+  }
 
   const questionTypeOptions = [
     { id: 1, name: "주관식" },
@@ -35,47 +46,35 @@ export default function CreateQuizSelectType() {
     { id: 3, name: "O/X 문제" },
   ];
 
-  const [userInfo, setUserInfo] = useState(null);
-
+  // 로그인 여부 체크
   useEffect(() => {
-    const fetchNickname = async () => {
-      try {
-        let token;
-        if (Platform.OS === 'web') {
-          token = localStorage.getItem("accessToken");
-        } else {
-          token = await SecureStore.getItemAsync("accessToken");
+      async function checkLogin() {
+        try {
+          let token;
+
+          if (Platform.OS === "web") {
+            token = localStorage.getItem("accessToken");
+          } else {
+            token = await SecureStore.getItemAsync("accessToken");
+          }
+
+          if (!token) throw new Error("Token not found");
+          const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          setUserInfo(res.data);
+        } catch (err) {
+          console.log(err);
+          setUserInfo(null);
+          router.push("/");
         }
-
-        const res = await axios.get("http://localhost:8080/api/validation", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setUserInfo({ nickname: res.data.nickname });
-      } catch (error) {
-        console.error("인증 실패:", error);
-        router.push("/");
       }
-    };
-    fetchNickname();
-  }, []);
 
-
-  useEffect(() => {
-    if (selectedNotesParam) {
-      try {
-        setSelectedNotes(JSON.parse(selectedNotesParam));
-      } catch (e) {
-        console.error("selectedNotesParam 파싱 실패:", e);
-      }
-    }
-    if (inputTextParam) {
-      setInputText(inputTextParam);
-    }
-  }, [selectedNotesParam, inputTextParam]);
-
+      checkLogin();
+    }, []);
 
   const toggleType = (id) => {
     setSelectedTypes((prev) =>
@@ -89,7 +88,6 @@ export default function CreateQuizSelectType() {
 
   const handleRemoveText = () => setInputText("");
 
-  const noteIds = selectedNotes.map((note) => note.id);
 
   const closeModalAndGoBack = () => {
     setShowModal(false);
@@ -112,15 +110,6 @@ export default function CreateQuizSelectType() {
       return found?.name;
     });
 
-    let token;
-    if (Platform.OS === 'web') {
-      token = localStorage.getItem("accessToken");
-    } else {
-      token = await SecureStore.getItemAsync("accessToken");
-    }
-
-    console.log("🔐 token 확인:", token);
-
     const payload = {
       noteIds: noteIds,
       quizTitle: problemName.trim() === "" ? "새로운 문제지" : problemName.trim(),
@@ -135,12 +124,7 @@ export default function CreateQuizSelectType() {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/quiz/generate",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { payload, }
       );
       const quizList = response.data;
 
@@ -204,22 +188,22 @@ export default function CreateQuizSelectType() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>문제 유형을 선택해주세요.</Text>
+          <Text style={styles.headerText}>문제 유형 선택</Text>
         </View>
 
         <Text style={styles.subHeader}>선택된 노트</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-          {selectedNotes.map((note, idx) => (
+          {Array.isArray(parsedSelectedNotes) && parsedSelectedNotes.map((note, idx) => (
             <View key={idx} style={styles.selectedNoteBox}>
-              <Text style={styles.selectedNoteText}>{note.title}</Text>
-              <TouchableOpacity onPress={() => handleRemoveNote(note.id)}>
+              <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
+              <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
                 <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
               </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
 
-        {inputText !== "" && (
+        {inputText && (
           <View style={styles.inputTextBox}>
             <View style={styles.inputTextHeader}>
               <Text style={styles.inputTextLabel}>직접 입력한 내용</Text>
@@ -308,7 +292,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "600",
     marginLeft: 10,
   },
