@@ -1,5 +1,4 @@
 // creatquiz_selectnote.js
-import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,38 +7,73 @@ import {
   ScrollView,
   TextInput,
   FlatList,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import * as SecureStore from 'expo-secure-store';
+import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
 
 export default function CreateQuizSelectNote() {
   const router = useRouter();
   const [openFolder, setOpenFolder] = useState(null);
   const [inputText, setInputText] = useState("");
   const [selectedNotes, setSelectedNotes] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+  const [folders, setFolders] = useState([]);
 
-  const folders = [
-    {
-      name: "추천시스템",
-      notes: ["노트 1", "노트 2", "노트 3"],
-    },
-    {
-      name: "고급기계학습",
-      notes: [],
-    },
-    {
-      name: "심층학습",
-      notes: [],
-    },
-    {
-      name: "알고리즘",
-      notes: [],
-    },
-  ];
+  // 로그인 여부 체크
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
+
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
+
+ useEffect(() => {
+     async function getFolders() {
+       try {
+         const response = await axios.post(`${API_BASE_URL}/api/note/getByNickname`, {
+            nickname: userInfo.nickname,
+         })
+         setFolders(response.data);
+       } catch (err) {
+         console.log("failed to load folders ", err);
+         setFolders(null);
+       }
+     }
+
+     if(userInfo !== null){
+        getFolders();
+     }
+   }, [userInfo]);
 
   // 노트 선택 토글 함수
-  const toggleNoteSelection = (folderName, note) => {
-    const noteId = `${folderName}-${note}`;
+  const toggleNoteSelection = (noteId) => {
     if (selectedNotes.includes(noteId)) {
       setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
     } else {
@@ -65,7 +99,8 @@ export default function CreateQuizSelectNote() {
       {/* 폴더와 노트 리스트 스크롤 */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 폴더 리스트 */}
-        {folders.map((folder, idx) => (
+        {folders ? (
+          (folders.map((folder, idx) => (
           <View key={idx} style={{ marginBottom: 10 }}>
             <TouchableOpacity
               style={styles.folderBox}
@@ -77,30 +112,23 @@ export default function CreateQuizSelectNote() {
             {/* 해당 폴더가 열려 있을 때만 노트 목록 표시 */}
             {openFolder === idx &&
               folder.notes.map((note, noteIdx) => {
-                const noteId = `${folder.name}-${note}`;
-                const selected = selectedNotes.includes(noteId);
-                return (
-                  <TouchableOpacity
-                    key={noteIdx}
-                    style={[
-                      styles.noteBox,
-                      selected && styles.noteBoxSelected,
-                    ]}
-                    onPress={() => toggleNoteSelection(folder.name, note)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name="document-text"
-                      size={18}
-                      color="#BA94CC"
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text style={styles.noteText}>{note}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+                 const selected = selectedNotes.includes(note.id);  // 숫자 기반 체크
+                  return (
+                    <TouchableOpacity
+                      key={noteIdx}
+                      style={[styles.noteBox, selected && styles.noteBoxSelected]}
+                      onPress={() => toggleNoteSelection(note.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="document-text" size={18} color="#BA94CC" style={{ marginRight: 8 }} />
+                      <Text style={styles.noteText}>{note.title}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
           </View>
-        ))}
+          )))
+        ) : null}
+
 
         {/* 노트 없이 문제 생성 */}
         <View style={styles.customInputBox}>
@@ -127,7 +155,8 @@ export default function CreateQuizSelectNote() {
             keyExtractor={(item) => item}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => {
-              const noteName = item.split("-")[1];
+              const found = folders.flatMap(f => f.notes).find(n => n.id === item);
+              const noteName = found?.title || `노트 ${item}`;
               return (
                 <View style={styles.selectedNoteBox}>
                   <Text style={styles.selectedNoteText}>{noteName}</Text>
@@ -150,14 +179,21 @@ export default function CreateQuizSelectNote() {
         style={styles.selectButton}
         activeOpacity={0.8}
         onPress={() =>
-            router.push({
-                pathname: "/createquiz_selecttype", // 또는 "createquiz_selecttype" 경로
-                params: {
-                    selectedNotesParam: selectedNotes.join(","),
-                    inputTextParam: inputText,
-                },
-            })
+          router.push({
+            pathname: "/createquiz_selecttype",
+            params: {
+              selectedNotesParam: JSON.stringify(
+                selectedNotes.map(id => {
+                  const found = folders.flatMap(f => f.notes).find(n => n.id === id);
+                  return { id, title: found?.title || `노트 ${id}` };
+                })
+              ),
+              inputTextParam: inputText.trim(),
+              nickname: userInfo?.nickname
+            },
+          })
         }
+
       >
         <Text style={styles.selectButtonText}>선택 완료</Text>
       </TouchableOpacity>

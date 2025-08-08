@@ -134,9 +134,8 @@ export default function MyPageScreen() {
       <View style={{ flex: 1 }}>
         <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {/* 제목 왼쪽 / 아이콘 오른쪽 */}
             <View style={styles.titleRow}>
-              <Text style={styles.title}>나의 시험</Text>
+              <Text style={styles.title}>마이페이지</Text>
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => router.push("/account")}
@@ -144,7 +143,7 @@ export default function MyPageScreen() {
                 <Ionicons name="person-circle-outline" size={24} color="#663399" />
               </TouchableOpacity>
             </View>
-
+            <Text style={[styles.subtitle, styles.extraBottomSpace]}>나의 시험</Text>
             <View style={styles.examCardWhiteRow}>
               {examInfo ? (
                 <>
@@ -166,7 +165,7 @@ export default function MyPageScreen() {
             </View>
 
             {/* "나의 공부 시간" 제목에 위/아래 여백 추가 */}
-            <Text style={[styles.title, styles.extraTopSpace, styles.extraBottomSpace]}>
+            <Text style={[styles.subtitle, styles.extraTopSpace, styles.extraBottomSpace]}>
               나의 공부 시간
             </Text>
 
@@ -218,13 +217,21 @@ export default function MyPageScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 80 },
+  title: {
+    fontFamily: "Abhaya Libre ExtraBold",
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#3C3C3C",
+    marginLeft: 3,
+    marginBottom: 20,
+    paddingTop: 20,
+  },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
   },
-  title: { fontSize: 24, fontWeight: "bold" },
+  subtitle: { fontSize: 24, fontWeight: "bold" },
   extraTopSpace: { marginTop: 28 },       // "나의 공부 시간" 위쪽 여백
   extraBottomSpace: { marginBottom: 20 }, // "나의 공부 시간" 아래쪽 여백
   iconButton: {

@@ -16,8 +16,9 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import { MaterialIcons } from '@expo/vector-icons';
 
-const tabs = ["Time table", "Planner", "Completion rate"];
+const tabs = ["Study time", "Planner", "Completion rate"];
 const studyTags = [
   { text: "0-3h", bgColor: "rgb(228, 215, 245)", textColor: "#6D7582" },
   { text: "3-6h", bgColor: "rgb(191, 161, 226)", textColor: "#F3EEFB" },
@@ -34,8 +35,8 @@ export default function CalendarTimetableScreen() {
   );
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [plans, setPlans] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
   const [loadingStudyTimes, setLoadingStudyTimes] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userInfo, setUserInfo] = useState(false);
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
   const hourCount = 24;
@@ -45,6 +46,11 @@ export default function CalendarTimetableScreen() {
   const [selectedSubject, setSelectedSubject] = useState(null);
 
   const [studyTimes, setStudyTimes] = useState([]);
+
+  const formatTimeToKorean = (time) => {
+    const [hh, mm, ss] = time.split(":");
+    return `${hh}시 ${mm}분 ${ss}초`;
+  }
 
   useEffect(() => {
     async function checkLogin() {
@@ -121,7 +127,10 @@ export default function CalendarTimetableScreen() {
     setLoadingStudyTimes(true);
 
     const fetchStudyTimes = async () => {
-      if (!userInfo || subjects.length === 0) return;
+      if (!userInfo || subjects.length === 0) {
+        setLoadingStudyTimes(false);
+        return;
+      }
 
       try {
         const subjectIdList = subjects.map((s) => s.id);
@@ -145,49 +154,44 @@ export default function CalendarTimetableScreen() {
 
   const renderStudyTimeSummary = () => {
     if (loadingStudyTimes) {
-      return (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
-          불러오는 중...
-        </Text>
-      );
+      return <Text style={styles.loadingText}>불러오는 중...</Text>;
     }
 
     if (!subjects || subjects.length === 0) {
-      return (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
-          등록된 과목이 없습니다.
-        </Text>
-      );
+      return <Text style={styles.loadingText}>등록된 과목이 없습니다.</Text>;
     }
 
     if (!studyTimes || studyTimes.length === 0) {
       return (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
+        <Text style={styles.loadingText}>
           공부 시간 데이터를 불러오는 중입니다...
         </Text>
       );
     }
 
     return (
-      <View style={{ paddingHorizontal: 20 }}>
-        <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12 }}>
-          {format(new Date(selectedDate), "yyyy / M / d일")}
+      <View style={styles.timeContainer}>
+        <Text style={styles.dateText}>
+          {format(new Date(selectedDate), "yyyy년 M월 d일 공부 시간")}
         </Text>
 
         {subjects.map((subject, idx) => {
-          const time = studyTimes[idx] || "00:00:00"; // 공부 시간 없으면 기본 0시간 표시
-
+          const time = studyTimes[idx] || "00:00:00";
           return (
-            <View key={subject.id || idx} style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 16, color: "#4b3a99" }}>
-                {subject.name || subject} : {time}
-              </Text>
-            </View>
+            time !== "00:00:00" && (
+              <View key={subject.id || idx} style={styles.subjectRow}>
+                <MaterialIcons name="schedule" size={20} color="#6b4d9a" style={{ marginRight: 8 }} />
+                <Text style={styles.subjectText}>
+                    <Text>{subject.name}: </Text>
+                    <Text style={{ fontWeight: "600", }}>{formatTimeToKorean(time)}</Text>
+                </Text>
+              </View>
+            )
           );
         })}
       </View>
     );
-  };
+  }
 
   const getColorFromTime = (timeString) => {
     if (!timeString) return undefined;
@@ -220,7 +224,7 @@ export default function CalendarTimetableScreen() {
   useEffect(() => {
     async function fetchPlans() {
       try {
-        setLoadingPlans(true);
+        setIsLoading(true);
         const response = await axios.post(`${API_BASE_URL}/api/plan/date`, {
           nickname: userInfo.nickname,
           date: selectedDate,
@@ -242,7 +246,7 @@ export default function CalendarTimetableScreen() {
         console.error("계획 불러오기 실패", e);
         setPlans([]);
       } finally {
-        setLoadingPlans(false);
+        setIsLoading(false);
       }
     }
 
@@ -259,55 +263,39 @@ export default function CalendarTimetableScreen() {
     );
   };
 
-  const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
-    try {
-      await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`, {
-        learned: newValue,
-        nickname: userInfo.nickname,
-      });
-      setPlans((prevPlans) =>
-        prevPlans.map((plan) =>
-          plan.id === planGroupId
-            ? {
-                ...plan,
-                todos: plan.todos.map((todo) =>
-                  todo.id === todoId ? { ...todo, checked: newValue } : todo
-                ),
-              }
-            : plan
-        )
-      );
-    } catch (e) {
-      console.error("체크박스 상태 변경 실패", e);
-    }
-  };
-
+  // --- renderPlans: 이제 ScrollView를 반환하지 않고 단순 View를 반환합니다.
+  // 바깥에서 하나의 ScrollView로 전체 스크롤을 담당하게 합니다.
   const renderPlans = () => {
-    if (loadingPlans) {
+    if (isLoading) {
       return (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
-          계획 불러오는 중...
-        </Text>
+        <View style={styles.card}>
+          <Text style={styles.loadingText}>
+            계획 불러오는 중...
+          </Text>
+        </View>
       );
     }
 
     if (!plans || plans.length === 0) {
       return (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
-          등록된 계획이 없습니다.
-        </Text>
+        <View style={styles.card}>
+          <Text style={styles.loadingText}>
+            등록된 계획이 없습니다.
+          </Text>
+        </View>
       );
     }
 
     return (
-      <ScrollView style={styles.card}>
+      <View style={styles.card}>
         <Text style={styles.toDoTitle}>
-          {format(selectedDate, "yyyy년 M월 d일")} 계획
+          {format(new Date(selectedDate), "yyyy년 M월 d일")} 계획
         </Text>
         {plans.map((plan) => (
           <View key={plan.id}>
             <View style={styles.planItem}>
-              <Text styles={styles.planText}>{plan.title}</Text>
+              {/* 여기에 styles -> style로 수정했음 */}
+              <Text style={styles.planText}>{plan.title}</Text>
               <TouchableOpacity onPress={() => toggleExpand(plan.id)}>
                 <Ionicons
                   name={plan.isExpanded ? "chevron-back" : "chevron-down"}
@@ -318,27 +306,21 @@ export default function CalendarTimetableScreen() {
             </View>
             {plan.isExpanded && (
               <View style={styles.subTodoContainer}>
-                {plan.todos
-                  .filter((todo) => todo.checked)
-                  .map((todo) => (
-                    <View key={todo.id} style={styles.subTodoItem}>
-                      <View style={styles.subTodoTextContainer}>
-                        <Text style={styles.subTodoText}>
-                          <Text style={styles.subTodoWeek}>{todo.week} </Text>
-                          <Text>{todo.title}</Text>
-                        </Text>
-                      </View>
+                {plan.todos.map((todo) => (
+                  <View key={todo.id} style={styles.subTodoItem}>
+                    <View style={styles.subTodoTextContainer}>
+                      <Text style={styles.subTodoText}>
+                        <Text style={styles.subTodoWeek}>{todo.week} </Text>
+                        <Text>{todo.title}</Text>
+                      </Text>
                     </View>
-                  ))}
+                  </View>
+                ))}
               </View>
             )}
           </View>
         ))}
-
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ 과목</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      </View>
     );
   };
 
@@ -347,8 +329,8 @@ export default function CalendarTimetableScreen() {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <TouchableOpacity
-            onPress={() => router.back()}
             style={styles.backButton}
+            onPress={() => router.back()}
           >
             <Ionicons name="chevron-back" size={32} color="#535353" />
           </TouchableOpacity>
@@ -393,10 +375,12 @@ export default function CalendarTimetableScreen() {
           </View>
         </View>
 
+        {/* 탭 행: zIndex와 배경색을 줘서 스크롤 영역 위에 항상 보이게 함 */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabRow}
+          style={styles.tabRowWrapper}
         >
           {tabs.map((tab) => {
             const isActive = activeTab === tab;
@@ -416,10 +400,29 @@ export default function CalendarTimetableScreen() {
           })}
         </ScrollView>
 
+        {/* content 영역: Planner일 때 바깥 ScrollView 하나만 사용 */}
         <View style={styles.contentContainer}>
-          {activeTab === "Time table" && renderStudyTimeSummary()}
+          {activeTab === "Study time" && (
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={{
+                paddingBottom: 20,
+              }}
+              showsVerticalScrollIndicator={false}
+            >
+              {renderStudyTimeSummary()}
+            </ScrollView>
+          )}
           {activeTab === "Planner" && (
-            <ScrollView style={styles.plannerBox}>{renderPlans()}</ScrollView>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={{
+                paddingBottom: 20,
+              }}
+              showsVerticalScrollIndicator={false}
+            >
+              {renderPlans()}
+            </ScrollView>
           )}
           {activeTab === "Completion rate" && <Text>완성도 내용</Text>}
         </View>
@@ -439,8 +442,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     paddingHorizontal: 10,
-    justifyContent: "center", // 가로 가운데 정렬
-    position: "relative", // 절대 위치 요소들 있으면 컨텍스트 유지용(필요에 따라)
+    justifyContent: "center",
+    position: "relative",
     marginBottom: 10,
   },
   headerText: {
@@ -448,8 +451,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
     marginTop: 0,
-    //marginBottom: 8,
-    flex: 1, // 텍스트가 headerRow 내에서 공간을 넓게 차지하게
   },
   backButton: {
     position: "absolute",
@@ -458,6 +459,16 @@ const styles = StyleSheet.create({
   calendar: {
     marginHorizontal: 30,
     marginBottom: 14,
+  },
+  calendarWrapper: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 5,
+    borderWidth: 1,
+    borderColor: "#9E73D9",
+    marginHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 10,
   },
   tagRow: {
     flexDirection: "row",
@@ -473,12 +484,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 10,
   },
+  // 탭의 contentContainerStyle (스크롤 내부의 레이아웃)
   tabRow: {
-    //backgroundColor: "#9B73D2",
     flexDirection: "row",
     paddingHorizontal: 20,
-    maxHeight: 40,
     alignItems: "center",
+  },
+  // 탭을 감싸는 바깥 스타일: 배경과 zIndex를 줘서 스크롤 콘텐츠 위에 있도록 함
+  tabRowWrapper: {
+    backgroundColor: "#ffffff",
+    zIndex: 10,
+    elevation: 3,
+    paddingVertical: 8,
+    maxHeight: 50,
   },
   tabButton: {
     marginRight: 30,
@@ -499,41 +517,38 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#B493C3",
   },
+  // contentContainer은 View이므로 flex:1로 채움
   contentContainer: {
     paddingHorizontal: 20,
-    // backgroundColor: "#B493C3",
-    //alignItems: "stretch",
-    //minHeight: 500,
-    //flexDirection: "column",
-    flexGrow: 1,
-    justifyContent: "flex-start", // 세로 가운데 정렬
-    //alignItems: "center",
+    flex: 1,
+    justifyContent: "flex-start",
   },
   plannerBox: {
     width: "100%",
   },
-  card: {
-    backgroundColor: "#f5f0ff", // 연한 보라 배경
-    borderRadius: 10, // 둥근 모서리
-    padding: 16, // 안쪽 여백
-    //shadowColor: "#000", // 그림자 색
-    //shadowOffset: { width: 0, height: 2 }, // 그림자 위치
-    //shadowOpacity: 0.1, // 그림자 투명도
-    //shadowRadius: 4, // 그림자 퍼짐
-    elevation: 5, // 안드로이드용 그림자 효과
+  // planner 전체 스크롤 담당
+  scrollView: {
+    flex: 1,
     width: "100%",
+  },
+  card: {
+    backgroundColor: "#f5f0ff",
+    borderRadius: 10,
+    padding: 16,
+    elevation: 5,
+    width: "100%",
+    marginTop: 10,
   },
   toDoTitle: {
     fontSize: 18,
     fontWeight: "bold",
     alignSelf: "center",
     marginBottom: 12,
-    color: "#533a99", // 약간 진한 보라색
+    color: "#533a99",
   },
   planItem: {
-    flexDirection: "row", // 가로 정렬
+    flexDirection: "row",
     alignItems: "center",
-    //justifyContent: "space-between", // 좌우 끝 정렬
     paddingVertical: 8,
     paddingHorizontal: 10,
     backgroundColor: "#faf5ff",
@@ -549,11 +564,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subTodoContainer: {
-    marginLeft: 24,
+    marginLeft: 10,
     marginBottom: 10,
   },
   subTodoItem: {
-    flexDirection: "row", // 가로 정렬
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
   },
@@ -562,30 +577,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  addButton: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: "#d7ccf9",
-  },
-  addButtonText: {
-    color: "#5e43c2",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
   subTodoTextContainer: {
     flex: 1,
   },
   subTodoWeek: {
     fontSize: 14,
     color: "#333",
-    fontWeight: 500,
+    fontWeight: "500",
     flexShrink: 0,
   },
-  subTodoText: {
-    flexWrap: "wrap",
-    flexShrink: 1,
+  timeContainer: {
+    paddingHorizontal: 24,
+    backgroundColor: "#f9f7fd", // 아주 연한 보라
+    borderRadius: 16,
+    paddingVertical: 16,
+    marginTop: 10,
+    elevation: 6,
+    width: "100%",
   },
+  dateText: {
+    fontWeight: "700",
+    fontSize: 18,
+    marginBottom: 16,
+    color: "#5b3e99", // 좀 더 딥한 보라
+    textAlign: "center",
+  },
+  subjectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    backgroundColor: "#ede9fb", // 아주 부드러운 보라톤 박스
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    shadowColor: "#a999d8",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  subjectText: {
+    fontSize: 15,
+    color: "#5b3e99",
+  },
+  loadingText: {
+    textAlign: "center",
+  }
 });

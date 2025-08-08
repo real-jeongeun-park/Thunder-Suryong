@@ -2,6 +2,7 @@ package com.byeraksuryong.service;
 
 import com.byeraksuryong.api.AiApi;
 import com.byeraksuryong.domain.Style;
+import com.byeraksuryong.dto.Response;
 import com.byeraksuryong.dto.SubjectInfoList;
 import com.byeraksuryong.dto.SyllabusList;
 import com.byeraksuryong.repository.StyleRepository;
@@ -249,5 +250,36 @@ public class AiService {
         ai.setDefaultPrompt("너는 학생들의 공부를 도와주는 수룡이 챗봇이야. 친근한 말투로 학생들을 도와줘야 해.\n\n" + content + "\n\n이 배경 지식을 바탕으로 다음의 물음에 답해줘:\n");
         String result = ai.requestAnswer(chatInput).getResponse();
         return result.replace("**", "");
+    }
+
+    /**
+     * GPT에게 퀴즈 프롬프트 전달하고 퀴즈 리스트 반환
+     * @param prompt GPT에 보낼 프롬프트 (퀴즈 생성 명령 포함)
+     * @return 퀴즈 리스트 (문자열 리스트 형태)
+     */
+    public List<String> useQuizAi(String prompt) {
+        try {
+
+            Response responseObj = ai.requestAnswer(prompt);
+
+            if (responseObj == null || responseObj.getResponse() == null) {
+                System.out.println("GPT 응답이 null입니다. 퀴즈 생성 실패");
+                return new ArrayList<>();  // 빈 리스트로 반환
+            }
+
+            String response = responseObj.getResponse();
+
+            // 줄바꿈 기준으로 문제 분리해서 리스트로 반환
+            return Arrays.stream(
+                            response.split("(?<=@@[^@]+@@[^@]+)(?=\\s*[^@\\s])|\\n") // @@정답@@다음에 문제시작 또는 줄바꿈
+                    )
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+
+        } catch (Exception e) {
+            System.out.println("GPT 호출 중 오류: " + e.getMessage());
+            return new ArrayList<>();  // 예외 발생 시도 빈 리스트 반환
+        }
     }
 }

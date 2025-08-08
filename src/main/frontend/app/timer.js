@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -211,7 +210,7 @@ export default function TimerScreen() {
               <Text style={styles.subjectText}>{item.name}</Text>
             </View>
             <View style={styles.cell}>
-              <Text style={styles.subjectText}>{item.time}</Text>
+              <Text style={styles.timeText}>{item.time}</Text>
             </View>
             <View style={[styles.cell, styles.buttonGroup]}>
               <TouchableOpacity
@@ -224,7 +223,7 @@ export default function TimerScreen() {
                   name={item.isRunning ? "pause-circle-outline" : "play-circle-outline"}
                   size={28}
                   color="#8D5ACF"
-                  style={{ marginTop: 2, }}
+                  style={{ marginTop: 1, }}
                 />
               </TouchableOpacity>
             </View>
@@ -293,7 +292,7 @@ const styles = StyleSheet.create({
   },
   cell: { flex: 1, justifyContent: "center" },
   subjectText: { textAlign: "center" },
-
+  timeText: { textAlign: "center", fontWeight: "500", },
   buttonGroup: { flexDirection: "row", justifyContent: "center", gap: 8 },
   circleButton: {
     width: 36,

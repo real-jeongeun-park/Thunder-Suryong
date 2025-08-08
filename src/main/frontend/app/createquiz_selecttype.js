@@ -10,10 +10,17 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import axios from "axios";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Alert } from "react-native";
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from "react-native";
+
 
 export default function CreateQuizSelectType() {
   const router = useRouter();
-  const { selectedNotesParam, inputTextParam } = useLocalSearchParams();
+  const { selectedNotesParam, inputTextParam, nickname: passedNickname } = useLocalSearchParams();
+
 
   const [selectedNotes, setSelectedNotes] = useState([]);
   const [inputText, setInputText] = useState("");
@@ -28,14 +35,47 @@ export default function CreateQuizSelectType() {
     { id: 3, name: "O/X 문제" },
   ];
 
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchNickname = async () => {
+      try {
+        let token;
+        if (Platform.OS === 'web') {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        const res = await axios.get("http://localhost:8080/api/validation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo({ nickname: res.data.nickname });
+      } catch (error) {
+        console.error("인증 실패:", error);
+        router.push("/");
+      }
+    };
+    fetchNickname();
+  }, []);
+
+
   useEffect(() => {
     if (selectedNotesParam) {
-      setSelectedNotes(selectedNotesParam.split(","));
+      try {
+        setSelectedNotes(JSON.parse(selectedNotesParam));
+      } catch (e) {
+        console.error("selectedNotesParam 파싱 실패:", e);
+      }
     }
     if (inputTextParam) {
       setInputText(inputTextParam);
     }
   }, [selectedNotesParam, inputTextParam]);
+
 
   const toggleType = (id) => {
     setSelectedTypes((prev) =>
@@ -44,33 +84,117 @@ export default function CreateQuizSelectType() {
   };
 
   const handleRemoveNote = (noteId) => {
-    setSelectedNotes((prev) => prev.filter((id) => id !== noteId));
+    setSelectedNotes((prev) => prev.filter((note) => note.id !== noteId));
   };
 
   const handleRemoveText = () => setInputText("");
 
-  const onSubmit = () => {
-    if (selectedNotes.length === 0 && inputText.trim() === "") {
-      setShowModal(true);
-      return;
-    }
-    const finalProblemName = problemName.trim() === "" ? "새로운 문제지" : problemName;
-    const finalQuestionCount = parseInt(questionCount) > 0 ? parseInt(questionCount) : 5;
-
-    router.push({
-      pathname: "/createdquiz",
-      params: {
-        problemName: finalProblemName,
-        questionCount: finalQuestionCount.toString(),
-        selectedTypes: JSON.stringify(selectedTypes),
-        inputText: inputText.trim(),
-      },
-    });
-  };
+  const noteIds = selectedNotes.map((note) => note.id);
 
   const closeModalAndGoBack = () => {
     setShowModal(false);
-    router.push("/createquiz_selectnote");
+    router.back();
+  };
+
+  const handleGenerateQuiz = async () => {
+    if (!userInfo || !userInfo.nickname) {
+      Alert.alert("잠시만요", "로그인 정보를 불러오는 중입니다. 다시 시도해주세요.");
+      return;
+    }
+
+    if (selectedTypes.length === 0) {
+        Alert.alert("알림", "적어도 하나의 문제 유형을 선택해주세요!");
+        return;
+      }
+
+    const selectedTypeNames = selectedTypes.map((id) => {
+      const found = questionTypeOptions.find((t) => t.id === id);
+      return found?.name;
+    });
+
+    let token;
+    if (Platform.OS === 'web') {
+      token = localStorage.getItem("accessToken");
+    } else {
+      token = await SecureStore.getItemAsync("accessToken");
+    }
+
+    console.log("🔐 token 확인:", token);
+
+    const payload = {
+      noteIds: noteIds,
+      quizTitle: problemName.trim() === "" ? "새로운 문제지" : problemName.trim(),
+      problemCount: parseInt(questionCount) || 5,
+      problemTypes: selectedTypeNames,
+      nickname: userInfo?.nickname,
+      inputText: inputText.trim(),
+    };
+
+    console.log(" payload 확인:", payload);  // 삭제하기
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/quiz/generate",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const quizList = response.data;
+
+      // 🔧 문자열 리스트 → 객체 리스트로 변환
+      const parsedQuizList = quizList.map((item) => {
+        const parts = item.split("@@");
+
+        const question = parts[0]?.trim();
+        const isSubjective = parts.length === 3;  // 주관식은 @@정답@@해설 형식
+
+        let options = "";
+        let answer = "";
+        let solution = "";
+        let type = "subjective";
+
+        if (isSubjective) {
+          // 주관식: 문제@@정답@@해설
+          answer = parts[1]?.trim();
+          solution = parts[2]?.trim();
+        } else {
+          // 객관식/ox: 문제@@보기@@정답@@해설
+          options = parts[1]?.trim();
+          answer = parts[2]?.trim();
+          solution = parts[3]?.trim();
+
+          if (options.toUpperCase() === "O|X") {
+            type = "ox";
+          } else if (options.includes("|")) {
+            type = "objective";
+          }
+        }
+
+        return {
+          question: `${question}${options ? "@@" + options : ""}`,
+          correctAnswer: [answer] || [], // 백엔드의 answer 필드 사용
+          solution: solution,
+          type: type,
+        };
+      });
+
+      router.push({
+        pathname: "/createdquiz",
+        params: {
+          quizList: encodeURIComponent(JSON.stringify(parsedQuizList)),
+          problemName: problemName.trim() === "" ? "새로운 문제지" : problemName.trim(),
+          questionCount: (parseInt(questionCount) || 5).toString(),
+          selectedTypes: encodeURIComponent(JSON.stringify(selectedTypes)),
+          noteIds: encodeURIComponent(JSON.stringify(noteIds)),
+        },
+      });
+    } catch (error) {
+      console.error("퀴즈 생성 오류:", error);
+      Alert.alert("오류", "퀴즈 생성에 실패했어요!");
+    }
   };
 
   return (
@@ -87,8 +211,8 @@ export default function CreateQuizSelectType() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
           {selectedNotes.map((note, idx) => (
             <View key={idx} style={styles.selectedNoteBox}>
-              <Text style={styles.selectedNoteText}>{note}</Text>
-              <TouchableOpacity onPress={() => handleRemoveNote(note)}>
+              <Text style={styles.selectedNoteText}>{note.title}</Text>
+              <TouchableOpacity onPress={() => handleRemoveNote(note.id)}>
                 <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
               </TouchableOpacity>
             </View>
@@ -148,7 +272,7 @@ export default function CreateQuizSelectType() {
           keyboardType="numeric"
         />
 
-        <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
+        <TouchableOpacity style={styles.submitButton} onPress={handleGenerateQuiz}>
           <Text style={styles.submitButtonText}>완료</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -221,9 +345,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputTextLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#222",
+    fontWeight: "600",
+    color: "#fff",
   },
   inputTextArea: {
     backgroundColor: "#fff",

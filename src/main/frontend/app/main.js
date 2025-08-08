@@ -249,11 +249,11 @@ export default function HomeScreen() {
           flex: 1,
         }}
       >
+       <LinearGradient
+                  colors={["#EFE5FF", "#FFFFFF"]}
+                  style={styles.gradient}
+                >
         <View contentContainerStyle={styles.container}>
-          <LinearGradient
-            colors={["#EFE5FF", "#FFFFFF"]}
-            style={styles.gradient}
-          >
             <View style={styles.contentWrapper}>
               {userInfo && (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -375,18 +375,16 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-          </LinearGradient>
-        </View>
-
-        {/* 말풍선 */}
-        <View style={styles.speechContainer}>
-          <View style={styles.bubble}>
-            <Text style={styles.bubbleText}>
-              시험이 얼마 남지 않았네요! 오늘도 파이팅!
-            </Text>
+          {/* 말풍선 */}
+          <View style={styles.speechContainer}>
+            <View style={styles.bubble}>
+              <Text style={styles.bubbleText}>
+                시험이 얼마 남지 않았네요! 오늘도 파이팅!
+              </Text>
+            </View>
           </View>
-          <View style={styles.bubbleTail} />
         </View>
+       </LinearGradient>
 
         {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
         <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
@@ -510,6 +508,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     flex: 1,
+    height: "100%",
   },
   title: {
     fontSize: 25,
@@ -561,7 +560,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     backgroundColor: "#F6F0FF",
-    padding: 5,
+    padding: 10,
     borderRadius: 20,
   },
   character: {
@@ -571,38 +570,34 @@ const styles = StyleSheet.create({
   },
   speechContainer: {
     position: "absolute",
-    width: "60%",              // 적당한 가로폭
-    top: "30%",                // 원하는 위치
-    left: "20%",               // 중앙 정렬용
+    left: 20,        // 왼쪽으로 붙이기
+    bottom: 40,      // 수룡이 위쪽으로 당기기
+    flexDirection: "row",
     alignItems: "center",
+    zIndex: 10,      // 수룡이 위에 보이도록
   },
   bubble: {
-    backgroundColor: "#ffffff",
-    paddingVertical: 20,
-    paddingHorizontal: 25,
-    borderRadius: 30,
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    maxWidth: 230,
+
+    // 입체감 있는 그림자
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  bubbleTail: {
-    width: 20,
-    height: 20,
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
-    position: "absolute",
-    bottom: -8,       // 본체에 더 가깝게
-    left: "50%",
-    marginLeft: -10, // 꼬리 width의 절반 음수로 중앙 정렬
-    transform: [{ rotate: "45deg" }],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
+
+    // 살짝 테두리로 입체감 보완
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
   },
   bubbleText: {
-    color: "#5e3e8c",
-    fontSize: 16,
-    fontWeight: "500",
-    textAlign: "center",
+    fontSize: 14,
+    color: "#5b5b5b",
+    fontWeight: "600",
   },
   timerText: {
     marginTop: 4,
@@ -752,19 +747,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     alignSelf: "flex-start", // 텍스트 너비만큼 박스 크기 조정
-    marginVertical: 10,
     //marginTop: "10%",
   },
   ddayText: {
     color: "#fff", // 흰색 텍스트
     fontWeight: "bold",
     fontSize: 16,
-  },
-  bubble: {
-    backgroundColor: "#6c4ed5", // 말풍선 배경색
-  },
-  speech: {
-    color: "#fff", // 텍스트 색상
-    fontSize: 14,
   },
 });
