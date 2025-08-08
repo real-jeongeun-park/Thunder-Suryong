@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Modal,
+  Image,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,6 +40,14 @@ export default function MyPageScreen() {
   const [userInfo, setUserInfo] = useState(false);
   const [examInfo, setExamInfo] = useState(null);
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const collectedDragons = [
+    require("../assets/images/rainbow-dragon.png"),
+    require("../assets/images/grass-dragon.png"),
+    require("../assets/images/study-dragon.png"),
+  ];
+  const missingDragon = require("../assets/images/missing-dragon.png");
 
   useEffect(() => {
     async function checkLogin() {
@@ -94,7 +104,7 @@ export default function MyPageScreen() {
 
   const getColorFromTime = (timeString) => {
     if (!timeString) return undefined;
-    const [h, m, s] = timeString.split(":").map(Number);
+    const [h, m, s] = timeString.split(":" ).map(Number);
     const total = h + m / 60 + s / 3600;
     if (0 < total && total < 3) return "rgb(228, 215, 245)";
     if (3 <= total && total < 6) return "rgb(191, 161, 226)";
@@ -156,15 +166,14 @@ export default function MyPageScreen() {
             </View>
 
             <View style={styles.listButtonRow}>
-              <TouchableOpacity onPress={() => router.push("/schedule_list")}>
+              <TouchableOpacity onPress={() => router.push("/schedule_list") }>
                 <Text style={styles.listButtonText}>지난 시험 보기 &gt;</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/exam_schedule")}>
+              <TouchableOpacity onPress={() => router.push("/exam_schedule") }>
                 <Text style={styles.listButtonText}>새로운 시험 생성 &gt;</Text>
               </TouchableOpacity>
             </View>
 
-            {/* "나의 공부 시간" 제목에 위/아래 여백 추가 */}
             <Text style={[styles.subtitle, styles.extraTopSpace, styles.extraBottomSpace]}>
               나의 공부 시간
             </Text>
@@ -205,18 +214,65 @@ export default function MyPageScreen() {
                 ))}
               </View>
             </View>
+
+            <View style={styles.sectionHeader}>
+  <Text style={styles.subtitle}>수집한 수룡이</Text>
+  <TouchableOpacity
+    onPress={() => setModalVisible(true)}
+    style={styles.viewAllButtonWrapper}
+  >
+    <Text style={styles.listButtonText}>전체 보기 &gt;</Text>
+  </TouchableOpacity>
+</View>
+
+<View style={styles.collectedRow}>
+  {collectedDragons.map((img, idx) => (
+    <View key={idx} style={styles.suryongCard}>
+      <Image source={img} style={styles.suryongImageGrid} />
+    </View>
+  ))}
+</View>
+
+<Modal visible={modalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>수집한 수룡이 전체 보기</Text>
+
+      <ScrollView contentContainerStyle={styles.modalScroll}>
+        <View style={styles.gridWrapper}>
+          {Array.from({ length: 9 }).map((_, idx) => {
+            const isCollected = idx < collectedDragons.length;
+            const source = isCollected ? collectedDragons[idx] : missingDragon;
+
+            return (
+              <View key={idx} style={styles.suryongCard}>
+                <Image source={source} style={styles.suryongImageGrid} />
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      <TouchableOpacity
+        onPress={() => setModalVisible(false)}
+        style={styles.modalCloseButton}
+      >
+        <Text style={{ color: "#663399", fontWeight: "bold" }}>닫기</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
           </ScrollView>
         </LinearGradient>
-
         <BottomNavigation />
       </View>
     </SafeAreaWrapper>
   );
 }
-
-const styles = StyleSheet.create({
+  const styles = StyleSheet.create({
   gradient: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 80 },
+
   title: {
     fontFamily: "Abhaya Libre ExtraBold",
     fontSize: 32,
@@ -226,14 +282,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingTop: 20,
   },
+
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
+
   subtitle: { fontSize: 24, fontWeight: "bold" },
-  extraTopSpace: { marginTop: 28 },       // "나의 공부 시간" 위쪽 여백
-  extraBottomSpace: { marginBottom: 20 }, // "나의 공부 시간" 아래쪽 여백
+  extraTopSpace: { marginTop: 28 },
+  extraBottomSpace: { marginBottom: 20 },
+
   iconButton: {
     width: 36,
     height: 36,
@@ -242,6 +301,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   examCardWhiteRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -254,25 +314,31 @@ const styles = StyleSheet.create({
     borderColor: "#D3BFFF",
     marginBottom: 8,
   },
+
   examText: { fontSize: 16, fontWeight: "bold", color: "#5E3BCB" },
+
   ddayTagSmallInside: {
     backgroundColor: "#E9E0F5",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
   },
+
   ddayText: { fontSize: 12, color: "#663399" },
+
   listButtonRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
     marginTop: 8,
   },
+
   listButtonText: {
     fontSize: 12,
     color: "#9E73D9",
     fontWeight: "500",
     marginRight: 8,
   },
+
   calendarWrapper: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -280,22 +346,135 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#9E73D9",
   },
+
   calendar: {
     marginHorizontal: 30,
     marginBottom: 14,
   },
+
   tagRow: {
     flexDirection: "row",
     marginLeft: 18,
     marginBottom: 12,
   },
+
   tagBase: {
     borderRadius: 5,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
+
   tagText: {
     fontWeight: "bold",
     fontSize: 10,
+  },
+
+  collectedRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+
+  suryongImage: {
+    width: 100,
+    height: 100,
+    resizeMode: "contain",
+    borderRadius: 12,
+  },
+
+  // ✅ 수집한 수룡이 섹션
+  sectionHeader: {
+    marginTop: 28,
+    marginBottom: 8,
+    paddingBottom: 8,
+  },
+
+  viewAllButtonWrapper: {
+    alignItems: "flex-end",
+    width: "100%",
+    marginTop: 4,
+  },
+
+  // ✅ 모달 관련
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",     // 🔥 세로 중앙 정렬
+  alignItems: "center",         // 🔥 가로 중앙 정렬
+  },
+
+  modalContent: {
+  width: 360,
+  height: 600,              // 또는 360
+  maxWidth: 400,             // 너무 커지지 않도록
+  backgroundColor: "#fff",
+  borderRadius: 20,
+  paddingVertical: 24,
+  paddingHorizontal: 16,
+  alignItems: "center",
+
+},
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 10,
+    color: "#000000",
+  },
+
+modalScroll: {
+  flexGrow: 1, // 핵심!
+  justifyContent: "center", // 수직 가운데 정렬
+  alignItems: "center",     // 수평 가운데 정렬
+  paddingVertical: 20,
+},
+
+gridWrapper: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  paddingHorizontal: 10,
+},
+
+  collectedRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  paddingHorizontal: 12,
+  marginBottom: 8,
+},
+
+  suryongImageGrid: {
+  width: 82,           // 고정 너비
+  height:130,          // 고정 높이
+  resizeMode: "contain",
+  borderRadius: 12,
+},
+
+suryongCard: {
+  width: "30%", // 3개가 한 줄에 들어오게
+  aspectRatio: 0.75, // 조금 더 세로 길게
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: "#9E73D9",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 14,  // 카드 간 세로 간격
+},
+
+suryongImageCard: {
+  width: "100%",
+  height: "100%",
+  resizeMode: "contain",
+  borderRadius: 15,
+},
+
+  modalCloseButton: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#E9E0F5",
+    borderRadius: 12,
   },
 });
