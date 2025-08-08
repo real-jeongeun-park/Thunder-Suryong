@@ -188,7 +188,7 @@ export default function ExamInfoInput() {
     }
   };
 
-  const uploadImage = async (uri: string) => {
+  const uploadImage = async (uri) => {
     // 앱용
     setLoading(true);
 
@@ -236,28 +236,27 @@ export default function ExamInfoInput() {
     const isExamnameEmpty = !examName.trim();
     const isSubjectsEmpty = subjects.length === 0;
     const isInvalidDates =
-        selectedDates.length === 0 ||
-        selectedDates.length !== subjects.length ||
-        Array.from(selectedDates).some(date => !date || date.trim() === "");
+      selectedDates.length === 0 ||
+      selectedDates.length !== subjects.length ||
+      Array.from(selectedDates).some((date) => !date || date.trim() === "");
 
-    if(isExamnameEmpty){
-        setEmptyExamName(true);
+    if (isExamnameEmpty) {
+      setEmptyExamName(true);
     }
-    if(isSubjectsEmpty){
-        setEmptySubjects(true);
-    }
-    if(isInvalidDates){
-        alert("입력되지 않은 시험 날짜가 있습니다.");
+    if (isSubjectsEmpty) {
+      setEmptySubjects(true);
+    } else if (isInvalidDates) {
+      alert("각 과목의 시험 날짜를 선택해주세요.");
     }
 
-    if(!isExamnameEmpty && !isSubjectsEmpty && !isInvalidDates){
-        setData((prev) => ({
-            ...prev,
-            examName,
-            subjects: JSON.stringify(subjects),
-            subjectDates: JSON.stringify(selectedDates),
-        }));
-        router.push("/exam_schedule3");
+    if (!isExamnameEmpty && !isSubjectsEmpty && !isInvalidDates) {
+      setData((prev) => ({
+        ...prev,
+        examName,
+        subjects: JSON.stringify(subjects),
+        subjectDates: JSON.stringify(selectedDates),
+      }));
+      router.push("/exam_schedule3");
     }
   };
 
@@ -368,24 +367,26 @@ export default function ExamInfoInput() {
                   </View>
                   {/*시간표 불러오기, 초기화 버튼*/}
                   <View style={styles.btnRow}>
-                    <TouchableOpacity
-                      style={styles.addScheduleBtn}
-                      onPress={pickImage}
-                    >
-                      <Text style={styles.addScheduleBtnText}>
-                        에타 시간표 불러오기
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.addScheduleBtn}
-                      onPress={() => {
-                        if (subjects.length > 0) {
-                          setShowModal(true);
-                        }
-                      }}
-                    >
-                      <Text style={styles.addScheduleBtnText}>초기화</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={styles.addScheduleBtn}
+                        onPress={pickImage}
+                      >
+                        <Text style={styles.addScheduleBtnText}>
+                          에타 시간표 불러오기
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.addScheduleBtn}
+                        onPress={() => {
+                          if (subjects.length > 0) {
+                            setShowModal(true);
+                          }
+                        }}
+                      >
+                        <Text style={styles.addScheduleBtnText}>초기화</Text>
+                      </TouchableOpacity>
+                    </View>
                     <Text style={styles.counter2}>{subject.length}/30</Text>
                   </View>
                   {emptySubjects && (
@@ -405,7 +406,7 @@ export default function ExamInfoInput() {
                         <TouchableOpacity
                           onPress={() => openDatePicker(index)}
                         >
-                          <Text style={styles.dateSelectBox}>
+                          <Text style={styles.dateSelectText}>
                             {selectedDates[index]
                               ? format(parseISO(selectedDates[index]), "M/d")
                               : "날짜 선택"}
@@ -724,9 +725,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#C0C0C0",
     marginTop: 2,
-    paddingLeft: 140,
+    //paddingLeft: 80,
     marginLeft: "auto",
-    marginRight: 100,
+    //marginRight: 100,
   },
   subjectRow: {
     flexDirection: "row",
@@ -737,6 +738,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     marginVertical: 10,
+    flex: 1,
   },
   addScheduleBtn: {
     //width: 100,

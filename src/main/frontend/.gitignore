@@ -42,3 +42,7 @@ app-example
 *.json
 key.json
 vision-key.json
+
+src/main/frontend/.env
+src/main/java/com/byeraksuryong/api/AiApi.java
+src/main/java/com/byeraksuryong/api/SecurityConfig.java

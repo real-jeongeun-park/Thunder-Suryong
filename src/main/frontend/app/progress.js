@@ -34,11 +34,17 @@ export default function CalendarTimetableScreen() {
   );
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [plans, setPlans] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingStudyTimes, setLoadingStudyTimes] = useState(false);
   const [userInfo, setUserInfo] = useState(false);
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
   const hourCount = 24;
   const daysCount = 7;
+
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+
+  const [studyTimes, setStudyTimes] = useState([]);
 
   useEffect(() => {
     async function checkLogin() {
@@ -67,6 +73,31 @@ export default function CalendarTimetableScreen() {
   }, []);
 
   useEffect(() => {
+    async function fetchSubjects() {
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
+          nickname: userInfo.nickname,
+        });
+
+        const { subjectNameList, subjectIdList } = res.data;
+        if (subjectIdList && subjectNameList.length === subjectIdList.length) {
+          const list = subjectIdList.map((id, idx) => ({
+            id,
+            name: subjectNameList[idx],
+          }));
+          setSubjects(list);
+          if (list.length > 0) setSelectedSubject(list[0].name);
+        } else {
+          setSubjects([]);
+        }
+      } catch (e) {
+        console.error("과목 불러오기 실패", e);
+      }
+    }
+    if (userInfo) fetchSubjects();
+  }, [userInfo]);
+
+  useEffect(() => {
     const getTotalTimes = async () => {
       try {
         const response = await axios.post(
@@ -85,6 +116,78 @@ export default function CalendarTimetableScreen() {
       getTotalTimes();
     }
   }, [userInfo, selectedMonth]);
+
+  useEffect(() => {
+    setLoadingStudyTimes(true);
+
+    const fetchStudyTimes = async () => {
+      if (!userInfo || subjects.length === 0) return;
+
+      try {
+        const subjectIdList = subjects.map((s) => s.id);
+
+        const res = await axios.post(`${API_BASE_URL}/api/totalTime/get`, {
+          subjectIdList,
+          date: selectedDate,
+        });
+
+        setStudyTimes(res.data);
+      } catch (err) {
+        console.error("공부 시간 불러오기 실패", err);
+        setStudyTimes([]);
+      } finally {
+        setLoadingStudyTimes(false);
+      }
+    };
+
+    fetchStudyTimes();
+  }, [userInfo, subjects, selectedDate]);
+
+  const renderStudyTimeSummary = () => {
+    if (loadingStudyTimes) {
+      return (
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          불러오는 중...
+        </Text>
+      );
+    }
+
+    if (!subjects || subjects.length === 0) {
+      return (
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          등록된 과목이 없습니다.
+        </Text>
+      );
+    }
+
+    if (!studyTimes || studyTimes.length === 0) {
+      return (
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          공부 시간 데이터를 불러오는 중입니다...
+        </Text>
+      );
+    }
+
+    return (
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12 }}>
+          {format(new Date(selectedDate), "yyyy / M / d일")}
+        </Text>
+
+        {subjects.map((subject, idx) => {
+          const time = studyTimes[idx] || "00:00:00"; // 공부 시간 없으면 기본 0시간 표시
+
+          return (
+            <View key={subject.id || idx} style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 16, color: "#4b3a99" }}>
+                {subject.name || subject} : {time}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
 
   const getColorFromTime = (timeString) => {
     if (!timeString) return undefined;
@@ -117,7 +220,7 @@ export default function CalendarTimetableScreen() {
   useEffect(() => {
     async function fetchPlans() {
       try {
-        setIsLoading(true);
+        setLoadingPlans(true);
         const response = await axios.post(`${API_BASE_URL}/api/plan/date`, {
           nickname: userInfo.nickname,
           date: selectedDate,
@@ -126,7 +229,7 @@ export default function CalendarTimetableScreen() {
         const transformed = Object.entries(result).map(([subject, todos]) => ({
           id: subject,
           title: subject,
-          isExpanded: false,
+          isExpanded: true,
           todos: todos.map((todo) => ({
             id: todo.id,
             week: todo.week,
@@ -139,7 +242,7 @@ export default function CalendarTimetableScreen() {
         console.error("계획 불러오기 실패", e);
         setPlans([]);
       } finally {
-        setIsLoading(false);
+        setLoadingPlans(false);
       }
     }
 
@@ -180,7 +283,7 @@ export default function CalendarTimetableScreen() {
   };
 
   const renderPlans = () => {
-    if (isLoading) {
+    if (loadingPlans) {
       return (
         <Text style={{ textAlign: "center", marginTop: 10 }}>
           계획 불러오는 중...
@@ -215,49 +318,28 @@ export default function CalendarTimetableScreen() {
             </View>
             {plan.isExpanded && (
               <View style={styles.subTodoContainer}>
-                {plan.todos.map((todo) => (
-                  <View key={todo.id} style={styles.subTodoItem}>
-                    <Checkbox
-                      style={{ marginRight: 8 }}
-                      value={todo.checked}
-                      onValueChange={(newValue) =>
-                        handleCheckboxChange(plan.id, todo.id, newValue)
-                      }
-                    />
-                    <View style={styles.subTodoTextContainer}>
-                      <Text style={styles.subTodoText}>
-                        <Text style={styles.subTodoWeek}>{todo.week} </Text>
-                        <Text>{todo.title}</Text>
-                      </Text>
+                {plan.todos
+                  .filter((todo) => todo.checked)
+                  .map((todo) => (
+                    <View key={todo.id} style={styles.subTodoItem}>
+                      <View style={styles.subTodoTextContainer}>
+                        <Text style={styles.subTodoText}>
+                          <Text style={styles.subTodoWeek}>{todo.week} </Text>
+                          <Text>{todo.title}</Text>
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  ))}
               </View>
             )}
           </View>
         ))}
+
         <TouchableOpacity style={styles.addButton}>
           <Text style={styles.addButtonText}>+ 과목</Text>
         </TouchableOpacity>
       </ScrollView>
     );
-  };
-
-  const renderTimeTable = () => {
-    return Array.from({ length: hourCount }, (_, i) => {
-      let hour = (6 + i) % 24;
-      if (hour === 0) hour = 24;
-      return (
-        <View style={styles.timeTableRow} key={`row-${i}`}>
-          <Text style={styles.timeTableHour}>
-            {hour.toString().padStart(2, "0")}
-          </Text>
-          {Array.from({ length: daysCount }, (_, j) => (
-            <View style={styles.timeTableCell} key={`cell-${i}-${j}`} />
-          ))}
-        </View>
-      );
-    });
   };
 
   return (
@@ -335,14 +417,7 @@ export default function CalendarTimetableScreen() {
         </ScrollView>
 
         <View style={styles.contentContainer}>
-          {activeTab === "Time table" && (
-            <ScrollView
-              style={styles.timeTableBox}
-              showsVerticalScrollIndicator={false}
-            >
-              {renderTimeTable()}
-            </ScrollView>
-          )}
+          {activeTab === "Time table" && renderStudyTimeSummary()}
           {activeTab === "Planner" && (
             <ScrollView style={styles.plannerBox}>{renderPlans()}</ScrollView>
           )}
@@ -355,8 +430,9 @@ export default function CalendarTimetableScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    //flex: 1,
-    backgroundColor: "#fff",
+    flex: 1,
+    backgroundColor: "#ffffffff",
+    justifyContent: "flex-start",
   },
   headerRow: {
     flexDirection: "row",
@@ -365,7 +441,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     justifyContent: "center", // 가로 가운데 정렬
     position: "relative", // 절대 위치 요소들 있으면 컨텍스트 유지용(필요에 따라)
-    // 또는 flex: 1 추가해서 전체 너비 차지하게 할 수도 있음
     marginBottom: 10,
   },
   headerText: {
@@ -375,13 +450,10 @@ const styles = StyleSheet.create({
     marginTop: 0,
     //marginBottom: 8,
     flex: 1, // 텍스트가 headerRow 내에서 공간을 넓게 차지하게
-    // flexGrow: 1, flexShrink: 1 으로도 가능
   },
   backButton: {
     position: "absolute",
     left: 10,
-    // top값은 headerRow의 height와 marginTop에 맞게 적절히 조절
-    // 또는 flexBasis, width를 지정 가능
   },
   calendar: {
     marginHorizontal: 30,
@@ -428,41 +500,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#B493C3",
   },
   contentContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
     // backgroundColor: "#B493C3",
     //alignItems: "stretch",
-    minHeight: 500,
-    flexDirection: "column",
-    justifyContent: "center", // 세로 가운데 정렬
-    alignItems: "center",
-  },
-  timeTableBox: {
-    marginHorizontal: 27,
-    //borderRadius: 10,
-    height: 200,
-    backgroundColor: "#fff",
-  },
-  timeTableRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 39,
-  },
-  timeTableHour: {
-    width: 30,
-    fontWeight: "bold",
-    fontSize: 12,
-    color: "#B493C3",
-    textAlign: "center",
-    marginRight: 8,
-  },
-  timeTableCell: {
-    width: 41.7,
-    height: 39,
-    backgroundColor: "#FAF8FD",
-    borderColor: "#B493C3",
-    borderWidth: 0.6,
-    //borderRadius: 4,
-    //marginRight: 1,
+    //minHeight: 500,
+    //flexDirection: "column",
+    flexGrow: 1,
+    justifyContent: "flex-start", // 세로 가운데 정렬
+    //alignItems: "center",
   },
   plannerBox: {
     width: "100%",
