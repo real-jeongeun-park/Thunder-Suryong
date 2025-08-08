@@ -190,15 +190,10 @@ export default function TimerScreen() {
         </TouchableOpacity>
         <Text style={styles.header}>타이머</Text>
       </View>
-
-      {/* 메인 타이머 */}
-      <View style={styles.timerContainer}>
-        <Text style={styles.todayText}>{today}</Text>
-        <Text style={styles.timerText}>
-          {runningSubject ? runningSubject.time : "00:00:00"}
-        </Text>
-      </View>
-
+    <View style={styles.timerContainer}>
+      <Text style={styles.todayText}>{today}</Text>
+      <Text style={styles.timerText}>{getTotalTime()}</Text>
+    </View>
       {/* 표 헤더 */}
       <View style={styles.tableHeader}>
         <Text style={styles.tableHeaderText}>과목</Text>
@@ -229,7 +224,10 @@ export default function TimerScreen() {
                   name={item.isRunning ? "pause-circle-outline" : "play-circle-outline"}
                   size={28}
                   color="#8D5ACF"
+<<<<<<< HEAD
                   style={{ marginTop: 2, }}
+=======
+>>>>>>> a8f8fecb478c684f26cfce70a923750c76cac00b
                 />
               </TouchableOpacity>
             </View>
