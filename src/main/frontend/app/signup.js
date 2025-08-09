@@ -15,8 +15,8 @@ import {
   Platform,
 } from "react-native";
 
-import * as SecureStore from 'expo-secure-store';
-import axios from 'axios';
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 
 export default function Signup() {
@@ -24,7 +24,7 @@ export default function Signup() {
 
   const [nicknameStatus, setNicknameStatus] = useState("");
   const [emailStatus, setEmailStatus] = useState("");
-  const [passwordStatus, setPasswordStatus] = useState("") // password == passwordConfirm 확인
+  const [passwordStatus, setPasswordStatus] = useState(""); // password == passwordConfirm 확인
 
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
@@ -47,98 +47,98 @@ export default function Signup() {
     3. 기타 개인정보 관련 방침...
   `;
 
-  function emailValidate(email){
+  function emailValidate(email) {
     const email_regex = /^[a-zA-Zx0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i;
-    return email_regex.test(email)
+    return email_regex.test(email);
   }
 
   const checkNickname = () => {
-    if(!nickname.trim()) return;
-    axios.post(`${API_BASE_URL}/api/nickname`, {nickname})
-    .then((res) => {
-        if(res.data){
-            setNicknameStatus("true");
+    if (!nickname.trim()) return;
+    axios
+      .post(`${API_BASE_URL}/api/nickname`, { nickname })
+      .then((res) => {
+        if (res.data) {
+          setNicknameStatus("true");
+        } else {
+          // 겹침
+          console.log(res);
+          setNicknameStatus("false");
         }
-        else{
-            // 겹침
-            console.log(res);
-            setNicknameStatus("false");
-        }
-    })
-    .catch((err) => {
+      })
+      .catch((err) => {
         console.log(err);
         setNicknameStatus("false");
-    });
+      });
   };
 
   const checkEmail = () => {
-    if(!email.trim()) return;
-    if(!emailValidate(email)){
-        setEmailStatus("false");
-        return;
+    if (!email.trim()) return;
+    if (!emailValidate(email)) {
+      setEmailStatus("false");
+      return;
     }
 
-    axios.post(`${API_BASE_URL}/api/email`, {email})
-    .then((res) => {
-        if(res.data){
-            setEmailStatus("true");
+    axios
+      .post(`${API_BASE_URL}/api/email`, { email })
+      .then((res) => {
+        if (res.data) {
+          setEmailStatus("true");
+        } else {
+          // 겹침
+          console.log(res);
+          setEmailStatus("false");
         }
-        else{
-            // 겹침
-            console.log(res);
-            setEmailStatus("false");
-        }
-    })
-    .catch((err) => {
+      })
+      .catch((err) => {
         /* console.log("emailDuplicateCheck failed");
         console.log(err); */
         setEmailStatus("false");
-    });
+      });
   };
 
   const passwordEqual = (passwordConfirm: string) => {
-    if(password == passwordConfirm) setPasswordStatus("true");
+    if (password == passwordConfirm) setPasswordStatus("true");
     else setPasswordStatus("false");
   };
 
-const handleSignup = async () => {
-  // 다 잘 입력됐나 확인
-  if (
-    !agreeTerms ||
-    !agreePrivacy ||
-    nicknameStatus !== "true" ||
-    emailStatus !== "true" ||
-    passwordStatus !== "true"
-  ) {
-    setPopupType("alert");
-    setVisible(true);
-  } else {
-    axios
-      .post(`${API_BASE_URL}/api/signup`, { nickname, email, password })
-      .then(async (res) => {
-        const token = res.data.token;
+  const handleSignup = async () => {
+    // 다 잘 입력됐나 확인
+    if (
+      !agreeTerms ||
+      !agreePrivacy ||
+      nicknameStatus !== "true" ||
+      emailStatus !== "true" ||
+      passwordStatus !== "true"
+    ) {
+      setPopupType("alert");
+      setVisible(true);
+    } else {
+      axios
+        .post(`${API_BASE_URL}/api/signup`, { nickname, email, password })
+        .then(async (res) => {
+          const token = res.data.token;
 
-        if (Platform.OS === 'web') {
-          localStorage.setItem("accessToken", token);
-        } else {
-          await SecureStore.setItemAsync("accessToken", token);
-        }
+          if (Platform.OS === "web") {
+            localStorage.setItem("accessToken", token);
+          } else {
+            await SecureStore.setItemAsync("accessToken", token);
+          }
 
-        // 무사히 회원가입 완료
-        setPopupType("success");
-        setVisible(true);
-        setTimeout(() => {
-          setVisible(false);
-          router.push("/question1");
-        }, 1000);
-      })
-      .catch((err) => {
-        // 서버 에러로 회원가입 실패
-        setPopupType("fail");
-        setVisible(true);
-      });
-  }
-};
+          // 무사히 회원가입 완료
+          setPopupType("success");
+          setVisible(true);
+          setTimeout(() => {
+            setVisible(false);
+            router.push("/question1");
+          }, 1000);
+        })
+        .catch((err) => {
+          // 서버 에러로 회원가입 실패
+          setPopupType("fail");
+          setVisible(true);
+        });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -161,8 +161,16 @@ const handleSignup = async () => {
         </TouchableOpacity>
       </View>
 
-      {nicknameStatus == "true" && <Text style={{color : "green", marginBottom: 10, marginLeft: 5}}>사용 가능한 닉네임입니다.</Text>}
-      {nicknameStatus == "false" && <Text style={{color: "red", marginBottom: 10, marginLeft: 5}}>이미 등록된 닉네임입니다. 다른 닉네임을 사용해 주세요.</Text>}
+      {nicknameStatus == "true" && (
+        <Text style={{ color: "green", marginBottom: 10, marginLeft: 5 }}>
+          사용 가능한 닉네임입니다.
+        </Text>
+      )}
+      {nicknameStatus == "false" && (
+        <Text style={{ color: "red", marginBottom: 10, marginLeft: 5 }}>
+          이미 등록된 닉네임입니다. 다른 닉네임을 사용해 주세요.
+        </Text>
+      )}
 
       {/* 이메일 */}
       <View style={styles.inputRow}>
@@ -181,8 +189,16 @@ const handleSignup = async () => {
         </TouchableOpacity>
       </View>
 
-      {emailStatus == "true" && <Text style={{ color: "green", marginBottom: 10, marginLeft: 5}}>사용 가능한 이메일입니다.</Text>}
-      {emailStatus == "false" && <Text style={{ color: "red", marginBottom: 10, marginLeft: 5}}>이미 등록된 이메일이거나, 이메일 형식이 잘못 되었습니다.</Text>}
+      {emailStatus == "true" && (
+        <Text style={{ color: "green", marginBottom: 10, marginLeft: 5 }}>
+          사용 가능한 이메일입니다.
+        </Text>
+      )}
+      {emailStatus == "false" && (
+        <Text style={{ color: "red", marginBottom: 10, marginLeft: 5 }}>
+          이미 등록된 이메일이거나, 이메일 형식이 잘못 되었습니다.
+        </Text>
+      )}
 
       {/* 비밀번호 */}
       <TextInput
@@ -202,13 +218,21 @@ const handleSignup = async () => {
         style={styles.inputFull}
         value={passwordConfirm}
         onChangeText={(text) => {
-            setPasswordConfirm(text);
-            passwordEqual(text);
+          setPasswordConfirm(text);
+          passwordEqual(text);
         }}
       />
 
-      {passwordStatus == "true" && <Text style={{ color: "green", marginBottom: 10, marginLeft: 5}}>비밀번호가 일치합니다.</Text>}
-      {passwordStatus == "false" && <Text style={{ color: "red", marginBottom: 10, marginLeft: 5}}>입력한 비밀번호가 틀립니다. 다시 입력하세요.</Text>}
+      {passwordStatus == "true" && (
+        <Text style={{ color: "green", marginBottom: 10, marginLeft: 5 }}>
+          비밀번호가 일치합니다.
+        </Text>
+      )}
+      {passwordStatus == "false" && (
+        <Text style={{ color: "red", marginBottom: 10, marginLeft: 5 }}>
+          입력한 비밀번호가 틀립니다. 다시 입력하세요.
+        </Text>
+      )}
 
       {/* 체크박스 */}
       <View style={styles.checkboxRow}>
@@ -265,7 +289,8 @@ const handleSignup = async () => {
                 {popupType == "terms" && TERMS_TEXT}
                 {popupType == "privacy" && PRIVACY_TEXT}
                 {popupType === "success" && "회원가입 성공!"}
-                {popupType === "fail" && "회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요."}
+                {popupType === "fail" &&
+                  "회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요."}
               </Text>
             </ScrollView>
 
@@ -283,10 +308,7 @@ const handleSignup = async () => {
       </Modal>
 
       {/* 회원가입 버튼 */}
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSignup}
-      >
+      <TouchableOpacity style={styles.submitButton} onPress={handleSignup}>
         <Text style={styles.submitButtonText}>회원가입</Text>
       </TouchableOpacity>
 
@@ -302,10 +324,11 @@ const handleSignup = async () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 100,
+    //paddingTop: 100,
     paddingHorizontal: 30,
     flex: 1,
     backgroundColor: "#fff",
+    justifyContent: "center",
   },
   title: {
     fontSize: 18,
