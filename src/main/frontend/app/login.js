@@ -102,22 +102,6 @@ export default function LoginScreen() {
         </Text>
       )}
 
-      <View style={styles.checkboxRow}>
-        <Checkbox
-          value={autoLogin}
-          onValueChange={setAutoLogin}
-          color={autoLogin ? "#B491DD" : undefined}
-        />
-        <TouchableOpacity
-          onPress={() => {
-            setPopupType("terms");
-            setVisible(true);
-          }}
-        >
-          <Text style={[styles.checkboxLabel]}>자동 로그인</Text>
-        </TouchableOpacity>
-      </View>
-
       {loginFail && (
         <Text style={{ color: "red", marginBottom: 15, marginLeft: 5 }}>
           이메일 또는 비밀번호가 틀립니다.
@@ -128,7 +112,7 @@ export default function LoginScreen() {
         <Text style={styles.loginText}>로그인</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/signup")}>
+      <TouchableOpacity onPress={() => router.push("/question4")}>
         <Text style={styles.signupLink}>
           아직 회원이 아니신가요? &gt; 회원가입하기
         </Text>
@@ -165,6 +149,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     alignItems: "center",
+    marginTop: 10,
   },
   loginText: { color: "#fff", fontWeight: "bold" },
   signupLink: {
