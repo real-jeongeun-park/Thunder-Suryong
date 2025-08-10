@@ -112,7 +112,7 @@ export default function LoginScreen() {
         <Text style={styles.loginText}>로그인</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/question4")}>
+      <TouchableOpacity onPress={() => router.push("/signup")}>
         <Text style={styles.signupLink}>
           아직 회원이 아니신가요? &gt; 회원가입하기
         </Text>
