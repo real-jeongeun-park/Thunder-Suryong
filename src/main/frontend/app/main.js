@@ -15,9 +15,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   Platform,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { differenceInDays, parseISO } from "date-fns";
@@ -40,6 +42,190 @@ export default function HomeScreen() {
   const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.4));
   const [rewardOpen, setRewardOpen] = useState(false);
   const rewardFiredRef = useRef(false);
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addForm, setAddForm] = useState({
+    subjectId: "",
+    week: "",
+    title: "",
+  });
+
+  // 컴포넌트 내부(상태)
+  const menuAnchorRef = useRef(null);
+  const [menuState, setMenuState] = useState({ visible: false, x: 0, y: 0 });
+  const anchorRefs = useRef({});
+  const [menuTargetId, setMenuTargetId] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ title: "", week: "" });
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveDate, setMoveDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [moving, setMoving] = useState(false);
+
+  const openMenu = (id) => {
+    // 아이콘 위치 측정 후 그 아래에 메뉴 오픈
+    const ref = anchorRefs.current[id];
+    ref?.measureInWindow((x, y, width, height) => {
+      const menuWidth = 180; // 아래 스타일 width와 맞추세요
+      setMenuState({
+        visible: true,
+        x: x + width - menuWidth, // 아이콘 오른쪽 정렬
+        y: y + height + 8, // 아이콘 아래 약간 띄움
+      });
+      setMenuTargetId(id);
+    });
+  };
+
+  const closeMenu = () => setMenuState((s) => ({ ...s, visible: false }));
+
+  const onEdit = () => {
+    // 메뉴가 열린 대상(todo)을 plans에서 찾기
+    const current = (() => {
+      for (const g of plans) {
+        const t = g.todos.find((x) => x.id === menuTargetId);
+        if (t) return t;
+      }
+      return null;
+    })();
+
+    if (current) {
+      setEditForm({
+        title: current.title ?? "",
+        week: String(current.week ?? ""),
+      });
+      setEditOpen(true);
+    }
+    closeMenu();
+  };
+  const saveEdit = async () => {
+    try {
+      // TODO: 서버 수정 API 호출 (엔드포인트에 맞게 바꾸세요)
+      // await axios.patch(`${API_BASE_URL}/api/plan/${menuTargetId}`, {
+      //   content: editForm.title,
+      //   week: Number(editForm.week),
+      //   nickname: userInfo.nickname,
+      // });
+
+      // 프론트 상태 반영
+      setPlans((prev) =>
+        prev.map((group) => ({
+          ...group,
+          todos: group.todos.map((t) =>
+            t.id === menuTargetId
+              ? { ...t, title: editForm.title, week: editForm.week }
+              : t
+          ),
+        }))
+      );
+    } catch (e) {
+      console.log("수정 실패", e);
+    } finally {
+      setEditOpen(false);
+    }
+  };
+
+  const onDelete = () => {
+    setConfirmOpen(true);
+    closeMenu(); /* TODO: 삭제 로직 */
+  };
+  const onMove = () => {
+    // 기본값: 현재 화면의 date로 초기화
+    setMoveDate(format(date, "yyyy-MM-dd"));
+    closeMenu();
+    setMoveOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      // TODO: 서버 삭제 API 호출 (예시)
+      // await axios.delete(`${API_BASE_URL}/api/plan/${menuTargetId}`, { headers: { ... } });
+
+      // 프런트 상태에서 해당 todo 제거
+      setPlans((prev) =>
+        prev.map((group) => ({
+          ...group,
+          todos: group.todos.filter((t) => t.id !== menuTargetId),
+        }))
+      );
+    } catch (e) {
+      console.log("삭제 실패", e);
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
+
+  const confirmMove = async () => {
+    try {
+      setMoving(true);
+      // TODO: 서버 이동 API 호출 (엔드포인트에 맞게 바꾸세요)
+      // await axios.patch(`${API_BASE_URL}/api/plan/${menuTargetId}/date`, {
+      //   date: moveDate,
+      //   nickname: userInfo.nickname,
+      // });
+
+      // 프론트 상태에서 해당 todo 제거 (다른 날로 이동했으니 오늘 리스트에서 제거)
+      setPlans((prev) =>
+        prev.map((group) => ({
+          ...group,
+          todos: group.todos.filter((t) => t.id !== menuTargetId),
+        }))
+      );
+
+      // 만약 선택한 moveDate가 화면의 date와 같다면,
+      // 여기서 해당 항목을 그 날짜 리스트로 추가하는 로직을 넣어도 됩니다
+      // (필요 시 API로 새 목록을 재조회하는 것도 OK)
+    } catch (e) {
+      console.log("이동 실패", e);
+    } finally {
+      setMoving(false);
+      setMoveOpen(false);
+    }
+  };
+
+  const confirmAdd = async () => {
+    try {
+      if (!addForm.subjectId || !addForm.title.trim()) return;
+
+      setAdding(true);
+
+      // TODO: 서버 생성 API 호출 (엔드포인트/바디 맞게 교체)
+      // const res = await axios.post(`${API_BASE_URL}/api/plan`, {
+      //   nickname: userInfo.nickname,
+      //   date: format(date, "yyyy-MM-dd"),
+      //   subject: addForm.subjectId,  // 서버에서 과목명을 쓸지 id를 쓸지 스펙에 맞추세요
+      //   content: addForm.title,
+      //   week: Number(addForm.week || 0),
+      // });
+      // const newId = res.data.id;
+
+      // 프론트 상태 즉시 반영 (임시 id 사용)
+      const tempId = Date.now();
+      setPlans((prev) =>
+        prev.map((group) =>
+          group.id === addForm.subjectId
+            ? {
+                ...group,
+                todos: [
+                  ...group.todos,
+                  {
+                    id: tempId, // 서버 id로 교체 가능
+                    week: addForm.week,
+                    title: addForm.title.trim(),
+                    checked: false,
+                  },
+                ],
+              }
+            : group
+        )
+      );
+    } catch (e) {
+      console.log("추가 실패", e);
+    } finally {
+      setAdding(false);
+      setAddOpen(false);
+    }
+  };
 
   const encouragementMessages = [
     "열심히 공부하고 있군요! \n오늘의 작은 노력이 내일의 큰 변화를 만듭니다.",
@@ -562,6 +748,24 @@ export default function HomeScreen() {
                                 <Text>{todo.title}</Text>
                               </Text>
                             </View>
+                            <View
+                              ref={(el) => {
+                                if (el) anchorRefs.current[todo.id] = el;
+                              }}
+                              collapsable={false}
+                            >
+                              <TouchableOpacity
+                                onPress={() => openMenu(todo.id)}
+                                activeOpacity={0.6}
+                              >
+                                <Ionicons
+                                  name="ellipsis-vertical"
+                                  size={16}
+                                  color="#866394ff"
+                                  style={{ paddingRight: 5 }}
+                                />
+                              </TouchableOpacity>
+                            </View>
                           </View>
                         ))}
                       </View>
@@ -569,6 +773,30 @@ export default function HomeScreen() {
                   </View>
                 ))
             )}
+            <TouchableOpacity
+              onPress={() => {
+                // 기본 과목(첫 번째 과목)으로 초기화
+                const firstSubjectId = plans?.[0]?.id ?? "";
+                setAddForm({
+                  subjectId: firstSubjectId,
+                  week: "",
+                  title: "",
+                });
+                setAddOpen(true);
+              }}
+              style={{
+                backgroundColor: "#E7DDF3",
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 10,
+                alignSelf: "flex-start",
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: "#4A3B73", fontWeight: "bold" }}>
+                추가+
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <Modal visible={calendarVisible} transparent animationType="none">
@@ -651,6 +879,402 @@ export default function HomeScreen() {
                     확인
                   </Text>
                 </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            transparent
+            visible={menuState.visible}
+            animationType="none"
+            onRequestClose={closeMenu}
+          >
+            {/* 바깥 터치 시 닫힘 */}
+            <TouchableWithoutFeedback onPress={closeMenu}>
+              <View style={styles.menuOverlay} />
+            </TouchableWithoutFeedback>
+
+            <View
+              style={[
+                styles.dropdownMenu,
+                { top: menuState.y, left: menuState.x },
+              ]}
+            >
+              <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
+                <Text style={styles.menuText}>수정</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem} onPress={onDelete}>
+                <Text style={styles.menuText}>삭제</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.menuItem, { borderBottomWidth: 0 }]}
+                onPress={onMove}
+              >
+                <Text style={styles.menuText}>다른 날에 하기</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
+          <Modal
+            visible={confirmOpen}
+            transparent
+            animationType="none"
+            onRequestClose={() => setConfirmOpen(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View
+                style={[styles.calendarContainer, { alignItems: "center" }]}
+              >
+                <Text
+                  style={{ fontSize: 16, fontWeight: "700", color: "#333" }}
+                >
+                  삭제하시겠습니까?
+                </Text>
+                <Text
+                  style={{
+                    marginTop: 8,
+                    fontSize: 13,
+                    color: "#666",
+                    textAlign: "center",
+                  }}
+                >
+                  항목을 삭제하면 되돌릴 수 없습니다.
+                </Text>
+
+                <View style={{ flexDirection: "row", marginTop: 16, gap: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => setConfirmOpen(false)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#eee",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#333", fontWeight: "600" }}>
+                      취소
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={confirmDelete}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#E57373",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                      삭제
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            visible={editOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setEditOpen(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View
+                style={[styles.calendarContainer, { alignItems: "stretch" }]}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: "#333",
+                    alignSelf: "center",
+                  }}
+                >
+                  항목 수정
+                </Text>
+
+                <Text style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
+                  주차
+                </Text>
+                <TextInput
+                  value={String(editForm.week)}
+                  onChangeText={(v) => setEditForm((s) => ({ ...s, week: v }))}
+                  keyboardType="numeric"
+                  style={{
+                    marginTop: 6,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                  placeholder="예: 3주차"
+                />
+
+                <Text style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
+                  내용
+                </Text>
+                <TextInput
+                  value={editForm.title}
+                  onChangeText={(v) => setEditForm((s) => ({ ...s, title: v }))}
+                  style={{
+                    marginTop: 6,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                  placeholder="학습 내용"
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    marginTop: 16,
+                    gap: 10,
+                    alignSelf: "center",
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => setEditOpen(false)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#eee",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#333", fontWeight: "600" }}>
+                      취소
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={saveEdit}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#6c4ed5",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                      저장
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            visible={moveOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setMoveOpen(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View
+                style={[styles.calendarContainer, { alignItems: "center" }]}
+              >
+                <Text
+                  style={{ fontSize: 16, fontWeight: "700", color: "#333" }}
+                >
+                  이동할 날짜를 선택하세요
+                </Text>
+
+                <View style={{ marginTop: 12, width: "100%" }}>
+                  <Calendar
+                    onDayPress={(day) => setMoveDate(day.dateString)}
+                    markedDates={{
+                      [moveDate]: { selected: true, selectedColor: "#B491DD" },
+                    }}
+                  />
+                </View>
+
+                <View style={{ flexDirection: "row", marginTop: 16, gap: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => setMoveOpen(false)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#eee",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#333", fontWeight: "600" }}>
+                      취소
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={confirmMove}
+                    disabled={moving}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: moving ? "#B9AEE3" : "#6c4ed5",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                      {moving ? "이동 중..." : "이동"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            visible={addOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setAddOpen(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View
+                style={[styles.calendarContainer, { alignItems: "stretch" }]}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: "#333",
+                    alignSelf: "center",
+                  }}
+                >
+                  일정 추가
+                </Text>
+
+                {/* 과목 선택 */}
+                <Text style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
+                  과목
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginTop: 6 }}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {(plans ?? []).map((p) => {
+                    const selected = addForm.subjectId === p.id;
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        onPress={() =>
+                          setAddForm((s) => ({ ...s, subjectId: p.id }))
+                        }
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 12,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: selected ? "#6c4ed5" : "#ddd",
+                          backgroundColor: selected ? "#F0EBFF" : "#fff",
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={{
+                            color: selected ? "#6c4ed5" : "#444",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {p.title}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                {/* 주차 */}
+                <Text style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
+                  주차
+                </Text>
+                <TextInput
+                  value={String(addForm.week)}
+                  onChangeText={(v) => setAddForm((s) => ({ ...s, week: v }))}
+                  keyboardType="numeric"
+                  style={{
+                    marginTop: 6,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                  placeholder="예: 3"
+                  placeholderTextColor="#797979ff"
+                />
+
+                {/* 내용 */}
+                <Text style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
+                  내용
+                </Text>
+                <TextInput
+                  value={addForm.title}
+                  onChangeText={(v) => setAddForm((s) => ({ ...s, title: v }))}
+                  style={{
+                    marginTop: 6,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                  }}
+                  placeholder="학습 내용"
+                  placeholderTextColor="#797979ff"
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    marginTop: 16,
+                    gap: 10,
+                    alignSelf: "center",
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => setAddOpen(false)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor: "#eee",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#333", fontWeight: "600" }}>
+                      취소
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={confirmAdd}
+                    disabled={
+                      adding || !addForm.subjectId || !addForm.title.trim()
+                    }
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      backgroundColor:
+                        adding || !addForm.subjectId || !addForm.title.trim()
+                          ? "#B9AEE3"
+                          : "#6c4ed5",
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "700" }}>
+                      {adding ? "추가 중..." : "추가"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>
@@ -911,5 +1535,34 @@ const styles = StyleSheet.create({
     color: "#fff", // 흰색 텍스트
     fontWeight: "bold",
     fontSize: 16,
+  },
+  menuOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    width: 180,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 6,
+    // 그림자
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)",
+  },
+  menuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(0,0,0,0.08)",
+  },
+  menuText: {
+    fontSize: 14,
+    color: "#333",
   },
 });
