@@ -106,13 +106,12 @@ export default function StudyOptionScreen() {
 
     axios
       .post("http://localhost:8080/api/style", newData)
-      .then((res) => {
-        router.push("/main");
-      })
+      .then((res) => {})
       .catch((err) => {
         console.log(err);
         // 오류가 생겼습니다 띄우기
       });
+    router.push("/question4");
   };
 
   return (
@@ -246,7 +245,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   confirmButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#B491DD",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",

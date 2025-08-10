@@ -149,6 +149,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     alignItems: "center",
+    marginTop: 10,
   },
   loginText: { color: "#fff", fontWeight: "bold" },
   signupLink: {

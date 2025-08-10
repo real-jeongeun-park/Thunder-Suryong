@@ -134,7 +134,7 @@ export default function ExamInfoInput() {
     }
   }, [userInfo]);
 
-  // 선택된 과목의 계획들만 필터링 (간단하고 명확하게)
+  // 선택된 과목의 계획들만 필터링
   const getSelectedPlans = () => {
     if (!selectedSubject || !plans || plans.length === 0) {
       return [];

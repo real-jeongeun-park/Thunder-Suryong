@@ -16,8 +16,8 @@ import {
 
 import { useData } from "../context/DataContext";
 
-import * as SecureStore from 'expo-secure-store';
-import axios from 'axios';
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 
 export default function StudySubScreen() {
@@ -31,41 +31,45 @@ export default function StudySubScreen() {
   const { data, setData } = useData();
 
   useEffect(() => {
-      async function checkLogin(){
-          try{
-              let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-              if(Platform.OS === 'web') token = localStorage.getItem("accessToken");
-              else token = await SecureStore.getItemAsync("accessToken");
+        if (Platform.OS === "web") token = localStorage.getItem("accessToken");
+        else token = await SecureStore.getItemAsync("accessToken");
 
-              if(!token) throw new Error("Token not found");
+        if (!token) throw new Error("Token not found");
 
-              const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-                    headers: {
-                      Authorization: `Bearer ${token}`
-                    }
-              });
-          } catch(err){
-              console.log(err);
-              router.push("/");
-          }
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        router.push("/");
       }
-
-      checkLogin();
-    }, []);
-
-  const selectComplete = () => {
-    if(!subjects.trim()){
-        setEmptySubjects(true);
-        return;
     }
 
-    setData((prev) => ({...prev, studySubject: subjects}));
+    checkLogin();
+  }, []);
+
+  const selectComplete = () => {
+    if (!subjects.trim()) {
+      setEmptySubjects(true);
+      return;
+    }
+
+    setData((prev) => ({ ...prev, studySubject: subjects }));
     router.push("/question3");
   };
 
   return (
-    <TouchableWithoutFeedback onPress={() => { if(Platform.OS !== "web") Keyboard.dismiss()}}>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        if (Platform.OS !== "web") Keyboard.dismiss();
+      }}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -98,7 +102,11 @@ export default function StudySubScreen() {
             <Text style={styles.subText}>
               최대 과목 수를 입력하면 맞춤형으로 계획해드릴게요.
             </Text>
-            {emptySubjects && <Text style={{color: "red", marginTop: 10}}>과목 수를 입력하세요.</Text>}
+            {emptySubjects && (
+              <Text style={{ color: "red", marginTop: 10 }}>
+                과목 수를 입력하세요.
+              </Text>
+            )}
           </View>
 
           {/* 하단 버튼들 */}
@@ -157,7 +165,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   confirmButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#B491DD",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",

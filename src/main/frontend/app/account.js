@@ -117,7 +117,7 @@ export default function AccountScreen() {
           <Text style={styles.label}>이메일</Text>
           <View style={styles.inputDisabled}>
             <Text style={styles.inputDisabledText}>
-              {userInfo?.email || "@현재 사용자의 이메일"}
+              {userInfo?.email || "현재 사용자의 이메일"}
             </Text>
           </View>
           <Text style={styles.helperTextDanger}>
@@ -162,21 +162,21 @@ export default function AccountScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="@현재 사용자의 비밀번호를 입력해주세요."
+              placeholder="현재 사용자의 비밀번호를 입력해주세요."
               secureTextEntry
               value={currentPw}
               onChangeText={setCurrentPw}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="@새로운 비밀번호를 입력해주세요."
+              placeholder="새로운 비밀번호를 입력해주세요."
               secureTextEntry
               value={newPw}
               onChangeText={setNewPw}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="@동일한 비밀번호를 입력해주세요."
+              placeholder="동일한 비밀번호를 입력해주세요."
               secureTextEntry
               value={newPw2}
               onChangeText={setNewPw2}

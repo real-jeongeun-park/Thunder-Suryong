@@ -362,7 +362,7 @@ export default function CreatedQuizScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#A9A9A9" />
+            <Ionicons name="chevron-back-outline" size={24} color="#black" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{quizProblemName}</Text>
         </View>
@@ -538,8 +538,8 @@ const styles = StyleSheet.create({
     paddingRight: 10
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "400",
+    fontSize: 20,
+    fontWeight: "600",
     color: "#3C3C3C"
   },
   questionNavWrapper: {
