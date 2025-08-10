@@ -75,10 +75,10 @@ export default function CreateQuizSelectType() {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerText}>문제 유형을 선택해주세요.</Text>
         </View>
@@ -151,7 +151,7 @@ export default function CreateQuizSelectType() {
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
           <Text style={styles.submitButtonText}>완료</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       <Modal
         transparent
@@ -174,6 +174,7 @@ export default function CreateQuizSelectType() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
     backgroundColor: "#fff",
     paddingBottom: 80,
@@ -182,9 +183,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+    marginTop: 50,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
     marginLeft: 10,
   },

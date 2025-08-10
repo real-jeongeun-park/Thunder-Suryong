@@ -1,6 +1,7 @@
 // WriteNote.js
 import { Feather } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -221,7 +222,7 @@ export default function WriteNote() {
           {/* 헤더 */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8 }}>
-              <Feather name="chevron-left" size={24} color="#717171" />
+              <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
             <Feather name="file" size={24} color="#717171" />
             <TextInput
