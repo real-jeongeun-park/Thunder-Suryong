@@ -40,14 +40,6 @@ const DATA = [
   },
 ];
 
-const Header = () => (
-  <View style={styles.headerBox}>
-    <Text style={styles.headerText}>
-      인연이 느껴지는 수룡이를 입양해주세요!
-    </Text>
-  </View>
-);
-
 export default function SuryongiAdoption() {
   const [selected, setSelected] = useState(null);
 
