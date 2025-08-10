@@ -9,9 +9,10 @@ import {
   TextInput,
   FlatList,
   Platform,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -19,12 +20,15 @@ import { useData } from "@/context/DataContext";
 
 export default function CreateQuizSelectNote() {
   const router = useRouter();
+  const { folderId } = useLocalSearchParams();
   const [openFolder, setOpenFolder] = useState(null);
   const [inputText, setInputText] = useState("");
   const [selectedNotes, setSelectedNotes] = useState([]);
   const [folders, setFolders] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const { data, setData } = useData();
+  const [showModal, setShowModal] = useState(false);
+  const [modalText, setModalText] = useState("");
 
   useEffect(() => {
     async function checkLogin() {
@@ -73,8 +77,6 @@ export default function CreateQuizSelectNote() {
     }
   }, [userInfo])
 
-
-
   // 노트 선택 토글 함수
   const toggleNoteSelection = (folderName, noteTitle, noteId) => {
     if(selectedNotes.some(note => note.noteId === noteId)){
@@ -88,6 +90,24 @@ export default function CreateQuizSelectNote() {
   const removeSelectedNote = (noteId) => {
     setSelectedNotes(selectedNotes.filter((note) => note.noteId !== noteId));
   };
+
+  // 선택 완료 시
+  const handleSelectComplete = () => {
+    if(!selectedNotes || selectedNotes.length === 0){
+        setModalText("하나 이상의 노트를 선택하세요.");
+        setShowModal(true);
+        return;
+    }
+
+    setData((prev) => ({
+        ...prev,
+        selectedNotes: JSON.stringify(selectedNotes),
+        inputText,
+        folderId,
+    }));
+
+    router.push("/create_quiz2");
+  }
 
   return (
     <View style={styles.container}>
@@ -142,8 +162,7 @@ export default function CreateQuizSelectNote() {
         {/* 노트 없이 문제 생성 */}
         <View style={styles.customInputBox}>
           <Text style={styles.customInputLabel}>
-            노트 없이도 문제 생성이 가능해요!{"\n"}
-            문제로 만들고 싶은 내용을 적어보세요.
+            📌 추가로 입력하고자 하는 공부 분량이 있다면 자유롭게 적어보세요.
           </Text>
           <TextInput
             style={styles.input}
@@ -168,7 +187,7 @@ export default function CreateQuizSelectNote() {
                 <View style={styles.selectedNoteBox}>
                   <Text style={styles.selectedNoteText}>{item.folderName} - {item.noteTitle}</Text>
                   <TouchableOpacity
-                    onPress={() => removeSelectedNote(item)}
+                    onPress={() => removeSelectedNote(item.noteId)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.removeIcon}
                   >
@@ -185,22 +204,25 @@ export default function CreateQuizSelectNote() {
       <TouchableOpacity
         style={styles.selectButton}
         activeOpacity={0.8}
-        onPress={() => {
-            if(selectedNotes.length === 0 && !inputText){
-                alert("하나 이상의 노트를 선택하거나 문제 내용을 입력하세요.");
-                return;
-            }
-
-            setData((prev) => ({
-                ...prev,
-                selectedNotes: JSON.stringify(selectedNotes),
-                inputText,
-            }));
-            router.push("/createquiz2");
-        }}
+        onPress={handleSelectComplete}
       >
         <Text style={styles.selectButtonText}>선택 완료</Text>
       </TouchableOpacity>
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showModal}
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setShowModal(false) }}>
+              <Ionicons name="close" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.modalText}>{modalText}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -267,7 +289,7 @@ const styles = StyleSheet.create({
     color: "#3C3C3C",
     marginBottom: 10,
     fontWeight: 600,
-    textAlign: "center",
+    paddingHorizontal: 10,
   },
   input: {
     backgroundColor: "#fff",
@@ -319,4 +341,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      maxWidth: "80%",
+      backgroundColor: "#fff",
+      borderRadius: 10,
+      paddingHorizontal: 40,
+      paddingVertical: 30,
+      alignItems: "center",
+    },
+    modalCloseBtn: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+    },
+    modalText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: "#000",
+      textAlign: "center",
+    },
 });

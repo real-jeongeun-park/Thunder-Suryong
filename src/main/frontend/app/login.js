@@ -18,7 +18,6 @@ import { API_BASE_URL } from "../src/constants";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [autoLogin, setAutoLogin] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -102,22 +101,6 @@ export default function LoginScreen() {
         </Text>
       )}
 
-      <View style={styles.checkboxRow}>
-        <Checkbox
-          value={autoLogin}
-          onValueChange={setAutoLogin}
-          color={autoLogin ? "#B491DD" : undefined}
-        />
-        <TouchableOpacity
-          onPress={() => {
-            setPopupType("terms");
-            setVisible(true);
-          }}
-        >
-          <Text style={[styles.checkboxLabel]}>자동 로그인</Text>
-        </TouchableOpacity>
-      </View>
-
       {loginFail && (
         <Text style={{ color: "red", marginBottom: 15, marginLeft: 5 }}>
           이메일 또는 비밀번호가 틀립니다.
@@ -161,6 +144,7 @@ const styles = StyleSheet.create({
   checkboxWrapper: { flexDirection: "row", alignItems: "center" },
   findText: { fontSize: 12, color: "#555" },
   loginBtn: {
+    marginTop: 10,
     backgroundColor: "#a582d9",
     padding: 16,
     borderRadius: 10,
@@ -172,15 +156,5 @@ const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
     marginTop: 20,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-    flexWrap: "wrap",
-  },
-  checkboxLabel: {
-    marginLeft: 8,
-    fontSize: 14,
   },
 });

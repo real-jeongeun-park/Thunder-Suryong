@@ -5,6 +5,6 @@ create table note (
     folder_id varchar(36),
     note_id varchar(36),
     title varchar(50),
-    content varchar(3000),
+    content varchar(10000),
     primary key (id)
 );

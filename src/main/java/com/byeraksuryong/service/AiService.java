@@ -1,6 +1,7 @@
 package com.byeraksuryong.service;
 
 import com.byeraksuryong.api.AiApi;
+import com.byeraksuryong.domain.Quiz;
 import com.byeraksuryong.domain.Style;
 import com.byeraksuryong.dto.Response;
 import com.byeraksuryong.dto.SubjectInfoList;
@@ -259,15 +260,14 @@ public class AiService {
      */
     public List<String> useQuizAi(String prompt) {
         try {
-
             Response responseObj = ai.requestAnswer(prompt);
 
             if (responseObj == null || responseObj.getResponse() == null) {
-                System.out.println("GPT 응답이 null입니다. 퀴즈 생성 실패");
-                return new ArrayList<>();  // 빈 리스트로 반환
+                throw new RuntimeException("failed to receive response from ChatGPT");
             }
 
             String response = responseObj.getResponse();
+            System.out.println("response = " + response);
 
             // 줄바꿈 기준으로 문제 분리해서 리스트로 반환
             return Arrays.stream(
@@ -278,8 +278,38 @@ public class AiService {
                     .toList();
 
         } catch (Exception e) {
-            System.out.println("GPT 호출 중 오류: " + e.getMessage());
-            return new ArrayList<>();  // 예외 발생 시도 빈 리스트 반환
+            throw new RuntimeException("failed to receive response from ChatGPT" + e.getMessage());
+        }
+    }
+
+    public boolean useQuizScoreAi(Quiz quiz, String userAnswer){
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("[ 질문 ]\n");
+        sb.append(quiz.getQuestion()).append("\n");
+        sb.append("[ 실제 정답 ]\n");
+        sb.append(quiz.getAnswer()).append("\n");
+        sb.append("[ 사용자가 낸 정답 ]\n");
+        sb.append(userAnswer).append("\n");
+        sb.append("질문에 대한 사용자가 낸 정답이 옳은지 혹은 옳지 않은지를 논리적으로 따져서, 옳으면 O, 옳지 않으면 X로 응답해 줘").append("\n");
+        sb.append("사용자가 낸 정답이 실제 정답과 가까우면 가까울수록 실제 정답일 확률은 올라가.").append("\n");
+        sb.append("** 다른 말은 덧붙이지 말고 한 단어 O 또는 X 로만 응답할 것. **");
+        sb.append("** 해설, 해답 등은 필요 없음. **");
+
+        try{
+            Response responseObj = ai.requestAnswer(sb.toString());
+            if(responseObj == null || responseObj.getResponse() == null){
+                throw new RuntimeException("failed to receive response from ChatGPT");
+            }
+
+            String response = responseObj.getResponse();
+            System.out.println(response);
+
+            if(response.equals("O")) return true;
+            else if(response.equals("X")) return false;
+            else throw new RuntimeException("not valid response from ChatGPT"); // 에러 터짐
+        } catch(Exception e){
+            throw new RuntimeException("failed to receive response from ChatGPT");
         }
     }
 }

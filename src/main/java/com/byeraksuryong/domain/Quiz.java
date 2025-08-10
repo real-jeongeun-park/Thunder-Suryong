@@ -8,13 +8,18 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Quiz {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "exam_id")
     private String examId;
+
+    @Column(name = "folder_id")
+    private String folderId;
+
+    @Column(name = "quiz_id")
+    private String quizId;
 
     @Column(name = "quiz_title")
     private String quizTitle;
@@ -27,11 +32,15 @@ public class Quiz {
 
     private String answer;
 
-    private String nickname;  // 사용자 식별자 (닉네임 기준)
-
     @Column(name = "type")
     private String type;
 
     @Column(length = 1000)
     private String solution;
+
+    @Column(name = "user_answer")
+    private String userAnswer;
+
+    @Column(name = "is_correct")
+    private Boolean isCorrect;
 }

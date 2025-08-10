@@ -40,7 +40,7 @@ public class FolderService {
         String key = UUID.randomUUID().toString();
         folder.setFolderId(key);
 
-        folder.setFolderName(folderRequest.getFolderName());
+        folder.setFolderName(folderName);
 
         return folderRepository.save(folder).getFolderId();
     }

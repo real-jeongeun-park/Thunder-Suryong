@@ -13,4 +13,5 @@ public interface FolderRepository {
     List<Folder> findByFolderId(String folderId);
     List<Folder> findByNicknameAndExamId(String nickname, String examId);
     Optional<List<Folder>> findByExamId(String examId);
+    List<Folder> findByFolderIdIn(List<String> folderIds);
 }

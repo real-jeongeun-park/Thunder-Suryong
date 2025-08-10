@@ -1,46 +1,39 @@
-// NoteScreen.js
-
-import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+  FlatList,
+  TextInput,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
-
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import BottomNavigation from "../components/BottomNavigation";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
-import SafeAreaWrapper from "../components/SafeAreaWrapper";
-import BottomNavigation from "../components/BottomNavigation";
 
-export default function NoteScreen() {
+export default function QuizScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState("노트");
-  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [activeTab, setActiveTab] = useState("퀴즈");
+  const [modalVisibleId, setModalVisibleId] = useState(null);
+  const inputRef = useRef(null);
   const [folderName, setFolderName] = useState("");
   const [folders, setFolders] = useState([]);
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+  const [newQuizName, setNewQuizName] = useState("");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
-  const [nickname, setNickname] = useState(null);
-
-  const tabs = [
-    { name: "홈", label: "홈" },
-    { name: "노트", label: "노트" },
-    { name: "퀴즈", label: "퀴즈" },
-    { name: "마이페이지", label: "마이페이지" },
-  ];
 
   useEffect(() => {
     async function checkLogin() {
@@ -60,7 +53,7 @@ export default function NoteScreen() {
           },
         });
 
-        setNickname(res.data.nickname);
+        setUserInfo(res.data);
       } catch (err) {
         console.log(err);
         router.push("/");
@@ -69,11 +62,15 @@ export default function NoteScreen() {
     checkLogin();
   }, []);
 
+  /// 퀴즈 폴더 가져오기
+  /// 퀴즈 폴더 가져오기
+  /// 퀴즈 폴더 가져오기
+
   useEffect(() => {
-    const getFolder = async () => {
+    const getQuizFolder = async () => {
       try {
-        const res = await axios.post(`${API_BASE_URL}/api/folder/get`, {
-          nickname,
+        const res = await axios.post(`${API_BASE_URL}/api/quizFolder/get`, {
+          nickname: userInfo.nickname,
         });
 
         const mappedFolders = res.data.map((f) => ({
@@ -87,35 +84,38 @@ export default function NoteScreen() {
       }
     };
 
-    if (nickname !== null) {
-      getFolder();
+    if (userInfo !== null) {
+      getQuizFolder();
     }
-  }, [nickname]);
+  }, [userInfo]);
 
-  // 폴더 생성
+  /// 퀴즈 폴더 생성하기
+  /// 퀴즈 폴더 생성하기
+  /// 퀴즈 폴더 생성하기
+
   const handleCreateFolder = async () => {
-    const newFolderName = folderName.trim();
-    if (newFolderName) {
-      try {
-        const res = await axios.post(`${API_BASE_URL}/api/folder/create`, {
-          nickname,
-          folderName: newFolderName,
-        });
+      const newFolderName = folderName.trim();
+      if (newFolderName) {
+        try {
+          const res = await axios.post(`${API_BASE_URL}/api/quizFolder/create`, {
+            nickname: userInfo.nickname,
+            folderName: newFolderName,
+          });
 
-        const newFolder = {
-          folderId: res.data,
-          folderName: newFolderName,
-        };
+          const newFolder = {
+            folderId: res.data,
+            folderName: newFolderName,
+          };
 
-        setFolders((prev) => [...prev, newFolder]);
-      } catch (e) {
-        console.log("failed to store folder name. For more: ", e);
-      } finally {
-        setFolderName("");
-        setIsCreatingFolder(false);
+          setFolders((prev) => [...prev, newFolder]);
+        } catch (e) {
+          console.log("failed to store folder name ", e);
+        } finally {
+          setFolderName("");
+          setIsCreatingFolder(false);
+        }
       }
-    }
-  };
+    };
 
   return (
     <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
@@ -123,7 +123,7 @@ export default function NoteScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <Text style={styles.title}>학습 폴더</Text>
+        <Text style={styles.title}>퀴즈 폴더</Text>
 
         {folders.length === 0 && !isCreatingFolder ? (
           <>
@@ -132,17 +132,19 @@ export default function NoteScreen() {
               style={styles.emptyImage}
               resizeMode="contain"
             />
-            <Text style={styles.emptyMessage}>아직 생성된 폴더가 없어요!</Text>
+            <Text style={styles.emptyMessage}>
+              아직 생성된 퀴즈가 없어요!{"\n"}학습한 내용을 점검해보세요!
+            </Text>
           </>
         ) : (
-          <ScrollView style={{ marginHorizontal: 20, marginBottom: 10 }}>
+          <ScrollView style={{ marginBottom: 10 }}>
             {folders.map((f, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.folderItem}
                 onPress={() =>
                   router.push({
-                    pathname: "/notefolder",
+                    pathname: "/quiz_folder",
                     params: { folderId: f.folderId },
                   })
                 }
@@ -182,10 +184,14 @@ export default function NoteScreen() {
             style={styles.circleButton}
             onPress={() => {
               if (folders.length > 0) setIsFolderSelectVisible(true);
-              else alert("먼저 폴더를 생성해주세요!");
+              else alert("퀴즈를 생성하려면 먼저 폴더를 만들어주세요!");
             }}
           >
-            <Feather name="file-plus" size={24} color="#B9A4DA" />
+            <Text
+              style={{ fontWeight: "800", fontSize: 16, color: "rgb(75 75 75)"}}
+            >
+               퀴즈
+             </Text>
           </TouchableOpacity>
         </View>
 
@@ -204,7 +210,7 @@ export default function NoteScreen() {
                       marginBottom: 15,
                     }}
                   >
-                    노트를 추가할 폴더를 선택하세요.
+                    퀴즈를 추가할 폴더를 선택하세요.
                   </Text>
                   {folders.map((f, idx) => (
                     <TouchableOpacity
@@ -213,10 +219,9 @@ export default function NoteScreen() {
                       onPress={() => {
                         setIsFolderSelectVisible(false);
                         router.push({
-                          pathname: "/notefolder",
+                          pathname: "/create_quiz1",
                           params: {
                             folderId: f.folderId,
-                            openAddNote: "true",
                           },
                         });
                       }}
@@ -244,13 +249,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+    paddingHorizontal: 20,
   },
   title: {
     fontFamily: "Abhaya Libre ExtraBold",
     fontSize: 32,
     fontWeight: "800",
     color: "#3C3C3C",
-    marginLeft: 23,
     marginBottom: 20,
     paddingTop: 20,
   },

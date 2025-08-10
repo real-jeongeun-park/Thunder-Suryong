@@ -8,5 +8,6 @@ import java.util.List;
 @Repository
 public interface QuizRepository {
     Quiz save(Quiz quiz);
-    List<Quiz> findByNickname(String nickname);
+    List<Quiz> findByQuizId(String quizId);
+    List<Quiz> findByFolderId(String folderId);
 }

@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   cell: { flex: 1, justifyContent: "center" },
   subjectText: { textAlign: "center" },
-  timeText: { textAlign: "center", fontWeight: "500", },
+  timeText: { textAlign: "center" },
   buttonGroup: { flexDirection: "row", justifyContent: "center", gap: 8 },
   circleButton: {
     width: 36,
