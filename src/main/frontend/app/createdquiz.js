@@ -11,24 +11,40 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from "react-native";
+import axios from "axios";
 
 const { width } = Dimensions.get("window");
 
 export default function CreatedQuizScreen() {
   const router = useRouter();
+
   const {
     problemName: initialProblemName,
     questionCount: initialQuestionCount,
-    selectedTypes: selectedTypesParam
+    selectedTypes: selectedTypesParam,
+    quizList,
+    noteIds: noteIdsParam
   } = useLocalSearchParams();
 
   const selectedTypes = useMemo(() => {
     try {
-      return JSON.parse(selectedTypesParam);
+      return JSON.parse(decodeURIComponent(selectedTypesParam));
     } catch {
       return [2];
     }
   }, [selectedTypesParam]);
+
+  //
+  const noteIds = useMemo(() => {
+    try {
+      return JSON.parse(decodeURIComponent(noteIdsParam));
+    } catch {
+      return [];
+    }
+  }, [noteIdsParam]);
+
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -40,6 +56,7 @@ export default function CreatedQuizScreen() {
   const [quizProblemName, setQuizProblemName] = useState(
     initialProblemName || "새로운 문제지"
   );
+
   const [totalQuestions, setTotalQuestions] = useState(
     parseInt(initialQuestionCount) > 0 ? parseInt(initialQuestionCount) : 5
   );
@@ -51,61 +68,132 @@ export default function CreatedQuizScreen() {
     Array(totalQuestions).fill(null)
   );
 
-  const questions = useMemo(() => {
-    const types = selectedTypes;
-    const mixed = Array.from({ length: totalQuestions }, (_, i) => {
-      const type = types[i % types.length];
-      if (type === 1) {
-        return {
-          id: i + 1,
-          type: "subjective",
-          question: `문제${i + 1}. 주관식 문제내용`,
-          correctAnswer: "정답",
-          solution: `해설: 주관식 문제 ${i + 1}의 정답은 '정답'입니다.`
-        };
-      } else if (type === 2) {
-        const options = ["보기 1", "보기 2", "보기 3"];
-        const correctIndex = Math.floor(Math.random() * 3);
-        const correctText = `${options[correctIndex]}`;
-        return {
-          id: i + 1,
-          type: "objective",
-          question: `문제${i + 1}. 어쩌고 저쩌고 기계학습이 블라블라`,
-          options: options,
-          correctAnswer: [correctText],
-          solution: `해설: 객관식 문제 ${i + 1}의 정답은 '${correctText}'입니다.`
-        };
-      } else if (type === 3) {
-        // OX 문제 예시
-        return {
-          id: i + 1,
-          type: "ox",
-          question: `문제${i + 1}. OX 문제 예시입니다.`,
-          options: ["O", "X"],
-          correctAnswer: ["O"],
-          solution: `해설: OX 문제 ${i + 1}의 정답은 'O'입니다.`
-        };
+  let parsedQuizList = [];
+  try {
+    parsedQuizList = JSON.parse(decodeURIComponent(quizList));
+  } catch (e) {
+    console.error("❌ quizList JSON 파싱 오류:", e, quizList);
+    parsedQuizList = [];
+  }
+
+  // (자동 유형 판별 및 정답 추출)
+  const questions = parsedQuizList.map((quiz) => {
+     const { question } = quiz;
+
+    // fix: answer는 quiz.answer가 아닌 correctAnswer[0]에서 추출
+    const rawAnswer = Array.isArray(quiz.correctAnswer) ? quiz.correctAnswer[0] : quiz.correctAnswer;
+    const safeAnswer = typeof rawAnswer === "string" ? rawAnswer.trim() : null;
+
+    let correctAnswer = [safeAnswer];
+    let type = "subjective";
+    let solution = quiz.solution || "";
+    let options = [];
+
+    if (question.includes("@@")) {
+      const [q, answerPartRaw] = question.split("@@");
+
+      // 여기서도 .trim()을 바로 쓰지 않고 안전하게 처리
+      const answerPart = typeof answerPartRaw === "string" ? answerPartRaw.trim() : "";
+
+      // 객관식 보기 구분자 포함 시
+      if (answerPart.includes("|")) {
+        const candidates = answerPart.split("|").map(opt => opt.trim());
+        options = candidates;
+
+        if (
+          candidates.length === 2 &&
+          candidates.includes("O") &&
+          candidates.includes("X")
+        ) {
+          type = "ox";
+          // 대문자 정답 추출 시도 + fallback으로 'O'
+          correctAnswer = [safeAnswer?.toUpperCase() ?? "O"];
+          options = ["O", "X"];
+        } else {
+          type = "objective";
+          // 보기 기반 정답 추론 제거하고 safeAnswer 사용
+          correctAnswer = [safeAnswer ?? candidates[0]];
+        }
+      } else if (["O", "X"].includes(answerPart.toUpperCase())) {
+        type = "ox";
+        correctAnswer = [safeAnswer?.toUpperCase() ?? answerPart.toUpperCase()];
+        options = ["O", "X"];
       } else {
-        // 기본 객관식 fallback
-        const options = ["보기 1", "보기 2", "보기 3"];
-        const correctIndex = Math.floor(Math.random() * 3);
-        const correctText = `${options[correctIndex]}`;
-        return {
-          id: i + 1,
-          type: "objective",
-          question: `문제${i + 1}. 어쩌고 저쩌고 기계학습이 블라블라`,
-          options: options,
-          correctAnswer: [correctText],
-          solution: `해설: 객관식 문제 ${i + 1}의 정답은 '${correctText}'입니다.`
-        };
+        type = "subjective";
+        correctAnswer = [safeAnswer ?? answerPart];
       }
-    });
-    return mixed.sort((a, b) => a.id - b.id); // 오름차순 정렬
-  }, [totalQuestions, selectedTypes]);
+
+      return {
+        ...quiz,
+        question: q.trim(),
+        correctAnswer,
+        solution,
+        type,
+        options,
+      };
+    } else {
+      return {
+        ...quiz,
+        correctAnswer: [safeAnswer ?? null],
+        solution,
+        type,
+        options: [],
+      };
+    }
+  });
+
+
+  console.log("🧪 파싱 전 quizList:", decodeURIComponent(quizList));
+  console.log("🧪 파싱 후 questions:", questions);
+
+  const currentRaw = questions[currentQuestionIndex] || {};
+  const rawQuestion = currentRaw.question || "";
+
+  let [mainTextRaw, optionsRaw] = rawQuestion.includes("@@")
+    ? rawQuestion.split("@@")
+    : [rawQuestion, ""];
+
+  const mainText = mainTextRaw.trim().replace(/^[\s\-–—]+/, "");
+  const options = optionsRaw ? optionsRaw.split("|") : [];
 
   const currentQuestion = questions[currentQuestionIndex];
   const questionNavScrollViewRef = useRef(null);
   const inputRef = useRef(null);
+
+  const [nickname, setNickname] = useState("");
+
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
+
+        // 플랫폼에 따라 accessToken 조회
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        if (!token) throw new Error("Token not found");
+
+        // /api/validation 호출하여 nickname 받아오기
+        const res = await axios.get("http://localhost:8080/api/validation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setNickname(res.data.nickname);  // nickname 설정
+      } catch (err) {
+        console.log(err);
+        router.push("/");  // 인증 실패 시 로그인 화면으로
+      }
+    }
+
+    checkLogin();
+  }, []);
+
+
 
   useEffect(() => {
     if (questionNavScrollViewRef.current) {
@@ -122,6 +210,9 @@ export default function CreatedQuizScreen() {
     } else {
       setSelectedOptions(savedAnswer || []);
     }
+
+    console.log("🔍 현재 문제 타입:", currentQuestion?.type);
+
   }, [currentQuestionIndex]);
 
   const handleOptionPress = (option) => {
@@ -135,7 +226,7 @@ export default function CreatedQuizScreen() {
     }
     setSelectedOptions(updated);
     const updatedAnswers = [...userAnswers];
-    updatedAnswers[currentQuestionIndex] = updated;
+    updatedAnswers[currentQuestionIndex] = [...updated]; // 배열 복사로 저장
     setUserAnswers(updatedAnswers);
   };
 
@@ -150,10 +241,25 @@ export default function CreatedQuizScreen() {
     setUserAnswers(updated);
   };
 
+  // 정답 비교 함수 (대소문자 + 문장 끝 기호 무시)
   const isCorrectAnswer = (answer, correctAnswer) => {
-    if (!Array.isArray(answer) || !Array.isArray(correctAnswer)) return false;
-    if (answer.length !== correctAnswer.length) return false;
-    return [...answer].sort().every((v, i) => v === correctAnswer.sort()[i]);
+    const normalize = (arr) =>
+      Array.isArray(arr)
+        ? arr.map((v) =>
+            v
+              ?.trim()
+              .toLowerCase()
+              .replace(/[.,!?]+$/, "")  //  문장 끝 .,!? 제거
+          ).sort()
+        : [arr?.trim().toLowerCase().replace(/[.,!?]+$/, "")];
+
+    const user = normalize(answer);
+    const correct = normalize(correctAnswer);
+
+    return (
+      user.length === correct.length &&
+      user.every((v, i) => v === correct[i])
+    );
   };
 
   const handleNextOrSubmit = () => {
@@ -165,15 +271,13 @@ export default function CreatedQuizScreen() {
     updatedAnswers[currentQuestionIndex] = userAnswer;
     setUserAnswers(updatedAnswers);
 
+
     const updatedStatuses = [...questionStatuses];
     updatedStatuses[currentQuestionIndex] =
-      currentQuestion.type === "subjective"
-        ? userAnswer === currentQuestion.correctAnswer
-          ? "correct"
-          : "incorrect"
-        : isCorrectAnswer(userAnswer, currentQuestion.correctAnswer)
+      isCorrectAnswer(userAnswer, currentQuestion.correctAnswer)
         ? "correct"
         : "incorrect";
+
     setQuestionStatuses(updatedStatuses);
 
     if (currentQuestionIndex < questions.length - 1) {
@@ -181,22 +285,50 @@ export default function CreatedQuizScreen() {
     } else {
       const finalStatuses = questions.map((q, idx) => {
         const answer = updatedAnswers[idx];
-        return q.type === "subjective"
-          ? answer === q.correctAnswer
-            ? "correct"
-            : "incorrect"
-          : isCorrectAnswer(answer, q.correctAnswer)
+        return isCorrectAnswer(answer, q.correctAnswer)
           ? "correct"
           : "incorrect";
       });
+
       setQuestionStatuses(finalStatuses);
       setIsSubmitted(true);
+
+      sendResultsToBackend();
     }
   };
 
+  const sendResultsToBackend = async () => {
+    try {
+      const finalQuizList = questions.map((q, idx) => {
+            const userAnswer = userAnswers[idx];
+            return {
+              ...q,
+              correctAnswer: Array.isArray(userAnswer) ? userAnswer : [userAnswer],  // 정답을 배열로
+            };
+          });
+      const res = await fetch("http://localhost:8080/api/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nickname: nickname,
+          quizTitle: quizProblemName,
+          noteIds: noteIds,
+          quizList: finalQuizList,
+        }),
+      });
+
+      const result = await res.json();
+      console.log("퀴즈 결과 전송 완료:", result);
+    } catch (err) {
+      console.error("퀴즈 결과 전송 실패:", err);
+    }
+  };
+
+
   const renderOptionStyle = (option) => {
     const isSelected = selectedOptions.includes(option);
-    const isCorrect = isSubmitted && currentQuestion.correctAnswer.includes(option);
+    //const isCorrect = isSubmitted && currentQuestion.correctAnswer.includes(option);
+    const isCorrect = isSubmitted && currentQuestion.correctAnswer?.map(a => a.trim().toLowerCase()).includes(option.trim().toLowerCase());
     const isWrong =
       isSubmitted &&
       selectedOptions.includes(option) &&
@@ -274,9 +406,12 @@ export default function CreatedQuizScreen() {
         </View>
 
         <ScrollView style={styles.questionContentContainer} keyboardShouldPersistTaps="handled">
-          <Text style={styles.questionText}>{currentQuestion.question}</Text>
+          <Text style={styles.questionText}>
+            문제 {currentQuestionIndex + 1}. {mainText}
+          </Text>
 
-          {currentQuestion.type === "objective" || currentQuestion.type === "ox" ? (
+
+          {currentQuestion.type === "objective" && currentQuestion.options?.length > 0 && (
             currentQuestion.options.map((option, idx) => (
               <TouchableOpacity
                 key={idx}
@@ -286,7 +421,27 @@ export default function CreatedQuizScreen() {
                 <Text style={styles.optionText}>{option}</Text>
               </TouchableOpacity>
             ))
-          ) : (
+          )}
+
+          {currentQuestion.type === "ox" && (
+            <>
+              <TouchableOpacity
+                onPress={() => handleOptionPress("O")}
+                style={renderOptionStyle("O")}
+              >
+                <Text style={styles.optionText}>O</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleOptionPress("X")}
+                style={renderOptionStyle("X")}
+              >
+                <Text style={styles.optionText}>X</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+
+          {currentQuestion.type === "subjective" && (
             <TextInput
               ref={inputRef}
               style={{
@@ -303,21 +458,27 @@ export default function CreatedQuizScreen() {
 
           {isSubmitted && (
             <View style={styles.solutionBox}>
-              <Text style={styles.solutionText}>{currentQuestion.solution}</Text>
+              <Text style={styles.solutionText}>
+                {currentQuestion.solution
+                  ? `해설: ${currentQuestion.solution}`
+                  : "해당 문제에 대한 해설이 없습니다."}
+              </Text>
             </View>
           )}
+
 
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {!isSubmitted ? (
-          <View style={styles.bottomButtonGroup}>
-            <TouchableOpacity onPress={handleNextOrSubmit} style={{ ...styles.bottomButton, flex: 1 }}>
-              <Text style={styles.bottomButtonText}>
-                {currentQuestionIndex === questions.length - 1 ? "정답 확인하기" : "다음"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleNextOrSubmit}
+            style={styles.bottomButton}
+          >
+            <Text style={styles.bottomButtonText}>
+              {currentQuestionIndex === questions.length - 1 ? "정답 확인하기" : "다음"}
+            </Text>
+          </TouchableOpacity>
         ) : (
           <View style={styles.bottomButtonGroup}>
             <TouchableOpacity

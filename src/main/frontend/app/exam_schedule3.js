@@ -17,13 +17,10 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
-
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
-
 import { useData } from "@/context/DataContext";
-
 const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
@@ -32,13 +29,18 @@ export default function ExamInfoInput() {
   const { startDate, endDate, examName, subjects } = data;
 
   let subjectList = [];
-  try {
-    subjectList = JSON.parse(subjects);
-    if (!Array.isArray(subjectList)) {
+
+  if (Array.isArray(subjects)) {
+    subjectList = subjects;
+  } else if (typeof subjects === "string") {
+    try {
+      const parsed = JSON.parse(subjects);
+      subjectList = Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      // JSON.parse 실패
       subjectList = [];
     }
-  } catch (e) {
-    console.log(e);
+  } else {
     subjectList = [];
   }
 
@@ -93,7 +95,12 @@ export default function ExamInfoInput() {
     }
     setSubjectInfo([
       ...subjectInfo,
-      { subject: selectedSubject, week, content },
+      {
+        subject: selectedSubject,
+        week,
+        content,
+        important: false,
+      },
     ]);
     setWeek("");
     setContent("");
@@ -144,7 +151,7 @@ export default function ExamInfoInput() {
     }
   };
 
-  const uploadImage = async (uri: string) => {
+  const uploadImage = async (uri) => {
     // 앱용
     setLoading(true);
     const formData = new FormData();
@@ -177,23 +184,32 @@ export default function ExamInfoInput() {
 
   const useAi = async (request) => {
     if (request.trim()) {
-      // 있어야만 실행
       try {
+        console.log("전송하는 request:", request);
         const response = await axios.post(`${API_BASE_URL}/api/ai/syllabus`, {
           request: request,
         });
+        const { weekList, contentList } = response.data; // 배열 체크 및 기본값 설정
 
-        const { weekList, contentList } = response.data;
+        const safeWeekList = Array.isArray(weekList) ? weekList : [];
+        const safeContentList = Array.isArray(contentList) ? contentList : [];
 
-        const newSubjectInfoList = weekList.map((week, index) => ({
+        if (safeWeekList.length === 0) {
+          alert("AI로부터 주차 목록을 받아오지 못했습니다.");
+          return;
+        }
+
+        const newSubjectInfoList = safeWeekList.map((week, index) => ({
           subject: selectedSubject,
           week,
           content: contentList[index],
+          important: false,
         }));
 
         setSubjectInfo([...subjectInfo, ...newSubjectInfoList]);
       } catch (e) {
         console.log(e);
+        alert("AI 분량 추출에 실패했습니다. 다시 시도해주세요.");
       }
     }
   };
@@ -255,6 +271,7 @@ export default function ExamInfoInput() {
           ...newArr[editIndex],
           week: editWeek,
           content: editContent,
+          important: false,
         };
       }
       return newArr;
@@ -283,6 +300,29 @@ export default function ExamInfoInput() {
     });
   };
 
+  const handleToggleImportant = (filteredIdx) => {
+    // 현재 subjectInfo에서 해당 filteredIdx(=같은 subject의 filtered idx → 실제 인덱스 변환 필요)
+    const info = filteredSubjectInfo[filteredIdx];
+    if (!info) return;
+
+    const realIndex = subjectInfo.findIndex(
+      (item) =>
+        item.subject === info.subject &&
+        item.week === info.week &&
+        item.content === info.content
+    );
+    if (realIndex === -1) return;
+
+    setSubjectInfo((prev) => {
+      const newArr = [...prev];
+      newArr[realIndex] = {
+        ...newArr[realIndex],
+        important: !newArr[realIndex].important, // 토글
+      };
+      return newArr;
+    });
+  };
+
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
@@ -307,7 +347,7 @@ export default function ExamInfoInput() {
 
           {/* 상단 날짜 및 안내 */}
           <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>분량을 입력해주세요.</Text>
+            <Text style={styles.headerTitle}>분량을 입력해 주세요.</Text>
             <Text style={styles.periodText}>{examPeriod}</Text>
             <FlatList
               data={[examName, ...subjectList]}
@@ -369,23 +409,29 @@ export default function ExamInfoInput() {
               </View>
 
               {/* 주차/단원 입력 */}
-              <Text style={styles.inputText}>주차/단원</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="예시: 2주차"
-                placeholderTextColor="#717171"
-                value={week}
-                onChangeText={setWeek}
-              />
-              {/* 내용/분량 입력 */}
-              <Text style={styles.inputText}>내용/분량</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="예시: 클라우드 컨셉 개요"
-                placeholderTextColor="#717171"
-                value={content}
-                onChangeText={setContent}
-              />
+              <View style={styles.headerRow}>
+                <View style={styles.inputGroupLeft}>
+                  <Text style={styles.inputText}>주차/단원</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="예시: 2주차"
+                    placeholderTextColor="#717171"
+                    value={week}
+                    onChangeText={setWeek}
+                  />
+                </View>
+                {/* 내용/분량 입력 */}
+                <View style={styles.inputGroupRight}>
+                  <Text style={styles.inputText}>내용/분량</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="예시: 클라우드 컨셉 개요"
+                    placeholderTextColor="#717171"
+                    value={content}
+                    onChangeText={setContent}
+                  />
+                </View>
+              </View>
               {/* 안내/추가 버튼 */}
               <TouchableOpacity
                 style={styles.directAddBtn}
@@ -396,7 +442,7 @@ export default function ExamInfoInput() {
 
               {/* 저장된 데이터 확인 */}
               <ScrollView
-                style={{ marginTop: 20, maxHeight: screenHeight * 0.28 }}
+                style={{ marginTop: 20, maxHeight: screenHeight * 0.25 }}
                 showsVerticalScrollIndicator={false}
               >
                 {filteredSubjectInfo.map((info, idx) => (
@@ -408,7 +454,7 @@ export default function ExamInfoInput() {
                         alignItems: "center",
                       }}
                     >
-                      <View>
+                      <View style={{ flex: 1, marginRight: 10 }}>
                         <Text style={styles.subjectInfoWeek}>{info.week}</Text>
                         <Text style={styles.subjectInfoContent}>
                           {info.content}
@@ -417,6 +463,17 @@ export default function ExamInfoInput() {
                       <View
                         style={{ flexDirection: "row", alignItems: "center" }}
                       >
+                        {/* 별 icon */}
+                        <TouchableOpacity
+                          onPress={() => handleToggleImportant(idx)}
+                          style={{ marginRight: 6 }} // 여유
+                        >
+                          <Ionicons
+                            name={info.important ? "star" : "star-outline"}
+                            size={22}
+                            color={info.important ? "#ffc23dff" : "#BDBDBD"}
+                          />
+                        </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => openEditModal(idx)}
                           style={styles.editButton}
@@ -536,7 +593,7 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     alignItems: "flex-start",
     backgroundColor: "#EFE5FF",
-    height: "24%",
+    height: "20%",
   },
   headerTitle: {
     fontSize: 30,
@@ -544,11 +601,25 @@ const styles = StyleSheet.create({
     color: "#535353",
     paddingBottom: 10,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between", // 각 inputGroup의 좌우 간격 조절
+    alignItems: "center",
+    marginTop: 5,
+  },
+  inputGroupLeft: {
+    flex: 3,
+    marginHorizontal: 5,
+  },
+  inputGroupRight: {
+    flex: 7,
+    marginHorizontal: 5,
+  },
   periodText: {
     fontSize: 18,
     color: "#535353",
     fontWeight: "500",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   subjectBadge: {
     backgroundColor: "#E5DFF5",
@@ -605,14 +676,13 @@ const styles = StyleSheet.create({
   },
   input: {
     //height: 45,
-    padding: 14,
+    padding: 10,
     backgroundColor: "#FAF8FD",
     borderColor: "#F4F1F5",
     borderWidth: 0.2,
     borderRadius: 5,
     fontSize: 15,
     color: "#717171",
-    paddingHorizontal: 10,
     marginTop: 10,
   },
   inputText: {
@@ -666,7 +736,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     color: "#555",
     marginTop: 4,
-    maxWidth: 350,
+    //flexShrink: 1,
   },
   editButton: {
     paddingHorizontal: 6,
@@ -716,13 +786,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 6,
-    alignItems: "center",
-  },
+
   // 모달 배경 (반투명 검은 배경)
   modalBackground: {
     flex: 1,
@@ -771,7 +835,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#6c4ed5",
     borderRadius: 10,
     paddingVertical: 14,
-    width: "100%",
+    width: "48%",
     marginTop: 24,
     alignItems: "center",
   },

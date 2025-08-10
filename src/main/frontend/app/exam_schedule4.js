@@ -31,7 +31,8 @@ export default function ExamInfoInput() {
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
+  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } =
+    data;
   const parsedSubjectInfo = JSON.parse(subjectInfo);
   const newSubjectList = [
     ...new Set(parsedSubjectInfo.map((item) => item.subject)),
@@ -133,7 +134,7 @@ export default function ExamInfoInput() {
     }
   }, [userInfo]);
 
-  // 선택된 과목의 계획들만 필터링 (간단하고 명확하게)
+  // 선택된 과목의 계획들만 필터링
   const getSelectedPlans = () => {
     if (!selectedSubject || !plans || plans.length === 0) {
       return [];
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
   },
   subjectBadge: {
     width: 100,
-    backgroundColor: "#BEBEBE",
+    backgroundColor: "#b8aebdff",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

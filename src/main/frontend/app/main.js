@@ -3,7 +3,7 @@ import { addDays, format, subDays } from "date-fns";
 import Checkbox from "expo-checkbox";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import BottomNavigation from "../components/BottomNavigation";
@@ -38,6 +38,85 @@ export default function HomeScreen() {
   const { height: screenHeight } = Dimensions.get("window");
   const { width: screenWidth } = Dimensions.get("window");
   const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.4));
+  const [rewardOpen, setRewardOpen] = useState(false);
+  const rewardFiredRef = useRef(false);
+
+  const encouragementMessages = [
+    "열심히 공부하고 있군요! \n오늘의 작은 노력이 내일의 큰 변화를 만듭니다.",
+    "집중력이 대단하네요! \n당신이 쌓는 시간은 절대 사라지지 않습니다.",
+    "꾸준함이 너무 멋져요! \n느려도 멈추지 않는 걸음이 가장 멀리 갑니다.",
+    "포기하지 않는 모습이 아름다워요! \n그 마음이 결국 당신을 빛나게 합니다.",
+    "차분하게 나아가고 있네요! \n한 페이지 한 페이지가 당신의 이야기를 써 내려갑니다.",
+    "노력이 눈에 보이는 것 같아요! \n지금의 땀방울은 언젠가 자랑스러운 추억이 됩니다.",
+    "성실함이 돋보여요! \n작은 성취들이 모여 당신을 원하는 곳으로 이끌어 갑니다.",
+    "집념이 느껴지네요! \n오늘의 선택이 내일의 당신을 만듭니다.",
+    "몰입하는 모습이 멋져요! \n노력은 언젠가 가장 따뜻한 보답으로 돌아옵니다.",
+    "꾸준한 걸음이 빛난다고 해요! \n지금의 당신은 어제보다 더 단단해지고 있습니다.",
+  ];
+  const [encouragementText, setEncouragementText] = useState("");
+
+  const bubbleMessages = {
+    relaxed: [
+      "차분히 시작하는 오늘, 정말 멋져요.",
+      "작은 하루가 쌓여 큰 힘이 돼요.",
+      "편안하게 준비하는 모습이 보기 좋아요.",
+      "느긋한 지금이 기초를 다지기 딱 좋은 시간이죠.",
+      "꾸준한 하루들이 미래를 비춰줄 거예요.",
+      "오늘의 공부가 내일을 가볍게 만들어요.",
+      "서두르지 않아도 좋아요, 방향은 맞아요.",
+      "천천히 해도 괜찮아요, 한 걸음씩 나아가요.",
+      "지금처럼만 하면 충분히 잘하고 있는 거예요.",
+      "잠깐 숨 돌리는 시간도 공부 그 자체예요.",
+      "노력은 언젠가 꼭 빛나게 마련이에요.",
+      "마음 편하게, 쉬엄쉬엄 해도 괜찮아요.",
+    ],
+
+    focus: [
+      "이 순간의 집중이 나를 한층 더 성장시켜요.",
+      "조금만 더 힘내면 큰 결실을 얻을 거예요.",
+      "쌓아온 시간들이 든든한 버팀목이 되어줘요.",
+      "몰입할 때 내가 가장 멋진 모습이에요.",
+      "멈추지 않고 한 걸음 더 나아가는 중이에요.",
+      "오늘의 노력이 곧 자랑스러운 추억이 될 거예요.",
+      "이미 좋은 흐름을 타고 있어요, 아주 잘 하고 있어요.",
+      "남들이 못 본 노력을 내가 쌓고 있는 거죠.",
+      "집중력이 최고인 오늘! 응원할게요.",
+      "마음이 흔들릴 땐 잠깐 숨 쉬어도 괜찮아요.",
+      "아주 조금만 더 힘내면 기대했던 만큼 성장할 수 있어요.",
+      "내 속도대로 가면 충분히 멋진 결과가 와요.",
+    ],
+
+    urgent: [
+      "지금이 마지막 스퍼트! 함께 달려봐요.",
+      "여기까지 온 내 노력, 진짜 대단해요.",
+      "모든 준비가 결실로 바뀌는 순간이에요.",
+      "조금만 더 힘내면 목표에 도달해요.",
+      "마지막까지 집중하면 분명 멋진 결과 있을 거예요!",
+      "끝까지 내 자신을 믿어봐요, 힘이 돼줄 거예요.",
+      "어느새 마지막을 앞두고 있어요, 감회가 남다르죠?",
+      "더 나아가기 위한 한 걸음, 지금이 딱 필요할 때예요.",
+      '스스로에게 "할 수 있다" 한 마디 건네주세요.',
+      "마무리가 곧 최고의 순간이 될 거예요.",
+      "포기하지 마세요, 끝까지 응원해요.",
+      "조금 지쳤더라도, 잠깐 숨 고르고 앞으로 가요. 잘 하고 있으니까요!",
+    ],
+
+    final: [
+      "마음 다해 준비한 만큼 반드시 빛날 순간이에요.",
+      "그동안 쌓아온 경험이 오늘 빛을 발할 거예요. 잘 하고 있어요!",
+      "마지막까지 평온함과 자신감, 꼭 챙겨주세요.",
+      "내 노력이 빛나는 날! 응원해요.",
+      "모든 준비는 끝났어요, 이제 날개를 펼칠 시간입니다.",
+      "마지막 한 걸음도 힘차게 내디뎌요.",
+      "누적된 노력이 같이 응원하고 있어요. 수룡이가 함께 응원합니다!",
+      "결과도 중요하지만 과정이 더 의미 있으니까요.",
+      "마무리하는 지금이 가장 자랑스러운 순간이에요.",
+      "여기까지 온 것만으로도 이미 멋져요.",
+      "끝까지 '나'답게, 내 속도로 아름답게 완주해요.",
+    ],
+  };
+
+  const [bubbleText, setBubbleText] = useState("");
 
   // 사용자 로그인 여부 확인
   const [userInfo, setUserInfo] = useState(null);
@@ -53,6 +132,36 @@ export default function HomeScreen() {
 
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 랜덤 수룡이 획득 메시지
+  useEffect(() => {
+    // TODO: 여기에 조건을 넣으세요 예) if (rate === 100) { ... }
+    if (Number(rate) === 50) {
+      rewardFiredRef.current = true;
+      const randomIndex = Math.floor(
+        Math.random() * encouragementMessages.length
+      );
+      setEncouragementText(encouragementMessages[randomIndex]);
+      setRewardOpen(true);
+    }
+  }, [rate]);
+
+  // 랜덤 메인 수룡이 메시지
+  useEffect(() => {
+    if (!selectedExam || !selectedExam.startDate) return;
+
+    const diff = differenceInDays(parseISO(selectedExam.startDate), new Date());
+
+    let group;
+    if (diff >= 7) group = "relaxed";
+    else if (diff >= 3) group = "focus";
+    else if (diff >= 1) group = "urgent";
+    else group = "final";
+
+    const messages = bubbleMessages[group];
+    const randomIndex = Math.floor(Math.random() * messages.length);
+    setBubbleText(messages[randomIndex]);
+  }, [selectedExam]);
 
   // 로그인 여부 확인
   useEffect(() => {
@@ -242,18 +351,6 @@ export default function HomeScreen() {
       getAchievementRate();
     }
   }, [userInfo]);
-  const handleRemoveExam = async () => {
-    try{
-      const response = await axios.post(`${API_BASE_URL}/api/exam/allFalse`, {
-        nickname: userInfo.nickname,
-      });
-
-      setSelectedExam(null);
-      setPlans(null);
-    } catch(err){
-        console.log(err);
-    }
-  };
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
@@ -261,11 +358,8 @@ export default function HomeScreen() {
           flex: 1,
         }}
       >
-        <View contentContainerStyle={styles.container}>
-          <LinearGradient
-            colors={["#EFE5FF", "#FFFFFF"]}
-            style={styles.gradient}
-          >
+        <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
+          <View contentContainerStyle={styles.container}>
             <View style={styles.contentWrapper}>
               {userInfo && (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -274,26 +368,6 @@ export default function HomeScreen() {
                       <Text style={[styles.title]}>
                         {selectedExam.examName}
                       </Text>
-                      {/* 삭제 버튼 */}
-                      <TouchableOpacity
-                        onPress={handleRemoveExam}
-                        style={{
-                          marginLeft: 10,
-                          backgroundColor: "#e57373",
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          시험 삭제
-                        </Text>
-                      </TouchableOpacity>
                     </>
                   ) : (
                     <Text style={[styles.title]}>
@@ -407,15 +481,14 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-          </LinearGradient>
-        </View>
-
-        {/* 말풍선 */}
-        <View style={styles.speechContainer}>
-          <Text style={styles.characterText}>
-            시험이 얼마 남지 않았네요! {"\n"}오늘도 파이팅!
-          </Text>
-        </View>
+            {/* 말풍선 */}
+            <View style={styles.speechContainer}>
+              <View style={styles.bubble}>
+                <Text style={styles.bubbleText}>{bubbleText}</Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
 
         {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
         <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
@@ -496,11 +569,6 @@ export default function HomeScreen() {
                   </View>
                 ))
             )}
-
-            {/* 과목 추가 버튼 (터치 기능은 별도 구현 필요) */}
-            <TouchableOpacity style={styles.addButton}>
-              <Text style={styles.addButtonText}>+ 과목</Text>
-            </TouchableOpacity>
           </View>
 
           <Modal visible={calendarVisible} transparent animationType="none">
@@ -532,6 +600,60 @@ export default function HomeScreen() {
               </View>
             </View>
           </Modal>
+          <Modal
+            visible={rewardOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setRewardOpen(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View
+                style={[styles.calendarContainer, { alignItems: "center" }]}
+              >
+                <Image
+                  source={require("../assets/images/dragon_0.png")}
+                  style={{ width: 300, height: 400 }}
+                  resizeMode="contain"
+                />
+                <Text
+                  style={{
+                    marginTop: 12,
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: "#333",
+                  }}
+                >
+                  새로운 수룡이를 획득했습니다!
+                </Text>
+                <Text
+                  style={{
+                    marginTop: 6,
+                    fontSize: 14,
+                    color: "#555",
+                    textAlign: "center",
+                  }}
+                >
+                  {encouragementText}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={() => setRewardOpen(false)}
+                  style={{
+                    marginTop: 16,
+                    backgroundColor: "#E7DDF3",
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ color: "#4A3B73", fontWeight: "bold" }}>
+                    확인
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </Animated.View>
         <BottomNavigation />
       </View>
@@ -544,6 +666,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     flex: 1,
+    height: "100%",
   },
   title: {
     fontSize: 25,
@@ -557,7 +680,7 @@ const styles = StyleSheet.create({
     //justifyContent: "flex-end",
     width: "100%",
     //gap: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     //alignSelf: "flex-end",
   },
   topButtons2: {
@@ -565,16 +688,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     width: "100%",
     //gap: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     //alignSelf: "flex-end",
   },
   achievementRate: {
     //backgroundColor: "#e5ddff",
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    //borderRadius: 30,
+    paddingHorizontal: 5,
     alignSelf: "flex-start",
-    //marginTop: 4,
   },
   actionButton: {
     backgroundColor: "#E7DDF3",
@@ -597,7 +718,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     backgroundColor: "#F6F0FF",
-    padding: 16,
+    padding: 10,
     borderRadius: 20,
   },
   character: {
@@ -607,24 +728,34 @@ const styles = StyleSheet.create({
   },
   speechContainer: {
     position: "absolute",
-    width: "100%",
-    top: "30%", // 세로 중앙 위치 (아래에서 translateY로 정확 조정 필요)
-    //backgroundColor: "#6c4ed5",
-    padding: 20,
-    //transform: [{ translateY: -30 }], // translateY 값은 박스 높이에 맞게 조정
+    left: 20, // 왼쪽으로 붙이기
+    bottom: 40, // 수룡이 위쪽으로 당기기
+    flexDirection: "row",
+    alignItems: "center",
+    zIndex: 10, // 수룡이 위에 보이도록
   },
-  characterText: {
-    backgroundColor: "#c9c4dfff",
-    width: "50%",
-    color: "#fff",
-    padding: 10,
-    paddingLeft: 15,
-    borderRadius: 20,
-    marginTop: 80,
-    //shadowOpacity: 0.3,
-    //shadowOffset: { width: 0, height: 2 },
-    //shadowRadius: 4,
-    //elevation: 5,
+  bubble: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    maxWidth: 230,
+
+    // 입체감 있는 그림자
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
+
+    // 살짝 테두리로 입체감 보완
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
+  bubbleText: {
+    fontSize: 14,
+    color: "#5b5b5b",
+    fontWeight: "600",
   },
   timerText: {
     marginTop: 4,
@@ -721,18 +852,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flexShrink: 1,
   },
-  addButton: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: "#e5ddff",
-  },
-  addButtonText: {
-    color: "#6c4ed5",
-    fontWeight: "bold",
-  },
   modalBackground: {
     flex: 1,
     backgroundColor: "#00000088",
@@ -786,19 +905,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     alignSelf: "flex-start", // 텍스트 너비만큼 박스 크기 조정
-    marginVertical: 10,
     //marginTop: "10%",
   },
   ddayText: {
     color: "#fff", // 흰색 텍스트
     fontWeight: "bold",
     fontSize: 16,
-  },
-  bubble: {
-    backgroundColor: "#6c4ed5", // 말풍선 배경색
-  },
-  speech: {
-    color: "#fff", // 텍스트 색상
-    fontSize: 14,
   },
 });

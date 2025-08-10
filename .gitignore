@@ -41,4 +41,7 @@ node_modules/
 *.json
 /src/main/resources/vision-key.json
 
+### 삭제 하지 말 것! ###
+src/main/frontend/.env
 src/main/java/com/byeraksuryong/api/AiApi.java
+src/main/java/com/byeraksuryong/api/SecurityConfig.java

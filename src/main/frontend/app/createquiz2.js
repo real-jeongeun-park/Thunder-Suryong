@@ -7,20 +7,38 @@ import {
   ScrollView,
   StyleSheet,
   Modal,
+  Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import axios from "axios";
+import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL } from "../src/constants";
+import { useData } from "@/context/DataContext";
 
 export default function CreateQuizSelectType() {
   const router = useRouter();
-  const { selectedNotesParam, inputTextParam } = useLocalSearchParams();
-
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [inputText, setInputText] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
   const [problemName, setProblemName] = useState("");
   const [questionCount, setQuestionCount] = useState("");
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const { data, setData } = useData();
+
+  const { selectedNotes, inputText } = data;
+
+  let parsedSelectedNotes = [];
+
+  try {
+    if (selectedNotes) {
+      parsedSelectedNotes = JSON.parse(selectedNotes);
+    }
+  } catch (e) {
+    console.error("JSON 파싱 실패:", e);
+    parsedSelectedNotes = [];
+  }
 
   const questionTypeOptions = [
     { id: 1, name: "주관식" },
@@ -28,14 +46,35 @@ export default function CreateQuizSelectType() {
     { id: 3, name: "O/X 문제" },
   ];
 
+  // 로그인 여부 체크
   useEffect(() => {
-    if (selectedNotesParam) {
-      setSelectedNotes(selectedNotesParam.split(","));
-    }
-    if (inputTextParam) {
-      setInputText(inputTextParam);
-    }
-  }, [selectedNotesParam, inputTextParam]);
+      async function checkLogin() {
+        try {
+          let token;
+
+          if (Platform.OS === "web") {
+            token = localStorage.getItem("accessToken");
+          } else {
+            token = await SecureStore.getItemAsync("accessToken");
+          }
+
+          if (!token) throw new Error("Token not found");
+          const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          setUserInfo(res.data);
+        } catch (err) {
+          console.log(err);
+          setUserInfo(null);
+          router.push("/");
+        }
+      }
+
+      checkLogin();
+    }, []);
 
   const toggleType = (id) => {
     setSelectedTypes((prev) =>
@@ -44,33 +83,102 @@ export default function CreateQuizSelectType() {
   };
 
   const handleRemoveNote = (noteId) => {
-    setSelectedNotes((prev) => prev.filter((id) => id !== noteId));
+    setSelectedNotes((prev) => prev.filter((note) => note.id !== noteId));
   };
 
   const handleRemoveText = () => setInputText("");
 
-  const onSubmit = () => {
-    if (selectedNotes.length === 0 && inputText.trim() === "") {
-      setShowModal(true);
-      return;
-    }
-    const finalProblemName = problemName.trim() === "" ? "새로운 문제지" : problemName;
-    const finalQuestionCount = parseInt(questionCount) > 0 ? parseInt(questionCount) : 5;
-
-    router.push({
-      pathname: "/createdquiz",
-      params: {
-        problemName: finalProblemName,
-        questionCount: finalQuestionCount.toString(),
-        selectedTypes: JSON.stringify(selectedTypes),
-        inputText: inputText.trim(),
-      },
-    });
-  };
 
   const closeModalAndGoBack = () => {
     setShowModal(false);
-    router.push("/createquiz_selectnote");
+    router.back();
+  };
+
+  const handleGenerateQuiz = async () => {
+    if (!userInfo || !userInfo.nickname) {
+      Alert.alert("잠시만요", "로그인 정보를 불러오는 중입니다. 다시 시도해주세요.");
+      return;
+    }
+
+    if (selectedTypes.length === 0) {
+        Alert.alert("알림", "적어도 하나의 문제 유형을 선택해주세요!");
+        return;
+      }
+
+    const selectedTypeNames = selectedTypes.map((id) => {
+      const found = questionTypeOptions.find((t) => t.id === id);
+      return found?.name;
+    });
+
+    const payload = {
+      noteIds: noteIds,
+      quizTitle: problemName.trim() === "" ? "새로운 문제지" : problemName.trim(),
+      problemCount: parseInt(questionCount) || 5,
+      problemTypes: selectedTypeNames,
+      nickname: userInfo?.nickname,
+      inputText: inputText.trim(),
+    };
+
+    console.log(" payload 확인:", payload);  // 삭제하기
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/quiz/generate",
+        { payload, }
+      );
+      const quizList = response.data;
+
+      // 🔧 문자열 리스트 → 객체 리스트로 변환
+      const parsedQuizList = quizList.map((item) => {
+        const parts = item.split("@@");
+
+        const question = parts[0]?.trim();
+        const isSubjective = parts.length === 3;  // 주관식은 @@정답@@해설 형식
+
+        let options = "";
+        let answer = "";
+        let solution = "";
+        let type = "subjective";
+
+        if (isSubjective) {
+          // 주관식: 문제@@정답@@해설
+          answer = parts[1]?.trim();
+          solution = parts[2]?.trim();
+        } else {
+          // 객관식/ox: 문제@@보기@@정답@@해설
+          options = parts[1]?.trim();
+          answer = parts[2]?.trim();
+          solution = parts[3]?.trim();
+
+          if (options.toUpperCase() === "O|X") {
+            type = "ox";
+          } else if (options.includes("|")) {
+            type = "objective";
+          }
+        }
+
+        return {
+          question: `${question}${options ? "@@" + options : ""}`,
+          correctAnswer: [answer] || [], // 백엔드의 answer 필드 사용
+          solution: solution,
+          type: type,
+        };
+      });
+
+      router.push({
+        pathname: "/createdquiz",
+        params: {
+          quizList: encodeURIComponent(JSON.stringify(parsedQuizList)),
+          problemName: problemName.trim() === "" ? "새로운 문제지" : problemName.trim(),
+          questionCount: (parseInt(questionCount) || 5).toString(),
+          selectedTypes: encodeURIComponent(JSON.stringify(selectedTypes)),
+          noteIds: encodeURIComponent(JSON.stringify(noteIds)),
+        },
+      });
+    } catch (error) {
+      console.error("퀴즈 생성 오류:", error);
+      Alert.alert("오류", "퀴즈 생성에 실패했어요!");
+    }
   };
 
   return (
@@ -80,22 +188,22 @@ export default function CreateQuizSelectType() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>문제 유형을 선택해주세요.</Text>
+          <Text style={styles.headerText}>문제 유형 선택</Text>
         </View>
 
         <Text style={styles.subHeader}>선택된 노트</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-          {selectedNotes.map((note, idx) => (
+          {Array.isArray(parsedSelectedNotes) && parsedSelectedNotes.map((note, idx) => (
             <View key={idx} style={styles.selectedNoteBox}>
-              <Text style={styles.selectedNoteText}>{note}</Text>
-              <TouchableOpacity onPress={() => handleRemoveNote(note)}>
+              <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
+              <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
                 <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
               </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
 
-        {inputText !== "" && (
+        {inputText && (
           <View style={styles.inputTextBox}>
             <View style={styles.inputTextHeader}>
               <Text style={styles.inputTextLabel}>직접 입력한 내용</Text>
@@ -148,7 +256,7 @@ export default function CreateQuizSelectType() {
           keyboardType="numeric"
         />
 
-        <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
+        <TouchableOpacity style={styles.submitButton} onPress={handleGenerateQuiz}>
           <Text style={styles.submitButtonText}>완료</Text>
         </TouchableOpacity>
       </View>
@@ -223,9 +331,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   inputTextLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#222",
+    fontWeight: "600",
+    color: "#fff",
   },
   inputTextArea: {
     backgroundColor: "#fff",

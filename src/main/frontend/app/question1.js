@@ -13,13 +13,13 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  ScrollView
+  ScrollView,
 } from "react-native";
 
 import { useData } from "@/context/DataContext";
 
-import * as SecureStore from 'expo-secure-store';
-import axios from 'axios';
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 
 export default function StudyTimeScreen() {
@@ -31,97 +31,110 @@ export default function StudyTimeScreen() {
   const { setData } = useData();
 
   useEffect(() => {
-    async function checkLogin(){
-        try{
-            let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-            if(Platform.OS === 'web') token = localStorage.getItem("accessToken");
-            else token = await SecureStore.getItemAsync("accessToken");
+        if (Platform.OS === "web") token = localStorage.getItem("accessToken");
+        else token = await SecureStore.getItemAsync("accessToken");
 
-            if(!token) throw new Error("Token not found");
+        if (!token) throw new Error("Token not found");
 
-            const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-                  headers: {
-                    Authorization: `Bearer ${token}`
-                  }
-            });
-        } catch(err){
-            console.log(err);
-            router.push("/");
-        }
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        router.push("/");
+      }
     }
 
     checkLogin();
   }, []);
 
   const selectComplete = () => {
-    if(!hours.trim()){
-        setEmptyHours(true);
-        return;
+    if (!hours.trim()) {
+      setEmptyHours(true);
+      return;
     }
 
-    setData((prev)=> ({...prev, studyTime: hours }));
+    setData((prev) => ({ ...prev, studyTime: hours }));
     router.push("/question2");
   };
 
   return (
-<TouchableWithoutFeedback onPress={() => { if(Platform.OS !== "web") Keyboard.dismiss(); }}>
-  <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : "height"} // Android까지 대응
-  >
-    <View style={styles.backButton}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="black" />
-        </TouchableOpacity>
-    </View>
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={styles.container}>
-        {/* 상단 뒤로가기 */}
-
-        {/* 질문 */}
-        <Text style={styles.title}>하루에 몇 시간까지 공부할 수 있나요?</Text>
-
-        {/* 중앙 입력 영역 */}
-        <View style={styles.center}>
-          <TextInput
-            style={styles.input}
-            value={hours}
-            placeholder="숫자를 입력해주세요."
-            placeholderTextColor="#ccc"
-            keyboardType="numeric"
-            onChangeText={(text) => {
-                setHours(text);
-                setEmptyHours(false);
-            }}
-          />
-          <Text style={styles.subText}>
-            최대 시간을 입력하면 맞춤형으로 계획해드릴게요.
-          </Text>
-          {emptyHours && <Text style={{color: "red", marginTop: 10}}>공부 시간을 입력하세요.</Text>}
-        </View>
-
-        {/* 하단 버튼들 */}
-        <View style={styles.bottomButtons}>
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={selectComplete}
-          >
-            <Text style={styles.confirmText}>선택 완료</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              console.log("건너뛰기");
-              router.push("/main");
-            }}
-          >
-            <Text style={styles.skipText}>나중에 하기</Text>
+    <TouchableWithoutFeedback
+      onPress={() => {
+        if (Platform.OS !== "web") Keyboard.dismiss();
+      }}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // Android까지 대응
+      >
+        <View style={styles.backButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={24} color="black" />
           </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
-  </KeyboardAvoidingView>
-</TouchableWithoutFeedback>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            {/* 상단 뒤로가기 */}
+
+            {/* 질문 */}
+            <Text style={styles.title}>
+              하루에 몇 시간까지 공부할 수 있나요?
+            </Text>
+
+            {/* 중앙 입력 영역 */}
+            <View style={styles.center}>
+              <TextInput
+                style={styles.input}
+                value={hours}
+                placeholder="숫자를 입력해주세요."
+                placeholderTextColor="#ccc"
+                keyboardType="numeric"
+                onChangeText={(text) => {
+                  setHours(text);
+                  setEmptyHours(false);
+                }}
+              />
+              <Text style={styles.subText}>
+                최대 시간을 입력하면 맞춤형으로 계획해드릴게요.
+              </Text>
+              {emptyHours && (
+                <Text style={{ color: "red", marginTop: 10 }}>
+                  공부 시간을 입력하세요.
+                </Text>
+              )}
+            </View>
+
+            {/* 하단 버튼들 */}
+            <View style={styles.bottomButtons}>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={selectComplete}
+              >
+                <Text style={styles.confirmText}>선택 완료</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log("건너뛰기");
+                  router.push("/main");
+                }}
+              >
+                <Text style={styles.skipText}>나중에 하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -137,7 +150,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 44,
     left: 16,
-    zIndex: 1
+    zIndex: 1,
   },
   title: {
     fontSize: 20,
@@ -166,7 +179,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   confirmButton: {
-    backgroundColor: "#A78BFA",
+    backgroundColor: "#B491DD",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",

@@ -188,7 +188,7 @@ export default function ExamInfoInput() {
     }
   };
 
-  const uploadImage = async (uri: string) => {
+  const uploadImage = async (uri) => {
     // 앱용
     setLoading(true);
 
@@ -236,28 +236,27 @@ export default function ExamInfoInput() {
     const isExamnameEmpty = !examName.trim();
     const isSubjectsEmpty = subjects.length === 0;
     const isInvalidDates =
-        selectedDates.length === 0 ||
-        selectedDates.length !== subjects.length ||
-        Array.from(selectedDates).some(date => !date || date.trim() === "");
+      selectedDates.length === 0 ||
+      selectedDates.length !== subjects.length ||
+      Array.from(selectedDates).some((date) => !date || date.trim() === "");
 
-    if(isExamnameEmpty){
-        setEmptyExamName(true);
+    if (isExamnameEmpty) {
+      setEmptyExamName(true);
     }
-    if(isSubjectsEmpty){
-        setEmptySubjects(true);
-    }
-    if(isInvalidDates){
-        alert("입력되지 않은 시험 날짜가 있습니다.");
+    if (isSubjectsEmpty) {
+      setEmptySubjects(true);
+    } else if (isInvalidDates) {
+      alert("각 과목의 시험 날짜를 선택해주세요.");
     }
 
-    if(!isExamnameEmpty && !isSubjectsEmpty && !isInvalidDates){
-        setData((prev) => ({
-            ...prev,
-            examName,
-            subjects: JSON.stringify(subjects),
-            subjectDates: JSON.stringify(selectedDates),
-        }));
-        router.push("/exam_schedule3");
+    if (!isExamnameEmpty && !isSubjectsEmpty && !isInvalidDates) {
+      setData((prev) => ({
+        ...prev,
+        examName,
+        subjects: JSON.stringify(subjects),
+        subjectDates: JSON.stringify(selectedDates),
+      }));
+      router.push("/exam_schedule3");
     }
   };
 
@@ -368,25 +367,27 @@ export default function ExamInfoInput() {
                   </View>
                   {/*시간표 불러오기, 초기화 버튼*/}
                   <View style={styles.btnRow}>
-                    <TouchableOpacity
-                      style={styles.addScheduleBtn}
-                      onPress={pickImage}
-                    >
-                      <Text style={styles.addScheduleBtnText}>
-                        에타 시간표 불러오기
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.addScheduleBtn}
-                      onPress={() => {
-                        if (subjects.length > 0) {
-                          setShowModal(true);
-                        }
-                      }}
-                    >
-                      <Text style={styles.addScheduleBtnText}>초기화</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.counter2}>{subject.length}/30</Text>
+                    <View style={{ flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={styles.addScheduleBtn}
+                        onPress={pickImage}
+                      >
+                        <Text style={styles.addScheduleBtnText}>
+                          에타 시간표 불러오기
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.addScheduleBtn}
+                        onPress={() => {
+                          if (subjects.length > 0) {
+                            setShowModal(true);
+                          }
+                        }}
+                      >
+                        <Text style={styles.addScheduleBtnText}>초기화</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.counter2}>{subject.length}/30</Text>
+                    </View>
                   </View>
                   {emptySubjects && (
                     <Text style={{ color: "red" }}>
@@ -404,9 +405,8 @@ export default function ExamInfoInput() {
                         <Text style={styles.subjectItemText}>{item}</Text>
                         <TouchableOpacity
                           onPress={() => openDatePicker(index)}
-                          style={styles.editButton}
                         >
-                          <Text style={styles.dateSelectBox}>
+                          <Text style={styles.dateSelectText}>
                             {selectedDates[index]
                               ? format(parseISO(selectedDates[index]), "M/d")
                               : "날짜 선택"}
@@ -416,7 +416,7 @@ export default function ExamInfoInput() {
                           onPress={() => openEditModal(index)}
                           style={styles.editButton}
                         >
-                          <Text style={{ color: "#5e43c2" }}>수정</Text>
+                          <Text style={styles.editButtonText}>수정</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleRemoveSubject(index)}
@@ -663,18 +663,25 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 10,
   },
-  dateSelectBox: {
-    padding: 5,
-    borderRadius: 7,
-    color: "#85608bff",
+  dateSelectText: {
+    padding: 8,
+    borderRadius: 12,
+    border: '1px solid #d0c4db',   /* 밝은 보라 계열 테두리 */
+    color: '#5e3e8c',              /* 좀 더 진한 보라 컬러로 텍스트 강조 */
+    backgroundColor: '#f8f6fb',    /* 밝은 배경색으로 고급스러움 추가 */
+    fontWeight: '500',             /* 글씨 두께로 가독성 개선 */
+    fontSize: 14,
+    appearance: 'none',            /* 브라우저 기본 화살표 제거 */
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,<svg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M0 0l5 6 5-6z\' fill=\'%235e3e8c\'/></svg>")',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '10px 6px',
     marginRight: 10,
-    shadowColor: "#535353", // 그림자 색상 (어두운 회색)
-    shadowOpacity: 0.3, // 투명도 (0~1)
-    shadowOffset: { width: 0, height: 2 }, // 그림자 위치(오프셋)
-    shadowRadius: 4, // 블러 반경
-    elevation: 5, // Android 그림자 깊이
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',  /* 부드러운 그림자 */
+    cursor: 'pointer',             /* 마우스 오버 시 포인터 변경 */
+    transition: 'border-color 0.3s, box-shadow 0.3s',
   },
-
   inputContainer: {
     flex: 1,
     borderTopLeftRadius: 30,
@@ -683,7 +690,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   inputBox: {
-    marginBottom: 24,
+    marginBottom: 14,
     paddingHorizontal: 30,
   },
   label: {
@@ -717,9 +724,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#C0C0C0",
     marginTop: 2,
-    paddingLeft: 140,
+    //paddingLeft: 80,
     marginLeft: "auto",
-    marginRight: 100,
+    //marginRight: 100,
   },
   subjectRow: {
     flexDirection: "row",
@@ -727,12 +734,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   btnRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginVertical: 10,
+    marginVertical: 15,
   },
   addScheduleBtn: {
-    //width: 100,
     backgroundColor: "#e0e0e0ff",
     paddingVertical: 8,
     borderRadius: 8,
@@ -772,7 +776,6 @@ const styles = StyleSheet.create({
     color: "#665783ff",
     fontSize: 14,
     flex: 1,
-    maxWidth: 250,
   },
   subjectItemDelete: {
     color: "#9c73b8ff",
@@ -968,5 +971,21 @@ const styles = StyleSheet.create({
     color: "#555",
     width: "100%",
     marginBottom: 20,
+  },
+
+  editButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#5e43c2',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButtonText: {
+    color: '#5e43c2',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

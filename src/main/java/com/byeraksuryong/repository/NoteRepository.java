@@ -10,4 +10,5 @@ public interface NoteRepository {
     Note save(Note note);
     List<Note> findByFolderId(String folderId);
     List<Note> findByNoteId(String noteId);
+    List<Note> findByNoteIdIn(List<String> noteId);
 }

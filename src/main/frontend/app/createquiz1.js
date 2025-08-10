@@ -1,5 +1,5 @@
 // creatquiz_selectnote.js
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,48 +8,85 @@ import {
   ScrollView,
   TextInput,
   FlatList,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+import { useData } from "@/context/DataContext";
 
 export default function CreateQuizSelectNote() {
   const router = useRouter();
   const [openFolder, setOpenFolder] = useState(null);
   const [inputText, setInputText] = useState("");
   const [selectedNotes, setSelectedNotes] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+  const { data, setData } = useData();
 
-  const folders = [
-    {
-      name: "추천시스템",
-      notes: ["노트 1", "노트 2", "노트 3"],
-    },
-    {
-      name: "고급기계학습",
-      notes: [],
-    },
-    {
-      name: "심층학습",
-      notes: [],
-    },
-    {
-      name: "알고리즘",
-      notes: [],
-    },
-  ];
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
+
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
+
+  useEffect(() => {
+    const getFoldersAndNotes = async() => {
+        try{
+            const response = await axios.post(`${API_BASE_URL}/api/folder/getFolderAndNote`, {
+                nickname: userInfo.nickname,
+            });
+
+            setFolders(response.data);
+        } catch(err){
+            console.log("failed to load folders and notes ", err);
+        }
+    }
+
+    if(userInfo !== null){
+        getFoldersAndNotes();
+    }
+  }, [userInfo])
+
+
 
   // 노트 선택 토글 함수
-  const toggleNoteSelection = (folderName, note) => {
-    const noteId = `${folderName}-${note}`;
-    if (selectedNotes.includes(noteId)) {
-      setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
-    } else {
-      setSelectedNotes([...selectedNotes, noteId]);
+  const toggleNoteSelection = (folderName, noteTitle, noteId) => {
+    if(selectedNotes.some(note => note.noteId === noteId)){
+        setSelectedNotes(selectedNotes.filter(note => note.noteId !== noteId));
+    } else{
+        setSelectedNotes([...selectedNotes, { folderName, noteTitle, noteId }]);
     }
   };
 
   // 선택 해제 함수 (엑스 버튼)
   const removeSelectedNote = (noteId) => {
-    setSelectedNotes(selectedNotes.filter((id) => id !== noteId));
+    setSelectedNotes(selectedNotes.filter((note) => note.noteId !== noteId));
   };
 
   return (
@@ -74,14 +111,14 @@ export default function CreateQuizSelectNote() {
               style={styles.folderBox}
               onPress={() => setOpenFolder(openFolder === idx ? null : idx)}
             >
-              <Text style={styles.folderText}>{folder.name}</Text>
+              <Text style={styles.folderText}>{folder.folderName}</Text>
             </TouchableOpacity>
 
             {/* 해당 폴더가 열려 있을 때만 노트 목록 표시 */}
             {openFolder === idx &&
-              folder.notes.map((note, noteIdx) => {
-                const noteId = `${folder.name}-${note}`;
-                const selected = selectedNotes.includes(noteId);
+              folder.noteTitles.map((noteTitle, noteIdx) => {
+                const noteId = folder.noteIds[noteIdx];
+                const selected = selectedNotes.some(note => note.noteId === noteId);
                 return (
                   <TouchableOpacity
                     key={noteIdx}
@@ -89,7 +126,7 @@ export default function CreateQuizSelectNote() {
                       styles.noteBox,
                       selected && styles.noteBoxSelected,
                     ]}
-                    onPress={() => toggleNoteSelection(folder.name, note)}
+                    onPress={() => toggleNoteSelection(folder.folderName, noteTitle, folder.noteIds[noteIdx])}
                     activeOpacity={0.7}
                   >
                     <Ionicons
@@ -98,7 +135,7 @@ export default function CreateQuizSelectNote() {
                       color="#BA94CC"
                       style={{ marginRight: 8 }}
                     />
-                    <Text style={styles.noteText}>{note}</Text>
+                    <Text style={styles.noteText}>{noteTitle}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -109,8 +146,8 @@ export default function CreateQuizSelectNote() {
         {/* 노트 없이 문제 생성 */}
         <View style={styles.customInputBox}>
           <Text style={styles.customInputLabel}>
-            노트 없이도 문제 생성이 가능해요!{"\n"}문제로 만들고 싶은 내용을
-            적어보세요.
+            노트 없이도 문제 생성이 가능해요!{"\n"}
+            문제로 만들고 싶은 내용을 적어보세요.
           </Text>
           <TextInput
             style={styles.input}
@@ -127,13 +164,12 @@ export default function CreateQuizSelectNote() {
           <FlatList
             horizontal
             data={selectedNotes}
-            keyExtractor={(item) => item}
+            keyExtractor={(item) => item.noteId}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => {
-              const noteName = item.split("-")[1];
               return (
                 <View style={styles.selectedNoteBox}>
-                  <Text style={styles.selectedNoteText}>{noteName}</Text>
+                  <Text style={styles.selectedNoteText}>{item.folderName} - {item.noteTitle}</Text>
                   <TouchableOpacity
                     onPress={() => removeSelectedNote(item)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -152,15 +188,19 @@ export default function CreateQuizSelectNote() {
       <TouchableOpacity
         style={styles.selectButton}
         activeOpacity={0.8}
-        onPress={() =>
-            router.push({
-                pathname: "/createquiz_selecttype", // 또는 "createquiz_selecttype" 경로
-                params: {
-                    selectedNotesParam: selectedNotes.join(","),
-                    inputTextParam: inputText,
-                },
-            })
-        }
+        onPress={() => {
+            if(selectedNotes.length === 0 && !inputText){
+                alert("하나 이상의 노트를 선택하거나 문제 내용을 입력하세요.");
+                return;
+            }
+
+            setData((prev) => ({
+                ...prev,
+                selectedNotes: JSON.stringify(selectedNotes),
+                inputText,
+            }));
+            router.push("/createquiz2");
+        }}
       >
         <Text style={styles.selectButtonText}>선택 완료</Text>
       </TouchableOpacity>
@@ -172,7 +212,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 50,
+    paddingTop: 30,
     paddingHorizontal: 20,
   },
   header: {
@@ -226,9 +266,11 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   customInputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#3C3C3C",
     marginBottom: 10,
+    fontWeight: 600,
+    textAlign: "center",
   },
   input: {
     backgroundColor: "#fff",
