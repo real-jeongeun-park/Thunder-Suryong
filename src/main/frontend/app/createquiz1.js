@@ -94,13 +94,16 @@ export default function CreateQuizSelectNote() {
       {/* 상단 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="chevron-back-outline" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerText}>노트 선택 또는 내용 입력</Text>
       </View>
 
       {/* 폴더와 노트 리스트 스크롤 */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={{ maxHeight: 300 }}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* 폴더 리스트 */}
         {folders.map((folder, idx) => (
           <View key={idx} style={{ marginBottom: 10 }}>
@@ -138,6 +141,7 @@ export default function CreateQuizSelectNote() {
               })}
           </View>
         ))}
+        </ScrollView>
 
         {/* 노트 없이 문제 생성 */}
         <View style={styles.customInputBox}>
@@ -153,7 +157,6 @@ export default function CreateQuizSelectNote() {
             onChangeText={setInputText}
           />
         </View>
-      </ScrollView>
 
       {/* 선택한 노트 가로 스크롤 영역 (선택 버튼 바로 위) */}
       {selectedNotes.length > 0 && (
@@ -215,10 +218,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
+    marginTop: 20,
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "600",
     marginLeft: 10,
   },
@@ -260,7 +264,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF8FD",
     borderRadius: 10,
     padding: 15,
-    marginTop: 10,
   },
   customInputLabel: {
     fontSize: 16,

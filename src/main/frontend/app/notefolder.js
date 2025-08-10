@@ -1,5 +1,6 @@
 // NoteFolder.js
-import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import Feather from "react-native-vector-icons/Feather";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
@@ -155,7 +156,7 @@ export default function NoteFolder() {
             }}
           >
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={24} color="black" />
+              <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
             <Text style={[styles.title, { marginLeft: 10 }]}>{folderName}</Text>
           </View>
