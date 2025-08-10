@@ -182,96 +182,104 @@ export default function CreateQuizSelectType() {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.container}>
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-         <Image
-            source={require("../assets/images/main.png")}
-            style={styles.character}
-            resizeMode="contain"
-         />
-           <Text style={styles.loadingText}>생성 중입니다....</Text>
-         </View>
-       )}
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerText}>문제 유형 선택</Text>
         </View>
-        { parsedSelectedNotes.length > 0 && (
-          <View>
-            <Text style={styles.subHeader}>선택된 노트</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-              {parsedSelectedNotes.length > 0 && parsedSelectedNotes.map((note, idx) => (
-                <View key={idx} style={styles.selectedNoteBox}>
-                  <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
-                  <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
-                    <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
 
-        {realInputText && (
-          <View>
-            <View style={styles.customInputBox}>
-              <Text style={styles.subHeader}>직접 입력한 내용</Text>
-              <TouchableOpacity onPress={handleRemoveText}>
-                <Ionicons name="close-circle" size={18} color="#BA94CC"/>
-              </TouchableOpacity>
+
+        <View style={styles.scrollContent}>
+          { parsedSelectedNotes.length > 0 && (
+            <View>
+              <Text style={styles.subHeader}>선택된 노트</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                {parsedSelectedNotes.length > 0 && parsedSelectedNotes.map((note, idx) => (
+                  <View key={idx} style={styles.selectedNoteBox}>
+                    <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
+                    <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
+                      <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
-            <TextInput
-              style={styles.customInput}
-              multiline
-              value={realInputText}
-              onChangeText={setRealInputText}
+          )}
+
+          {realInputText && (
+            <View>
+              <View style={styles.customInputBox}>
+                <Text style={styles.subHeader}>직접 입력한 내용</Text>
+                <TouchableOpacity onPress={handleRemoveText}>
+                  <Ionicons name="close-circle" size={18} color="#BA94CC"/>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.customInput}
+                multiline
+                value={realInputText}
+                onChangeText={setRealInputText}
+              />
+            </View>
+          )}
+          <View>
+              <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제지 이름</Text>
+              <TextInput
+                style={styles.input}
+                value={questionName}
+                onChangeText={setQuestionName}
+                placeholder="문제지 이름을 입력해 주세요."
+                maxLength={20}
+              />
+              <Text style={styles.charCount}>{questionName.length} / 20</Text>
+          </View>
+          <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 유형</Text>
+          <View style={styles.typesWrap}>
+            {questionTypeOptions.map((type) => (
+              <TouchableOpacity
+                key={type.id}
+                style={[styles.typeBtn, selectedTypes.includes(type.id) && styles.typeBtnSelected]}
+                onPress={() => toggleType(type.id)}
+              >
+                <Text
+                  style={[styles.typeText, selectedTypes.includes(type.id) && styles.typeTextSelected]}
+                >
+                  {type.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View>
+              <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 수</Text>
+              <TextInput
+                style={styles.input}
+                value={questionCount}
+                onChangeText={setQuestionCount}
+                placeholder="생성할 문제 수를 입력해 주세요."
+                placeholderTextColor="CCC"
+                keyboardType="numeric"
+              />
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.selectButton} onPress={handleGenerateQuiz}>
+            <Text style={styles.selectButtonText}>퀴즈 생성</Text>
+          </TouchableOpacity>
+        </View>
+
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+                source={require("../assets/images/main.png")}
+                style={styles.character}
+                resizeMode="contain"
             />
+            <Text style={styles.loadingText}>생성 중입니다....</Text>
           </View>
         )}
-        <View>
-            <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제지 이름</Text>
-            <TextInput
-              style={styles.input}
-              value={questionName}
-              onChangeText={setQuestionName}
-              placeholder="문제지 이름을 입력해 주세요."
-              maxLength={20}
-            />
-            <Text style={styles.charCount}>{questionName.length} / 20</Text>
-        </View>
-        <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 유형</Text>
-        <View style={styles.typesWrap}>
-          {questionTypeOptions.map((type) => (
-            <TouchableOpacity
-              key={type.id}
-              style={[styles.typeBtn, selectedTypes.includes(type.id) && styles.typeBtnSelected]}
-              onPress={() => toggleType(type.id)}
-            >
-              <Text
-                style={[styles.typeText, selectedTypes.includes(type.id) && styles.typeTextSelected]}
-              >
-                {type.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View>
-            <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 수</Text>
-            <TextInput
-              style={styles.input}
-              value={questionCount}
-              onChangeText={setQuestionCount}
-              placeholder="생성할 문제 수를 입력해 주세요."
-              keyboardType="numeric"
-            />
-        </View>
-        <TouchableOpacity style={styles.selectButton} onPress={handleGenerateQuiz}>
-          <Text style={styles.selectButtonText}>퀴즈 생성</Text>
-        </TouchableOpacity>
-      </ScrollView>
 
       <Modal
         transparent
@@ -288,16 +296,24 @@ export default function CreateQuizSelectType() {
           </View>
         </View>
       </Modal>
+    </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
     backgroundColor: "#fff",
     paddingBottom: 80,
     height: "100%",
+  },
+  scrollContent: {
+    paddingBottom: 20,  // 스크롤 안쪽 여백
+  },
+  footer: {
+    paddingVertical: 10,
   },
   loadingOverlay: {
     position: "absolute",
@@ -324,10 +340,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 40,
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "600",
     marginLeft: 10,
   },
@@ -354,7 +371,7 @@ const styles = StyleSheet.create({
   input: {
     marginTop: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#CCC",
     borderRadius: 5,
     paddingHorizontal: 15,
     height: 42,
@@ -391,20 +408,17 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   selectButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    height: 50,
+    height: 53,
     backgroundColor: "#000",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 14,
   },
   selectButtonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   modalOverlay: {
     flex: 1,
@@ -434,7 +448,6 @@ const styles = StyleSheet.create({
   customInputBox: {
     marginTop: 30,
     flexDirection: "row",
-    flex: 1,
     alignItems: "center",
   },
   customInput: {
@@ -443,7 +456,7 @@ const styles = StyleSheet.create({
     borderColor: "#D9CAEB",
     borderRadius: 8,
     padding: 10,
-    minHeight: 100,
+    height: 100,
     textAlignVertical: "top",
     marginTop: 10,
   },

@@ -21,6 +21,9 @@ import { API_BASE_URL } from "../src/constants";
 
 import * as SecureStore from "expo-secure-store";
 
+import { Modal } from "react-native";
+
+
 export default function NoteFolder() {
   const { folderId, openAddNote } = useLocalSearchParams();
   const router = useRouter();
@@ -31,6 +34,11 @@ export default function NoteFolder() {
 
   const [userInfo, setUserInfo] = useState(null);
   const [folderName, setFolderName] = useState(null);
+
+  const [moreModalVisible, setMoreModalVisible] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
+  const [newNoteRename, setNewNoteRename] = useState("");
+
 
   useEffect(() => {
     async function checkLogin() {
@@ -171,21 +179,33 @@ export default function NoteFolder() {
             data={notes}
             keyExtractor={(item) => item.noteId}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/writenote",
-                    params: {
-                      noteId: item.noteId,
-                    },
-                  })
-                }
-              >
-                <View style={styles.noteCard}>
-                  <Feather name="file" size={20} color="#A18CD1" />
-                  <Text style={styles.noteText}>{item.title}</Text>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.noteCard}>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/writenote",
+                      params: {
+                        noteId: item.noteId,
+                      },
+                    })
+                  }
+                  style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+                >
+                    <Feather name="file" size={20} color="#A18CD1" />
+                    <Text style={styles.noteText}>{item.title}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedNoteId(item.noteId);
+                    setNewNoteRename(item.title);
+                    setMoreModalVisible(true);
+                  }}
+                  style={{ paddingHorizontal: 10, paddingVertical: 5 }}
+                >
+                  <Feather name="more-horizontal" size={24} color="#888" />
+                </TouchableOpacity>
+              </View>
             )}
             ListFooterComponent={
               isCreatingNote && (
@@ -212,6 +232,65 @@ export default function NoteFolder() {
           >
             <Feather name="file-plus" size={24} color="#A18CD1" />
           </TouchableOpacity>
+
+          <Modal visible={moreModalVisible} transparent animationType="fade">
+            <TouchableWithoutFeedback onPress={() => setMoreModalVisible(false)}>
+              <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.modalContent}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                        노트 이름 변경
+                      </Text>
+                      <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                        <Feather name="x" size={24} color="#333" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TextInput
+                      value={newNoteRename}
+                      onChangeText={setNewNoteRename}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 8,
+                        padding: 8,
+                        marginBottom: 15,
+                        fontSize: 16,
+                      }}
+                      placeholder="노트 이름을 변경해주세요"
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        setMoreModalVisible(false);
+                      }}
+                    />
+
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#A18CD1",
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        alignItems: "center",
+                      }}
+                      onPress={() => {
+                        alert("삭제 기능 구현 부탁드려요");
+                      }}
+                    >
+                      <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
         </View>
       </TouchableWithoutFeedback>
     </SafeAreaWrapper>
@@ -272,4 +351,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    width: "90%",
+  },
+
 });

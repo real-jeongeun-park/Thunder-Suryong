@@ -1,4 +1,6 @@
 import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
@@ -17,6 +19,8 @@ import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 
+import { Modal } from "react-native";
+
 export default function quizFolder() {
   const router = useRouter();
   const { folderId } = useLocalSearchParams();
@@ -24,6 +28,11 @@ export default function quizFolder() {
   const [userInfo, setUserInfo] = useState(null);
   const [folderName, setFolderName] = useState(null);
   const [noteNames, setNoteNames] = useState([]);
+
+  const [moreModalVisible, setMoreModalVisible] = useState(false);
+  const [selectedQuizId, setSelectedQuizId] = useState(null);
+  const [newQuizRename, setNewQuizRename] = useState("");
+
 
   useEffect(() => {
     async function checkLogin() {
@@ -104,7 +113,7 @@ export default function quizFolder() {
             }}
           >
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={24} color="black" />
+              <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
             <Text style={[styles.title, { marginLeft: 10 }]}>{folderName}</Text>
           </View>
@@ -119,23 +128,30 @@ export default function quizFolder() {
             data={quizzes}
             keyExtractor={(item) => item.quizId}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/quiz_result",
-                    params: {
-                      quizId: item.quizId,
-                    },
-                  })
-                }
-              >
-                <View style={styles.noteCard}>
-                  <Feather name="file" size={20} color="#A18CD1" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.noteText}>{item.quizTitle}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.noteCard}>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/quiz_result",
+                      params: { quizId: item.quizId },
+                    })
+                  }
+                  style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+                >
+                  <MaterialCommunityIcons name="help-circle-outline" size={20} color="#A18CD1" />
+                  <Text style={styles.noteText}>{item.quizTitle}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedQuizId(item.quizId);
+                    setMoreModalVisible(true);
+                  }}
+                  style={{ paddingHorizontal: 10, paddingVertical: 5 }}
+                >
+                  <Feather name="more-horizontal" size={24} color="#888" />
+                </TouchableOpacity>
+              </View>
             )}
           />
 
@@ -150,10 +166,67 @@ export default function quizFolder() {
                 })
             }}
           >
-            <Text style={{ fontWeight: "800", fontSize: 16, color: "rgb(75 75 75)"}}>
-               퀴즈
-             </Text>
+            <MaterialCommunityIcons name="help-circle-outline" size={24} color="#A18CD1" />
           </TouchableOpacity>
+
+          <Modal visible={moreModalVisible} transparent animationType="fade">
+            <TouchableWithoutFeedback onPress={() => setMoreModalVisible(false)}>
+              <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.modalContent}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                        문제지 이름 변경
+                      </Text>
+                      <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                        <Feather name="x" size={24} color="#333" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TextInput
+                      value={newQuizRename}
+                      onChangeText={setNewQuizRename}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 8,
+                        padding: 8,
+                        marginBottom: 15,
+                        fontSize: 16,
+                      }}
+                      placeholder="문제지 이름을 변경해주세요"
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        setMoreModalVisible(false);
+                      }}
+                    />
+
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#A18CD1",
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        alignItems: "center",
+                      }}
+                      onPress={() => {
+                        alert("삭제 기능 구현 부탁드려요");
+                      }}
+                    >
+                      <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
         </View>
       </TouchableWithoutFeedback>
     </SafeAreaWrapper>
@@ -214,4 +287,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    width: "90%",
+  },
+
 });

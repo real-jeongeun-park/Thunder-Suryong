@@ -137,9 +137,9 @@ export default function CreatedQuizScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => { router.back(); }}>
-            <Ionicons name="arrow-back" size={24} color="#A9A9A9" />
+            <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{quizTitle} 결과</Text>
+          <Text style={styles.headerTitle}>{quizTitle} </Text>
         </View>
 
         {question && (
@@ -295,7 +295,7 @@ export default function CreatedQuizScreen() {
             }}
           >
             <Text style={styles.bottomButtonText}>
-             종료
+             끝내기
             </Text>
           </TouchableOpacity>
          ) : (

@@ -24,6 +24,7 @@ import { API_BASE_URL } from "../src/constants";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import BottomNavigation from "../components/BottomNavigation";
 
+
 export default function NoteScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -33,7 +34,12 @@ export default function NoteScreen() {
   const [folders, setFolders] = useState([]);
 
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
+  const [isNoFolderModalVisible, setIsNoFolderModalVisible] = useState(false);
   const [nickname, setNickname] = useState(null);
+  const [moreModalVisible, setMoreModalVisible] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
+  const [newFolderRename, setNewFolderRename] = useState("");
+
 
   const tabs = [
     { name: "홈", label: "홈" },
@@ -137,19 +143,31 @@ export default function NoteScreen() {
         ) : (
           <ScrollView style={{ marginHorizontal: 20, marginBottom: 10 }}>
             {folders.map((f, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.folderItem}
-                onPress={() =>
-                  router.push({
-                    pathname: "/notefolder",
-                    params: { folderId: f.folderId },
-                  })
-                }
-              >
-                <Feather name="folder" size={20} color="#A18CD1" />
-                <Text style={styles.folderText}>{f.folderName}</Text>
-              </TouchableOpacity>
+              <View key={index} style={styles.folderItem}>
+                <TouchableOpacity
+                  style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/notefolder",
+                      params: { folderId: f.folderId },
+                    })
+                  }
+                >
+                  <Feather name="folder" size={20} color="#A18CD1" />
+                  <Text style={styles.folderText}>{f.folderName}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedFolderId(f.folderId);
+                    setNewFolderRename(f.folderName);
+                    setMoreModalVisible(true);
+                  }}
+                  style={{ paddingHorizontal: 10, paddingVertical: 5 }}
+                >
+                  <Feather name="more-horizontal" size={24} color="#888" />
+                </TouchableOpacity>
+              </View>
             ))}
 
             {isCreatingFolder && (
@@ -182,7 +200,7 @@ export default function NoteScreen() {
             style={styles.circleButton}
             onPress={() => {
               if (folders.length > 0) setIsFolderSelectVisible(true);
-              else alert("먼저 폴더를 생성해주세요!");
+              else setIsNoFolderModalVisible(true);
             }}
           >
             <Feather name="file-plus" size={24} color="#B9A4DA" />
@@ -232,6 +250,90 @@ export default function NoteScreen() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+
+        <Modal visible={isNoFolderModalVisible} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setIsNoFolderModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <Text style={{ fontSize: 16, marginBottom: 20, textAlign: "center" }}>
+                    노트를 생성하려면 먼저 폴더를 만들어주세요!
+                  </Text>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#A18CD1",
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      alignItems: "center",
+                    }}
+                    onPress={() => setIsNoFolderModalVisible(false)}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 16 }}>확인</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>        
+
+        <Modal visible={moreModalVisible} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setMoreModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                      폴더 이름 변경
+                    </Text>
+                    <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                      <Feather name="x" size={24} color="#333" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TextInput
+                    value={newFolderRename}
+                    onChangeText={setNewFolderRename}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 8,
+                      padding: 8,
+                      marginBottom: 15,
+                      fontSize: 16,
+                    }}
+                    placeholder="폴더 이름을 변경해주세요"
+                    returnKeyType="done"
+                    onSubmitEditing={() => {
+                      setMoreModalVisible(false);
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#A18CD1",
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      alignItems: "center",
+                    }}
+                    onPress={() => {
+                      alert("삭제 기능 구현 부탁드려요");
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
 
         {/* 하단 네비게이션 바 */}
         <BottomNavigation />

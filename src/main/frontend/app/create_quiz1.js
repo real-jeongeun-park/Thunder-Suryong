@@ -172,6 +172,7 @@ export default function CreateQuizSelectNote() {
             style={styles.input}
             placeholder="내용을 입력하세요..."
             multiline
+            scrollEnabled={true}
             value={inputText}
             onChangeText={setInputText}
           />
@@ -211,6 +212,7 @@ export default function CreateQuizSelectNote() {
       >
         <Text style={styles.selectButtonText}>선택 완료</Text>
       </TouchableOpacity>
+      
       <Modal
         transparent
         animationType="fade"
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-    marginTop: 20,
+    marginTop: 30,
   },
   headerText: {
     fontSize: 20,
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   scrollContent: {
-    paddingBottom: 120, // 선택 버튼+선택 노트 공간 고려
+    paddingBottom: 20, // 선택 버튼+선택 노트 공간 고려
   },
   folderBox: {
     backgroundColor: "#f4edfd",
@@ -286,6 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAF8FD",
     borderRadius: 10,
     padding: 15,
+    marginBottom: 60,
   },
   customInputLabel: {
     fontSize: 16,
@@ -300,16 +303,15 @@ const styles = StyleSheet.create({
     borderColor: "#D9CAEB",
     borderRadius: 8,
     padding: 10,
-    minHeight: 100,
+    height: 100,
     textAlignVertical: "top",
   },
   selectedNotesContainer: {
-    position: "absolute",
-    bottom: 70,
-    left: 20,
+    marginVertical: 10,
+    marginBottom: 10,
+    left: 5,
     right: 20,
     minHeight: 40,
-    paddingBottom: 10,
   },
   selectedNoteBox: {
     flexDirection: "row",
@@ -329,10 +331,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   selectButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
     height: 50,
     backgroundColor: "#000",
     borderRadius: 12,

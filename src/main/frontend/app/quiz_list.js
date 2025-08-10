@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import BottomNavigation from "../components/BottomNavigation";
 import * as SecureStore from "expo-secure-store";
@@ -34,6 +35,12 @@ export default function QuizScreen() {
   const [newQuizName, setNewQuizName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
+  const [isNoFolderModalVisible, setIsNoFolderModalVisible] = useState(false);
+  const [moreModalVisible, setMoreModalVisible] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
+  const [newFolderRename, setNewFolderRename] = useState("");
+
+
 
   useEffect(() => {
     async function checkLogin() {
@@ -139,9 +146,9 @@ export default function QuizScreen() {
         ) : (
           <ScrollView style={{ marginBottom: 10 }}>
             {folders.map((f, index) => (
+              <View key={index} style={styles.folderItem}>
               <TouchableOpacity
-                key={index}
-                style={styles.folderItem}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
                 onPress={() =>
                   router.push({
                     pathname: "/quiz_folder",
@@ -152,6 +159,18 @@ export default function QuizScreen() {
                 <Feather name="folder" size={20} color="#A18CD1" />
                 <Text style={styles.folderText}>{f.folderName}</Text>
               </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedFolderId(f.folderId);
+                      setNewFolderRename(f.folderName);
+                      setMoreModalVisible(true);
+                    }}
+                    style={{ paddingHorizontal: 10, paddingVertical: 5 }}
+                  >
+                    <Feather name="more-horizontal" size={24} color="#888" />
+                  </TouchableOpacity>
+                </View>
             ))}
 
             {isCreatingFolder && (
@@ -184,14 +203,10 @@ export default function QuizScreen() {
             style={styles.circleButton}
             onPress={() => {
               if (folders.length > 0) setIsFolderSelectVisible(true);
-              else alert("퀴즈를 생성하려면 먼저 폴더를 만들어주세요!");
+              else setIsNoFolderModalVisible(true);
             }}
           >
-            <Text
-              style={{ fontWeight: "800", fontSize: 16, color: "rgb(75 75 75)"}}
-            >
-               퀴즈
-             </Text>
+            <MaterialCommunityIcons name="help-circle-outline" size={24} color="#B9A4DA" />
           </TouchableOpacity>
         </View>
 
@@ -201,7 +216,6 @@ export default function QuizScreen() {
           >
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
-                {/* 하얀 모달 박스 스타일 적용 */}
                 <View style={styles.modalContent}>
                   <Text
                     style={{
@@ -237,6 +251,88 @@ export default function QuizScreen() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+
+        <Modal visible={isNoFolderModalVisible} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setIsNoFolderModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <Text style={{ fontSize: 16, marginBottom: 20, textAlign: "center" }}>
+                    퀴즈를 생성하려면 먼저 폴더를 만들어주세요!
+                  </Text>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#A18CD1",
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      alignItems: "center",
+                    }}
+                    onPress={() => setIsNoFolderModalVisible(false)}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 16 }}>확인</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <Modal visible={moreModalVisible} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setMoreModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                      폴더 이름 변경
+                    </Text>
+                    <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                      <Feather name="x" size={24} color="#333" />
+                    </TouchableOpacity>
+                  </View>
+                  <TextInput
+                    value={newFolderRename}
+                    onChangeText={setNewFolderRename}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 8,
+                      padding: 8,
+                      marginBottom: 15,
+                      fontSize: 16,
+                    }}
+                    placeholder="폴더 이름을 변경해주세요"
+                    returnKeyType="done"
+                    onSubmitEditing={() => setMoreModalVisible(false)}
+                  />
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#A18CD1",
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      alignItems: "center",
+                    }}
+                    onPress={() => {
+                      alert("삭제 기능 구현 부탁드려요");
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+
+
 
         {/* 하단 네비게이션 바 */}
         <BottomNavigation />
