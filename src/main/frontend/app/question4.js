@@ -19,22 +19,21 @@ const router = useRouter();
 const DATA = [
   {
     id: "1",
-    // uri 쓰기 싫으면: source: require("./assets/suryongi1.png")
-    source: require("../assets/images/water-dragon.png"),
+    source: require("../assets/images/index_water.png"),
     title: "물의 수룡",
     description:
       "물의 수룡이는 바다 깊은 곳에서 조용히 살았습니다. 누구보다 물길을 잘 타고 파도와 장난치는 걸 좋아했지만, 세상 밖은 두려웠죠. 그러나 마음속 깊은 호기심이 그를 파도 위로 이끌었습니다. 처음 맞이한 햇살과 바람, 부서지는 물방울 속에서 물의 수룡이는 깨달았습니다. 바다는 넓지만, 세상은 그보다 훨씬 더 넓고 아름답다는 것을요.",
   },
   {
     id: "2",
-    source: require("../assets/images/thunder-dragon.png"),
+    source: require("../assets/images/index_thunder.png"),
     title: "전기의 수룡",
     description:
       "전기의 수룡이는 구름과 번개의 아이였습니다. 먹구름이 몰려올 때마다 그는 하늘로 뛰어올라 번개를 품고 놀았죠. 번쩍이는 빛 속에서 새로운 아이디어와 용기가 피어났습니다. 세상을 바꾸는 순간은 언제나 번개처럼 빠르고 강렬하다는 걸, 전기의 수룡이는 누구보다 잘 압니다. 오늘도 그는 번쩍이며 앞으로 나아갑니다.",
   },
   {
     id: "3",
-    source: require("../assets/images/grass-dragon.png"),
+    source: require("../assets/images/index_grass.png"),
     title: "풀의 수룡",
     description:
       "풀의 수룡이는 푸른 들판 속에서 하루하루를 성실히 보냈습니다. 새벽 햇살과 함께 눈을 뜨고, 바람 따라 흔들리는 풀잎을 가꾸는 것이 일상이었죠. 작은 뿌리가 모여 숲이 되듯, 꾸준함이 세상을 바꾼다는 걸 풀의 수룡이는 알고 있습니다. 오늘도 그는 한 걸음씩, 초록빛 길을 만들어갑니다.",
@@ -217,7 +216,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     maxHeight: 500,
     alignSelf: "center",
-    marginTop: 50,
+    //marginTop: 50,
   },
   overlay: {
     position: "absolute",
