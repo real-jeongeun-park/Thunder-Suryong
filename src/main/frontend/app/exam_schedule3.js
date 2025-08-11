@@ -142,7 +142,7 @@ export default function ExamInfoInput() {
     } catch (err) {
       console.log(err);
     } finally {
-      setLoading(false);
+      //setLoading(false);
     }
   };
 
@@ -173,7 +173,7 @@ export default function ExamInfoInput() {
     } catch (e) {
       console.log(e);
     } finally {
-      setLoading(false);
+      //setLoading(false);
     }
   };
 
@@ -200,7 +200,7 @@ export default function ExamInfoInput() {
           content: contentList[index],
           important: "false",
         }));
-
+        setLoading(false);
         setSubjectInfo([...subjectInfo, ...newSubjectInfoList]);
       } catch (e) {
         console.log(e);
@@ -312,8 +312,7 @@ export default function ExamInfoInput() {
       const newArr = [...prev];
       newArr[realIndex] = {
         ...newArr[realIndex],
-        important:
-          newArr[realIndex].important === "false" ? "true" : "false",
+        important: newArr[realIndex].important === "false" ? "true" : "false",
       };
       return newArr;
     });
@@ -466,9 +465,17 @@ export default function ExamInfoInput() {
                           style={{ marginRight: 6 }} // 여유
                         >
                           <Ionicons
-                            name={info.important === "true" ? "star" : "star-outline"}
+                            name={
+                              info.important === "true"
+                                ? "star"
+                                : "star-outline"
+                            }
                             size={22}
-                            color={info.important === "true" ? "#ffc23dff" : "#BDBDBD"}
+                            color={
+                              info.important === "true"
+                                ? "#ffc23dff"
+                                : "#BDBDBD"
+                            }
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -844,7 +851,7 @@ const styles = StyleSheet.create({
   },
 
   subjectListContainer: {
-     marginTop: 20,
-     maxHeight: screenHeight * 0.3,
-  }
+    marginTop: 20,
+    maxHeight: screenHeight * 0.3,
+  },
 });
