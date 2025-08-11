@@ -100,28 +100,22 @@ export default function HomeScreen() {
   };
   const saveEdit = async () => {
     try {
-      // TODO: 서버 수정 API 호출 (엔드포인트에 맞게 바꾸세요)
-      // await axios.patch(`${API_BASE_URL}/api/plan/${menuTargetId}`, {
-      //   content: editForm.title,
-      //   week: Number(editForm.week),
-      //   nickname: userInfo.nickname,
-      // });
+      if(!editForm.title.trim() || !editForm.week.trim()){
+        alert("입력되지 않은 항목이 존재합니다.");
+        return;
+      }
 
-      // 프론트 상태 반영
-      setPlans((prev) =>
-        prev.map((group) => ({
-          ...group,
-          todos: group.todos.map((t) =>
-            t.id === menuTargetId
-              ? { ...t, title: editForm.title, week: editForm.week }
-              : t
-          ),
-        }))
-      );
+      const res = axios.post(`${API_BASE_URL}/api/plan/changePlan`, {
+        planId: menuTargetId,
+        week: editForm.week,
+        content: editForm.title,
+      });
+
+      await fetchPlans();
+      setEditOpen(false);
     } catch (e) {
       console.log("수정 실패", e);
     } finally {
-      setEditOpen(false);
     }
   };
 
@@ -138,16 +132,11 @@ export default function HomeScreen() {
 
   const confirmDelete = async () => {
     try {
-      // TODO: 서버 삭제 API 호출 (예시)
-      // await axios.delete(`${API_BASE_URL}/api/plan/${menuTargetId}`, { headers: { ... } });
+      const res = await axios.post(`${API_BASE_URL}/api/plan/deleteByPlanId`, {
+        planId: menuTargetId,
+      });
 
-      // 프런트 상태에서 해당 todo 제거
-      setPlans((prev) =>
-        prev.map((group) => ({
-          ...group,
-          todos: group.todos.filter((t) => t.id !== menuTargetId),
-        }))
-      );
+      await fetchPlans();
     } catch (e) {
       console.log("삭제 실패", e);
     } finally {
@@ -156,25 +145,14 @@ export default function HomeScreen() {
   };
 
   const confirmMove = async () => {
+    setMoving(true);
     try {
-      setMoving(true);
-      // TODO: 서버 이동 API 호출 (엔드포인트에 맞게 바꾸세요)
-      // await axios.patch(`${API_BASE_URL}/api/plan/${menuTargetId}/date`, {
-      //   date: moveDate,
-      //   nickname: userInfo.nickname,
-      // });
+      const res = await axios.post(`${API_BASE_URL}/api/plan/changeDate`, {
+        date: moveDate,
+        planId: menuTargetId,
+      });
 
-      // 프론트 상태에서 해당 todo 제거 (다른 날로 이동했으니 오늘 리스트에서 제거)
-      setPlans((prev) =>
-        prev.map((group) => ({
-          ...group,
-          todos: group.todos.filter((t) => t.id !== menuTargetId),
-        }))
-      );
-
-      // 만약 선택한 moveDate가 화면의 date와 같다면,
-      // 여기서 해당 항목을 그 날짜 리스트로 추가하는 로직을 넣어도 됩니다
-      // (필요 시 API로 새 목록을 재조회하는 것도 OK)
+      await fetchPlans();
     } catch (e) {
       console.log("이동 실패", e);
     } finally {
@@ -184,41 +162,18 @@ export default function HomeScreen() {
   };
 
   const confirmAdd = async () => {
+    setAdding(true);
     try {
       if (!addForm.subjectId || !addForm.title.trim()) return;
 
-      setAdding(true);
+      const res = await axios.post(`${API_BASE_URL}/api/plan/createOne`, {
+        subjectId: addForm.subjectId,
+        week: addForm.week,
+        content: addForm.title,
+        date: format(date, "yyyy-MM-dd"),
+      })
 
-      // TODO: 서버 생성 API 호출 (엔드포인트/바디 맞게 교체)
-      // const res = await axios.post(`${API_BASE_URL}/api/plan`, {
-      //   nickname: userInfo.nickname,
-      //   date: format(date, "yyyy-MM-dd"),
-      //   subject: addForm.subjectId,  // 서버에서 과목명을 쓸지 id를 쓸지 스펙에 맞추세요
-      //   content: addForm.title,
-      //   week: Number(addForm.week || 0),
-      // });
-      // const newId = res.data.id;
-
-      // 프론트 상태 즉시 반영 (임시 id 사용)
-      const tempId = Date.now();
-      setPlans((prev) =>
-        prev.map((group) =>
-          group.id === addForm.subjectId
-            ? {
-                ...group,
-                todos: [
-                  ...group.todos,
-                  {
-                    id: tempId, // 서버 id로 교체 가능
-                    week: addForm.week,
-                    title: addForm.title.trim(),
-                    checked: false,
-                  },
-                ],
-              }
-            : group
-        )
-      );
+      await fetchPlans();
     } catch (e) {
       console.log("추가 실패", e);
     } finally {
@@ -317,6 +272,7 @@ export default function HomeScreen() {
   ];
 
   const [plans, setPlans] = useState([]);
+  const [entireSubjects, setEntireSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // 랜덤 수룡이 획득 메시지
@@ -381,43 +337,45 @@ export default function HomeScreen() {
 
   // 페이지에 대응되는 날짜의 계획 불러오기
   useEffect(() => {
-    async function fetchPlans() {
-      try {
-        setIsLoading(true);
-        const formattedDate = format(date, "yyyy-MM-dd"); // 선택된 날짜를 포맷
-
-        const res = await axios.post(`${API_BASE_URL}/api/plan/date`, {
-          nickname: userInfo.nickname,
-          date: formattedDate,
-        });
-
-        const result = res.data;
-
-        const transformed = Object.entries(result).map(([subject, todos]) => ({
-          id: subject,
-          title: subject,
-          isExpanded: true,
-          checked: false,
-          todos: todos.map((todo) => ({
-            id: todo.id,
-            week: todo.week,
-            title: todo.content,
-            checked: todo.learned,
-          })),
-        }));
-
-        setPlans(transformed);
-      } catch (err) {
-        console.log("계획 불러오기 실패", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     if (userInfo !== null) {
       fetchPlans();
     }
   }, [userInfo, date]); // date가 변경될 때마다 계획 다시 불러오기
+
+  async function fetchPlans() {
+    try {
+      setIsLoading(true);
+
+      // 선택된 날짜를 포맷
+      const formattedDate = format(date, "yyyy-MM-dd");
+
+      const res = await axios.post(`${API_BASE_URL}/api/plan/date`, {
+        nickname: userInfo.nickname,
+        date: formattedDate,
+      });
+
+      const result = res.data;
+
+      const transformed = Object.entries(result).map(([subject, todos]) => ({
+        id: subject,
+        title: subject,
+        isExpanded: true,
+        checked: false,
+        todos: todos.map((todo) => ({
+          id: todo.id,
+          week: todo.week,
+          title: todo.content,
+          checked: todo.learned,
+        })),
+      }));
+
+      setPlans(transformed);
+    } catch (err) {
+      console.log("계획 불러오기 실패", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchDefaultExam() {
@@ -463,8 +421,26 @@ export default function HomeScreen() {
       }
     }
 
+    const fetchEntireSubjects = async() => {
+        try{
+            const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
+                nickname: userInfo.nickname,
+            });
+
+            const subjects = res.data.subjectNameList.map((name, idx) => ({
+                name: name,
+                id: res.data.subjectIdList[idx],
+            }));
+
+            setEntireSubjects(subjects);
+        } catch(e){
+            console.log("failed to load entire subjects ", e);
+        }
+    }
+
     if (userInfo !== null && userInfo.nickname) {
       fetchDefaultExam();
+      fetchEntireSubjects();
     }
   }, [userInfo]);
 
@@ -733,7 +709,6 @@ export default function HomeScreen() {
                         {plan.todos.map((todo) => (
                           <View key={todo.id} style={styles.subTodoItem}>
                             <Checkbox
-                              style={{ marginRight: 8 }}
                               color={todo.checked ? "#B491DD" : undefined}
                               value={todo.checked}
                               onValueChange={(newValue) =>
@@ -776,12 +751,13 @@ export default function HomeScreen() {
             <TouchableOpacity
               onPress={() => {
                 // 기본 과목(첫 번째 과목)으로 초기화
-                const firstSubjectId = plans?.[0]?.id ?? "";
+                const firstSubjectId = plans[0]?.id;
                 setAddForm({
                   subjectId: firstSubjectId,
                   week: "",
                   title: "",
                 });
+
                 setAddOpen(true);
               }}
               style={{
@@ -790,6 +766,7 @@ export default function HomeScreen() {
                 paddingVertical: 8,
                 borderRadius: 10,
                 alignSelf: "flex-start",
+                marginTop: 5,
               }}
               activeOpacity={0.8}
             >
@@ -909,7 +886,7 @@ export default function HomeScreen() {
                 style={[styles.menuItem, { borderBottomWidth: 0 }]}
                 onPress={onMove}
               >
-                <Text style={styles.menuText}>다른 날에 하기</Text>
+                <Text style={[styles.menuText, { color: "rebeccapurple" }]}>다른 날에 하기</Text>
               </TouchableOpacity>
             </View>
           </Modal>
@@ -1161,7 +1138,7 @@ export default function HomeScreen() {
                   style={{ marginTop: 6 }}
                   contentContainerStyle={{ gap: 8 }}
                 >
-                  {(plans ?? []).map((p) => {
+                  {(entireSubjects ?? []).map((p) => {
                     const selected = addForm.subjectId === p.id;
                     return (
                       <TouchableOpacity
@@ -1185,7 +1162,7 @@ export default function HomeScreen() {
                             fontWeight: "600",
                           }}
                         >
-                          {p.title}
+                          {p.name}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1199,7 +1176,6 @@ export default function HomeScreen() {
                 <TextInput
                   value={String(addForm.week)}
                   onChangeText={(v) => setAddForm((s) => ({ ...s, week: v }))}
-                  keyboardType="numeric"
                   style={{
                     marginTop: 6,
                     borderWidth: 1,
@@ -1208,7 +1184,7 @@ export default function HomeScreen() {
                     paddingHorizontal: 12,
                     paddingVertical: 10,
                   }}
-                  placeholder="예: 3"
+                  placeholder="예: 3주차"
                   placeholderTextColor="#797979ff"
                 />
 
@@ -1455,7 +1431,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subTodoContainer: {
-    marginLeft: 32,
+    marginLeft: 10,
     marginTop: 4,
   },
   subTodoItem: {
@@ -1465,6 +1441,8 @@ const styles = StyleSheet.create({
   },
   subTodoTextContainer: {
     flex: 1,
+    marginLeft: 15,
+    marginRight: 10,
   },
   subTodoWeek: {
     fontSize: 14,
@@ -1562,7 +1540,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(0,0,0,0.08)",
   },
   menuText: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#333",
+    fontWeight: "400",
+    marginLeft: 5,
   },
 });

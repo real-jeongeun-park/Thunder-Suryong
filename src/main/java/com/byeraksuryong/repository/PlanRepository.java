@@ -14,5 +14,6 @@ public interface PlanRepository {
     Plan save(Plan plan);
     Optional<Plan> findById(Long id);
     List<Plan> findBySubjectIdInAndDate(List<String> subjectId, LocalDate date);
+    void deleteById(Long id);
 }
 

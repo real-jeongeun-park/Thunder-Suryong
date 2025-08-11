@@ -12,7 +12,8 @@ import java.util.Map;
 
 @RequestMapping("/api/subject")
 @RestController
-public class SubjectController {
+public class
+SubjectController {
     private final SubjectService subjectService;
     public SubjectController(SubjectService subjectService){
         this.subjectService = subjectService;

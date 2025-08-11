@@ -71,5 +71,49 @@ public class PlanController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
+    @PostMapping("/deleteByPlanId")
+    public ResponseEntity<?> deleteByPlanId(@RequestBody Map<String, String> body){
+        try{
+            planService.deleteByPlanId(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/changeDate")
+    public ResponseEntity<?> changeDate(@RequestBody Map<String, String> body){
+        try{
+            planService.changeByDate(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/changePlan")
+    public ResponseEntity<?> changePlan(@RequestBody Map<String, String> body){
+        try{
+            planService.changePlan(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/createOne")
+    public ResponseEntity<?> createOne(@RequestBody Map<String, String> body){
+        try{
+            planService.createOnePlan(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }
 

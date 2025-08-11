@@ -138,4 +138,53 @@ public class PlanService {
 
         return learned/total * 100;
     }
+
+    public void deleteByPlanId(Map<String, String> body){
+        Long planId = Long.parseLong(body.get("planId"));
+        planRepository.deleteById(planId);
+    }
+
+    public void changeByDate(Map<String, String> body){
+        LocalDate date = LocalDate.parse(body.get("date"));
+        Long planId = Long.parseLong(body.get("planId"));
+
+        Plan plan = planRepository.findById(planId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no plan found"));
+
+        plan.setDate(date);
+        planRepository.save(plan);
+    }
+
+    public void changePlan(Map<String, String> body){
+        Long planId = Long.parseLong(body.get("planId"));
+        String week = body.get("week");
+        String content = body.get("content");
+
+        Plan plan = planRepository.findById(planId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no plan found"));
+
+        plan.setWeek(week);
+        plan.setContent(content);
+        planRepository.save(plan);
+    }
+
+    public void createOnePlan(Map<String, String> body){
+        String subjectId = body.get("subjectId");
+        String week = body.get("week");
+        String content = body.get("content");
+        LocalDate date = LocalDate.parse(body.get("date"));
+
+        Plan newPlan = new Plan();
+        newPlan.setSubjectId(subjectId);
+        newPlan.setWeek(week);
+        newPlan.setContent(content);
+        newPlan.setDate(date);
+        newPlan.setLearned(false);
+
+        planRepository.save(newPlan);
+    }
 }
