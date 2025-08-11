@@ -33,7 +33,7 @@ public class NoteController {
     @PostMapping("/get")
     public ResponseEntity<?> printNotes(@RequestBody Map<String, String> body){
         try{
-            return ResponseEntity.ok(noteService.비공ㄱetNotes(body));
+            return ResponseEntity.ok(noteService.getNotes(body));
         } catch(Exception e){
             System.out.println(e.getMessage());
             return ResponseEntity.status(404).body(e.getMessage());
