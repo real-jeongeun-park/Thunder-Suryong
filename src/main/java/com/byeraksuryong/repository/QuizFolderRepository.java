@@ -12,4 +12,5 @@ public interface QuizFolderRepository {
     QuizFolder save(QuizFolder quizFolder);
     List<QuizFolder> findByNicknameAndExamId(String nickname, String examId);
     List<QuizFolder> findByFolderId(String folderId);
+    void deleteByFolderId(String folderId);
 }

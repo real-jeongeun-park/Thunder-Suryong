@@ -47,7 +47,7 @@ public class AiApi {
                     .uri(URI.create("https://api.openai.com/v1/chat/completions"))
                     .header("Content-Type", "application/json") // json 형태로 날림
                     .header("Authorization", "비공개")
-                   // github에서 f빼기
+                   // github에서 빼기
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build(); // 요청 보낼 곳 지정, 요청 content 타입 지정 -> json
 

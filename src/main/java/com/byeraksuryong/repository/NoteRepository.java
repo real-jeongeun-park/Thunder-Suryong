@@ -11,4 +11,5 @@ public interface NoteRepository {
     List<Note> findByFolderId(String folderId);
     List<Note> findByNoteId(String noteId);
     List<Note> findByNoteIdIn(List<String> noteId);
+    void deleteByNoteId(String noteId);
 }

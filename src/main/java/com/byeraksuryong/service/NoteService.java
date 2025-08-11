@@ -1,5 +1,6 @@
 package com.byeraksuryong.service;
 
+import com.byeraksuryong.domain.Folder;
 import com.byeraksuryong.domain.Note;
 import com.byeraksuryong.dto.NoteRequest;
 import com.byeraksuryong.repository.NoteRepository;
@@ -92,5 +93,23 @@ public class NoteService {
         newList.add(noteTitles);
 
         return newList;
+    }
+
+    public void renameNote(Map<String, String> body){
+        String noteId = body.get("noteId");
+        String noteName = body.get("noteName");
+
+        Note note = noteRepository.findByNoteId(noteId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no folder found"));
+
+        note.setTitle(noteName);
+        noteRepository.save(note);
+    }
+
+    public void deleteByNoteId(Map<String, String> body){
+        String noteId = body.get("noteId");
+        noteRepository.deleteByNoteId(noteId);
     }
 }

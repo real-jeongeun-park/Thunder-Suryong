@@ -7,14 +7,14 @@ import com.byeraksuryong.dto.QuizRequest;
 import com.byeraksuryong.domain.Note;
 import com.byeraksuryong.dto.QuizResultRequest;
 import com.byeraksuryong.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.lang.Integer.parseInt;
-
+@Transactional
 @Service
 public class QuizService {
     private final NoteRepository noteRepository;
@@ -337,7 +337,9 @@ public class QuizService {
             if ("subjective".equals(quiz.getType())) {
                 if (!correct) {
                     try {
-                        correct = aiService.useQuizScoreAi(quiz, userAnswer);
+                        if(!quiz.getUserAnswer().isBlank()){
+                            correct = aiService.useQuizScoreAi(quiz, userAnswer);
+                        }
                     } catch (Exception e) {
                         throw new RuntimeException("AI scoring failed for index: " + index, e);
                     }
@@ -358,6 +360,7 @@ public class QuizService {
         Map<String, Object> infoMap = new HashMap<>();
         infoMap.put("quizTitle", quizList.get(0).getQuizTitle());
         infoMap.put("questionCount", String.valueOf(quizList.size()));
+        infoMap.put("folderId", quizList.get(0).getFolderId());
 
         List<Boolean> isCorrectList = new ArrayList<>();
         for(Quiz quiz : quizList){
@@ -368,7 +371,7 @@ public class QuizService {
         return infoMap;
     }
 
-    public List<Map<String, Object>>  getByFolderId(Map<String, String> body){
+    public List<Map<String, Object>> getByFolderId(Map<String, String> body){
         String folderId = body.get("folderId");
 
         List<Quiz> quizList = quizRepository.findByFolderId(folderId);
@@ -397,5 +400,23 @@ public class QuizService {
         }
 
         return quizMapList;
+    }
+
+    public void renameQuiz(Map<String, String> body){
+        String quizId = body.get("quizId");
+        String quizName = body.get("quizName");
+
+        List<Quiz> quizList = quizRepository.findByQuizId(quizId);
+        if(quizList.isEmpty()) throw new RuntimeException("no quiz found");
+
+        for(Quiz quiz : quizList){
+            quiz.setQuizTitle(quizName);
+            quizRepository.save(quiz);
+        }
+    }
+
+    public void deleteByQuizId(Map<String, String> body){
+        String quizId = body.get("quizId");
+        quizRepository.deleteByQuizId(quizId);
     }
 }

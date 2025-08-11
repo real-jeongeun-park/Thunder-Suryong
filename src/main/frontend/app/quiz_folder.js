@@ -27,8 +27,6 @@ export default function quizFolder() {
   const [quizzes, setQuizzes] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [folderName, setFolderName] = useState(null);
-  const [noteNames, setNoteNames] = useState([]);
-
   const [moreModalVisible, setMoreModalVisible] = useState(false);
   const [selectedQuizId, setSelectedQuizId] = useState(null);
   const [newQuizRename, setNewQuizRename] = useState("");
@@ -77,7 +75,13 @@ export default function quizFolder() {
       }
     };
 
-    const getQuizzes = async () => {
+    if (userInfo) {
+      getFolderName();
+      getQuizzes();
+    }
+  }, [userInfo]);
+
+  const getQuizzes = async () => {
       try {
         const res = await axios.post(`${API_BASE_URL}/api/quiz/getByFolderId`, {
           folderId,
@@ -87,13 +91,46 @@ export default function quizFolder() {
       } catch (err) {
         console.log(err);
       }
-    };
+  };
 
-    if (userInfo) {
-      getFolderName();
-      getQuizzes();
+  const handleRenameQuiz = async() => {
+    if(!newQuizRename.trim()){
+        alert("노트 이름을 입력하세요.");
+        return;
     }
-  }, [userInfo]);
+    if(!selectedQuizId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/quiz/rename`, {
+            quizId: selectedQuizId,
+            quizName: newQuizRename,
+        });
+
+        await getQuizzes();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to rename quiz", e);
+    }
+  }
+
+  const handleRemoveQuiz = async() => {
+    if(!selectedQuizId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/quiz/remove`, {
+            quizId: selectedQuizId,
+        });
+
+        await getQuizzes();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to delete quiz ", e);
+    }
+  }
 
   return (
     <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
@@ -112,7 +149,7 @@ export default function quizFolder() {
               marginTop: 15,
             }}
           >
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => router.push("/quiz_list")}>
               <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
             <Text style={[styles.title, { marginLeft: 10 }]}>{folderName}</Text>
@@ -145,6 +182,7 @@ export default function quizFolder() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedQuizId(item.quizId);
+                    setNewQuizRename(item.quizTitle);
                     setMoreModalVisible(true);
                   }}
                   style={{ paddingHorizontal: 10, paddingVertical: 5 }}
@@ -183,7 +221,7 @@ export default function quizFolder() {
                       }}
                     >
                       <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                        문제지 이름 변경
+                        퀴즈 설정
                       </Text>
                       <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
                         <Feather name="x" size={24} color="#333" />
@@ -201,26 +239,39 @@ export default function quizFolder() {
                         marginBottom: 15,
                         fontSize: 16,
                       }}
-                      placeholder="문제지 이름을 변경해주세요"
+                      placeholder="새로운 퀴즈 이름"
                       returnKeyType="done"
-                      onSubmitEditing={() => {
-                        setMoreModalVisible(false);
-                      }}
+                      onSubmitEditing={handleRenameQuiz}
                     />
 
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#A18CD1",
-                        paddingVertical: 12,
-                        borderRadius: 8,
-                        alignItems: "center",
-                      }}
-                      onPress={() => {
-                        alert("삭제 기능 구현 부탁드려요");
-                      }}
-                    >
-                      <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
-                    </TouchableOpacity>
+                    <View style={{ flex: 1, flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#A18CD1",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginRight: 5,
+                        }}
+                        onPress={handleRenameQuiz}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "rgb(209 140 140)",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginLeft: 5,
+                        }}
+                        onPress={handleRemoveQuiz}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </TouchableWithoutFeedback>
               </View>

@@ -26,21 +26,15 @@ export default function QuizScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("퀴즈");
   const [modalVisibleId, setModalVisibleId] = useState(null);
-  const inputRef = useRef(null);
   const [folderName, setFolderName] = useState("");
   const [folders, setFolders] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-  const [newQuizName, setNewQuizName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
   const [isNoFolderModalVisible, setIsNoFolderModalVisible] = useState(false);
   const [moreModalVisible, setMoreModalVisible] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [newFolderRename, setNewFolderRename] = useState("");
-
-
 
   useEffect(() => {
     async function checkLogin() {
@@ -69,12 +63,13 @@ export default function QuizScreen() {
     checkLogin();
   }, []);
 
-  /// 퀴즈 폴더 가져오기
-  /// 퀴즈 폴더 가져오기
-  /// 퀴즈 폴더 가져오기
-
   useEffect(() => {
-    const getQuizFolder = async () => {
+    if(userInfo !== null){
+        getFolders();
+    }
+  }, [userInfo]);
+
+  const getFolders = async () => {
       try {
         const res = await axios.post(`${API_BASE_URL}/api/quizFolder/get`, {
           nickname: userInfo.nickname,
@@ -89,16 +84,7 @@ export default function QuizScreen() {
       } catch (err) {
         console.log(err);
       }
-    };
-
-    if (userInfo !== null) {
-      getQuizFolder();
-    }
-  }, [userInfo]);
-
-  /// 퀴즈 폴더 생성하기
-  /// 퀴즈 폴더 생성하기
-  /// 퀴즈 폴더 생성하기
+  };
 
   const handleCreateFolder = async () => {
       const newFolderName = folderName.trim();
@@ -122,7 +108,46 @@ export default function QuizScreen() {
           setIsCreatingFolder(false);
         }
       }
-    };
+  };
+
+  const handleRenameFolder = async() => {
+    if(!newFolderRename.trim()){
+        alert("폴더 이름을 입력하세요.");
+        return;
+    }
+    if(!selectedFolderId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/quizFolder/rename`, {
+            folderId: selectedFolderId,
+            folderName: newFolderRename,
+        });
+
+        await getFolders();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to rename folder", e);
+    }
+  }
+
+  const handleRemoveFolder = async() => {
+    if(!selectedFolderId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/quizFolder/remove`, {
+            folderId: selectedFolderId,
+        });
+
+        await getFolders();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to delete folder ", e);
+    }
+  }
 
   return (
     <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
@@ -159,7 +184,6 @@ export default function QuizScreen() {
                 <Feather name="folder" size={20} color="#A18CD1" />
                 <Text style={styles.folderText}>{f.folderName}</Text>
               </TouchableOpacity>
-
                   <TouchableOpacity
                     onPress={() => {
                       setSelectedFolderId(f.folderId);
@@ -291,7 +315,7 @@ export default function QuizScreen() {
                     }}
                   >
                     <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                      폴더 이름 변경
+                      폴더 설정
                     </Text>
                     <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
                       <Feather name="x" size={24} color="#333" />
@@ -308,23 +332,38 @@ export default function QuizScreen() {
                       marginBottom: 15,
                       fontSize: 16,
                     }}
-                    placeholder="폴더 이름을 변경해주세요"
+                    placeholder="새로운 폴더 이름"
                     returnKeyType="done"
-                    onSubmitEditing={() => setMoreModalVisible(false)}
+                    onSubmitEditing={handleRenameFolder}
                   />
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: "#A18CD1",
-                      paddingVertical: 12,
-                      borderRadius: 8,
-                      alignItems: "center",
-                    }}
-                    onPress={() => {
-                      alert("삭제 기능 구현 부탁드려요");
-                    }}
-                  >
-                    <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
-                  </TouchableOpacity>
+                  <View style={{ flex: 1, flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#A18CD1",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginRight: 5,
+                        }}
+                        onPress={handleRenameFolder}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "rgb(209 140 140)",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginLeft: 5,
+                        }}
+                        onPress={handleRemoveFolder}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                      </TouchableOpacity>
+                  </View>
                 </View>
               </TouchableWithoutFeedback>
             </View>
