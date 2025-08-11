@@ -86,4 +86,27 @@ public class QuizController {
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
+
+
+    @PostMapping("/rename")
+    public ResponseEntity<?> rename(@RequestBody Map<String, String> body){
+        try{
+            quizService.renameQuiz(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/remove")
+    public ResponseEntity<?> delete(@RequestBody Map<String, String> body){
+        try{
+            quizService.deleteByQuizId(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
 }

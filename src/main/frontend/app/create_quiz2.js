@@ -148,8 +148,6 @@ export default function CreateQuizSelectType() {
             return note.noteId;
         });
 
-        console.log(noteIds);
-
         const infoForQuestion = {
             noteIds,
             quizTitle: questionName.trim(),
@@ -159,8 +157,6 @@ export default function CreateQuizSelectType() {
             inputText: realInputText,
             folderId,
         }
-
-        console.log(infoForQuestion);
 
         try{
             const res = await axios.post(`${API_BASE_URL}/api/quiz/create`, infoForQuestion);

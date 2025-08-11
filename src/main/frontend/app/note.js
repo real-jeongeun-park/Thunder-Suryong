@@ -27,26 +27,15 @@ import BottomNavigation from "../components/BottomNavigation";
 
 export default function NoteScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState("노트");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [folders, setFolders] = useState([]);
-
   const [isFolderSelectVisible, setIsFolderSelectVisible] = useState(false);
   const [isNoFolderModalVisible, setIsNoFolderModalVisible] = useState(false);
-  const [nickname, setNickname] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   const [moreModalVisible, setMoreModalVisible] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [newFolderRename, setNewFolderRename] = useState("");
-
-
-  const tabs = [
-    { name: "홈", label: "홈" },
-    { name: "노트", label: "노트" },
-    { name: "퀴즈", label: "퀴즈" },
-    { name: "마이페이지", label: "마이페이지" },
-  ];
 
   useEffect(() => {
     async function checkLogin() {
@@ -66,7 +55,7 @@ export default function NoteScreen() {
           },
         });
 
-        setNickname(res.data.nickname);
+        setUserInfo(res.data);
       } catch (err) {
         console.log(err);
         router.push("/");
@@ -76,10 +65,15 @@ export default function NoteScreen() {
   }, []);
 
   useEffect(() => {
-    const getFolder = async () => {
+    if(userInfo !== null){
+        getFolders();
+    }
+  }, [userInfo]);
+
+  const getFolders = async () => {
       try {
         const res = await axios.post(`${API_BASE_URL}/api/folder/get`, {
-          nickname,
+          nickname: userInfo.nickname,
         });
 
         const mappedFolders = res.data.map((f) => ({
@@ -91,12 +85,7 @@ export default function NoteScreen() {
       } catch (err) {
         console.log(err);
       }
-    };
-
-    if (nickname !== null) {
-      getFolder();
-    }
-  }, [nickname]);
+  };
 
   // 폴더 생성
   const handleCreateFolder = async () => {
@@ -104,7 +93,7 @@ export default function NoteScreen() {
     if (newFolderName) {
       try {
         const res = await axios.post(`${API_BASE_URL}/api/folder/create`, {
-          nickname,
+          nickname: userInfo.nickname,
           folderName: newFolderName,
         });
 
@@ -122,6 +111,46 @@ export default function NoteScreen() {
       }
     }
   };
+
+  const handleRenameFolder = async() => {
+    if(!newFolderRename.trim()){
+        alert("폴더 이름을 입력하세요.");
+        return;
+    }
+    if(!selectedFolderId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/folder/rename`, {
+            folderId: selectedFolderId,
+            folderName: newFolderRename,
+        });
+
+        await getFolders();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to rename folder", e);
+    }
+  }
+
+  const handleRemoveFolder = async() => {
+    if(!selectedFolderId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/folder/remove`, {
+            folderId: selectedFolderId,
+        });
+
+        await getFolders();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to delete folder ", e);
+    }
+  }
+
 
   return (
     <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
@@ -290,13 +319,12 @@ export default function NoteScreen() {
                     }}
                   >
                     <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                      폴더 이름 변경
+                      폴더 설정
                     </Text>
                     <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
                       <Feather name="x" size={24} color="#333" />
                     </TouchableOpacity>
                   </View>
-
                   <TextInput
                     value={newFolderRename}
                     onChangeText={setNewFolderRename}
@@ -308,26 +336,38 @@ export default function NoteScreen() {
                       marginBottom: 15,
                       fontSize: 16,
                     }}
-                    placeholder="폴더 이름을 변경해주세요"
+                    placeholder="새로운 폴더 이름"
                     returnKeyType="done"
-                    onSubmitEditing={() => {
-                      setMoreModalVisible(false);
-                    }}
+                    onSubmitEditing={handleRenameFolder}
                   />
-
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: "#A18CD1",
-                      paddingVertical: 12,
-                      borderRadius: 8,
-                      alignItems: "center",
-                    }}
-                    onPress={() => {
-                      alert("삭제 기능 구현 부탁드려요");
-                    }}
-                  >
-                    <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
-                  </TouchableOpacity>
+                  <View style={{ flex: 1, flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#A18CD1",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginRight: 5,
+                        }}
+                        onPress={handleRenameFolder}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "rgb(209 140 140)",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginLeft: 5,
+                        }}
+                        onPress={handleRemoveFolder}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                      </TouchableOpacity>
+                  </View>
                 </View>
               </TouchableWithoutFeedback>
             </View>

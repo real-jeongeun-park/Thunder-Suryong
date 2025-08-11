@@ -2,6 +2,7 @@ package com.byeraksuryong.service;
 
 import com.byeraksuryong.domain.Exam;
 import com.byeraksuryong.domain.Folder;
+import com.byeraksuryong.domain.Quiz;
 import com.byeraksuryong.domain.QuizFolder;
 import com.byeraksuryong.dto.FolderRequest;
 import com.byeraksuryong.repository.ExamRepository;
@@ -67,5 +68,23 @@ public class QuizFolderService {
                 .findFirst()
                 .map(QuizFolder::getFolderName)
                 .orElseThrow(() -> new RuntimeException("no quiz folder found"));
+    }
+
+    public void renameFolder(Map<String, String> body){
+        String folderId = body.get("folderId");
+        String folderName = body.get("folderName");
+
+        QuizFolder quizFolder = quizFolderRepository.findByFolderId(folderId)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no folder found"));
+
+        quizFolder.setFolderName(folderName);
+        quizFolderRepository.save(quizFolder);
+    }
+
+    public void deleteByFolderId(Map<String, String> body){
+        String folderId = body.get("folderId");
+        quizFolderRepository.deleteByFolderId(folderId);
     }
 }

@@ -131,14 +131,7 @@ export default function CreatedQuizScreen() {
 
     setUserAnswers((prev) => {
       const filtered = prev.filter(item => item.index !== currentQuestionIndex);
-
-      if (answer && answer.trim() !== "") {
-        // 값이 있으면 덮어쓰기
-        return [...filtered, { index: currentQuestionIndex, answer }];
-      } else {
-        // 빈 문자열이면 제거
-        return filtered;
-      }
+      return [...filtered, { index: currentQuestionIndex, answer }];
     });
 
     setCurrentQuestionIndex(nextIndex);
@@ -149,28 +142,11 @@ export default function CreatedQuizScreen() {
     const handleSubmitAnswer = async () => {
       const answer = question.type === "subjective" ? subjectiveAnswer : selectedOption;
 
-      if (!answer || answer.trim() === "") {
-        alert("정답을 입력하지 않은 문제가 있습니다.");
-        setIsSubmitted(false);
-        return;
-      }
-
       // 현재 문제 답 덮어쓰기
       const updatedAnswers = [
         ...userAnswers.filter(item => item.index !== currentQuestionIndex),
         { index: currentQuestionIndex, answer }
       ];
-
-      console.log(updatedAnswers);
-      console.log(questionCount);
-
-      if (updatedAnswers.length !== Number(questionCount)) {
-        alert("정답을 입력하지 않은 문제가 있습니다.");
-        setIsSubmitted(false);
-        return;
-      }
-
-      console.log("updatedAnswers: ", updatedAnswers);
 
       try{
         const response = await axios.post(`${API_BASE_URL}/api/quiz/score`, {
@@ -197,9 +173,6 @@ export default function CreatedQuizScreen() {
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#A9A9A9" />
-          </TouchableOpacity>
           {questionName && <Text style={styles.headerTitle}>{questionName}</Text>}
         </View>
 

@@ -30,6 +30,7 @@ export default function CreatedQuizScreen() {
   const [questionCount, setQuestionCount] = useState(0);
   const [isCorrectList, setIsCorrectList] = useState([]);
   const [selectiveAnswer, setSelectiveAnswer] = useState("");
+  const [folderId, setFolderId] = useState(null);
 
   // 로그인 여부 체크
   // 로그인 여부 체크
@@ -77,6 +78,7 @@ export default function CreatedQuizScreen() {
 
             setQuizTitle(response.data.quizTitle);
             setQuestionCount(response.data.questionCount);
+            setFolderId(response.data.folderId);
             setIsCorrectList(response.data.isCorrectList);
         } catch(err){
             console.log("failed to load quiz title and question count", err);
@@ -123,7 +125,6 @@ export default function CreatedQuizScreen() {
       }));
 
       setQuestionParseComplete(true);
-      console.log(question);
     }
 
     if(question?.type === "subjective"){
@@ -136,9 +137,21 @@ export default function CreatedQuizScreen() {
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => { router.back(); }}>
-            <Ionicons name="chevron-back-outline" size={24} color="black" />
-          </TouchableOpacity>
+          { folderId &&
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => {
+                router.push({
+                    pathname: "/quiz_folder",
+                    params: {
+                        folderId,
+                    }
+                })
+              }}
+            >
+                <Ionicons name="chevron-back-outline" size={24} color="black" />
+            </TouchableOpacity>
+          }
           <Text style={styles.headerTitle}>{quizTitle} </Text>
         </View>
 
@@ -309,7 +322,6 @@ export default function CreatedQuizScreen() {
           </TouchableOpacity>
          )
          }
-
         </View>
       </View>
     </SafeAreaView>
@@ -409,7 +421,7 @@ const styles = StyleSheet.create({
   },
   bottomButtonGroup: {
     flexDirection: "row",
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     marginBottom: 20,
     position: "absolute",
     bottom: 20,

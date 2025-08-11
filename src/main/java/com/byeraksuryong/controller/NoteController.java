@@ -61,4 +61,26 @@ public class NoteController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
+    @PostMapping("/rename")
+    public ResponseEntity<?> rename(@RequestBody Map<String, String> body){
+        try{
+            noteService.renameNote(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/remove")
+    public ResponseEntity<?> delete(@RequestBody Map<String, String> body){
+        try{
+            noteService.deleteByNoteId(body);
+            return ResponseEntity.ok().build();
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
 }

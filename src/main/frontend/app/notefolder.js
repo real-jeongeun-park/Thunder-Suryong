@@ -14,15 +14,13 @@ import {
   TouchableWithoutFeedback,
   View,
   Platform,
+  Modal,
 } from "react-native";
-
+import { useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { API_BASE_URL } from "../src/constants";
-
 import * as SecureStore from "expo-secure-store";
-
-import { Modal } from "react-native";
-
 
 export default function NoteFolder() {
   const { folderId, openAddNote } = useLocalSearchParams();
@@ -83,7 +81,27 @@ export default function NoteFolder() {
       }
     };
 
-    const getNotes = async () => {
+    if (userInfo) {
+      getFolderName();
+      getNotes();
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    if (openAddNote === "true") {
+      setIsCreatingNote(true);
+    }
+  }, [openAddNote]);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        await getNotes();
+      })();
+    }, [])
+  );
+
+  const getNotes = async () => {
       try {
         const res = await axios.post(`${API_BASE_URL}/api/note/get`, {
           folderId,
@@ -98,19 +116,7 @@ export default function NoteFolder() {
       } catch (err) {
         console.log(err);
       }
-    };
-
-    if (userInfo) {
-      getFolderName();
-      getNotes();
-    }
-  }, [userInfo]);
-
-  useEffect(() => {
-    if (openAddNote === "true") {
-      setIsCreatingNote(true);
-    }
-  }, [openAddNote]);
+  };
 
   // 노트 저장
   const handleAddNote = async () => {
@@ -145,6 +151,45 @@ export default function NoteFolder() {
       }
     }
   };
+
+  const handleRenameNote = async() => {
+    if(!newNoteRename.trim()){
+        alert("노트 이름을 입력하세요.");
+        return;
+    }
+    if(!selectedNoteId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/note/rename`, {
+            noteId: selectedNoteId,
+            noteName: newNoteRename,
+        });
+
+        await getNotes();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to rename folder", e);
+    }
+  }
+
+  const handleRemoveNote = async() => {
+    if(!selectedNoteId){
+        return;
+    }
+
+    try{
+        const response = await axios.post(`${API_BASE_URL}/api/note/remove`, {
+            noteId: selectedNoteId,
+        });
+
+        await getNotes();
+        setMoreModalVisible(false);
+    } catch(e){
+        console.log("failed to delete folder ", e);
+    }
+  }
 
   return (
     <SafeAreaWrapper backgroundTop="#ffffffff" backgroundBottom="#ffffffff">
@@ -247,7 +292,7 @@ export default function NoteFolder() {
                       }}
                     >
                       <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                        노트 이름 변경
+                        노트 설정
                       </Text>
                       <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
                         <Feather name="x" size={24} color="#333" />
@@ -265,26 +310,39 @@ export default function NoteFolder() {
                         marginBottom: 15,
                         fontSize: 16,
                       }}
-                      placeholder="노트 이름을 변경해주세요"
+                      placeholder="새로운 노트 이름"
                       returnKeyType="done"
-                      onSubmitEditing={() => {
-                        setMoreModalVisible(false);
-                      }}
+                      onSubmitEditing={handleRenameNote}
                     />
 
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#A18CD1",
-                        paddingVertical: 12,
-                        borderRadius: 8,
-                        alignItems: "center",
-                      }}
-                      onPress={() => {
-                        alert("삭제 기능 구현 부탁드려요");
-                      }}
-                    >
-                      <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
-                    </TouchableOpacity>
+                    <View style={{ flex: 1, flexDirection: "row" }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#A18CD1",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginRight: 5,
+                        }}
+                        onPress={handleRenameNote}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "rgb(209 140 140)",
+                          paddingVertical: 12,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          flex: 1,
+                          marginLeft: 5,
+                        }}
+                        onPress={handleRemoveNote}
+                      >
+                        <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </TouchableWithoutFeedback>
               </View>
