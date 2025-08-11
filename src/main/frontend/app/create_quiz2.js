@@ -18,6 +18,8 @@ import axios from "axios";
 import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL } from "../src/constants";
 import { useData } from "@/context/DataContext";
+import { KeyboardAvoidingView } from "react-native";
+import { Keyboard, TouchableWithoutFeedback } from "react-native";
 
 export default function CreateQuizSelectType() {
   const router = useRouter();
@@ -178,121 +180,124 @@ export default function CreateQuizSelectType() {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back-outline" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>문제 유형 선택</Text>
-        </View>
-
-
-        <View style={styles.scrollContent}>
-          { parsedSelectedNotes.length > 0 && (
-            <View>
-              <Text style={styles.subHeader}>선택된 노트</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                {parsedSelectedNotes.length > 0 && parsedSelectedNotes.map((note, idx) => (
-                  <View key={idx} style={styles.selectedNoteBox}>
-                    <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
-                    <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
-                      <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {realInputText && (
-            <View>
-              <View style={styles.customInputBox}>
-                <Text style={styles.subHeader}>직접 입력한 내용</Text>
-                <TouchableOpacity onPress={handleRemoveText}>
-                  <Ionicons name="close-circle" size={18} color="#BA94CC"/>
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                style={styles.customInput}
-                multiline
-                value={realInputText}
-                onChangeText={setRealInputText}
-              />
-            </View>
-          )}
-          <View>
-              <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제지 이름</Text>
-              <TextInput
-                style={styles.input}
-                value={questionName}
-                onChangeText={setQuestionName}
-                placeholder="문제지 이름을 입력해 주세요."
-                maxLength={20}
-              />
-              <Text style={styles.charCount}>{questionName.length} / 20</Text>
-          </View>
-          <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 유형</Text>
-          <View style={styles.typesWrap}>
-            {questionTypeOptions.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={[styles.typeBtn, selectedTypes.includes(type.id) && styles.typeBtnSelected]}
-                onPress={() => toggleType(type.id)}
-              >
-                <Text
-                  style={[styles.typeText, selectedTypes.includes(type.id) && styles.typeTextSelected]}
-                >
-                  {type.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View>
-              <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 수</Text>
-              <TextInput
-                style={styles.input}
-                value={questionCount}
-                onChangeText={setQuestionCount}
-                placeholder="생성할 문제 수를 입력해 주세요."
-                placeholderTextColor="CCC"
-                keyboardType="numeric"
-              />
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.selectButton} onPress={handleGenerateQuiz}>
-            <Text style={styles.selectButtonText}>퀴즈 생성</Text>
-          </TouchableOpacity>
-        </View>
-
-        {isLoading && (
-          <View style={styles.loadingOverlay}>
-            <Image
-                source={require("../assets/images/main.png")}
-                style={styles.character}
-                resizeMode="contain"
-            />
-            <Text style={styles.loadingText}>생성 중입니다....</Text>
-          </View>
-        )}
-
-      <Modal
-        transparent
-        animationType="fade"
-        visible={showModal}
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
-              <Ionicons name="close" size={24} color="#000" />
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
-            <Text style={styles.modalText}>{modalRealText}</Text>
+            <Text style={styles.headerText}>문제 유형 선택</Text>
           </View>
-        </View>
-      </Modal>
-    </View>
+
+
+          <View style={styles.scrollContent}>
+            { parsedSelectedNotes.length > 0 && (
+              <View>
+                <Text style={styles.subHeader}>선택된 노트</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                  {parsedSelectedNotes.length > 0 && parsedSelectedNotes.map((note, idx) => (
+                    <View key={idx} style={styles.selectedNoteBox}>
+                      <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
+                      <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
+                        <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {realInputText && (
+              <View>
+                <View style={styles.customInputBox}>
+                  <Text style={styles.subHeader}>직접 입력한 내용</Text>
+                  <TouchableOpacity onPress={handleRemoveText}>
+                    <Ionicons name="close-circle" size={18} color="#BA94CC"/>
+                  </TouchableOpacity>
+                </View>
+                <TextInput
+                  style={styles.customInput}
+                  multiline
+                  value={realInputText}
+                  onChangeText={setRealInputText}
+                />
+              </View>
+            )}
+            <View>
+                <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제지 이름</Text>
+                <TextInput
+                  style={styles.input}
+                  value={questionName}
+                  onChangeText={setQuestionName}
+                  placeholder="문제지 이름을 입력해 주세요."
+                  placeholderTextColor={Platform.OS === 'ios' ? '#8A8A8A' : '#717171'}
+                  maxLength={20}
+                />
+                <Text style={styles.charCount}>{questionName.length} / 20</Text>
+            </View>
+            <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 유형</Text>
+            <View style={styles.typesWrap}>
+              {questionTypeOptions.map((type) => (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[styles.typeBtn, selectedTypes.includes(type.id) && styles.typeBtnSelected]}
+                  onPress={() => toggleType(type.id)}
+                >
+                  <Text
+                    style={[styles.typeText, selectedTypes.includes(type.id) && styles.typeTextSelected]}
+                  >
+                    {type.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View>
+                <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 수</Text>
+                <TextInput
+                  style={styles.input}
+                  value={questionCount}
+                  onChangeText={setQuestionCount}
+                  placeholder="생성할 문제 수를 입력해 주세요."
+                  placeholderTextColor={Platform.OS === 'ios' ? '#8A8A8A' : '#717171'}
+                  keyboardType="numeric"
+                />
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.selectButton} onPress={handleGenerateQuiz}>
+              <Text style={styles.selectButtonText}>퀴즈 생성</Text>
+            </TouchableOpacity>
+          </View>
+
+          {isLoading && (
+            <View style={styles.loadingOverlay}>
+              <Image
+                  source={require("../assets/images/main.png")}
+                  style={styles.character}
+                  resizeMode="contain"
+              />
+              <Text style={styles.loadingText}>생성 중입니다....</Text>
+            </View>
+          )}
+
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showModal}
+          onRequestClose={() => setShowModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.modalText}>{modalRealText}</Text>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </TouchableWithoutFeedback>
     </>
   );
 }

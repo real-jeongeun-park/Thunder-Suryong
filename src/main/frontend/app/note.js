@@ -310,21 +310,29 @@ export default function NoteScreen() {
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback>
                 <View style={styles.modalContent}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                      폴더 설정
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, position: "relative", }}>
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontWeight: "bold",
+                        fontSize: 18,
+                        textAlign: "center",
+                      }}
+                    >
+                      노트 폴더 편집
                     </Text>
-                    <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                    <TouchableOpacity
+                      onPress={() => setMoreModalVisible(false)}
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        padding: 5,
+                      }}
+                    >
                       <Feather name="x" size={24} color="#333" />
                     </TouchableOpacity>
                   </View>
+
                   <TextInput
                     value={newFolderRename}
                     onChangeText={setNewFolderRename}
@@ -336,37 +344,38 @@ export default function NoteScreen() {
                       marginBottom: 15,
                       fontSize: 16,
                     }}
-                    placeholder="새로운 폴더 이름"
+                    placeholder="새로운 폴더 이름을 작성해주세요."
                     returnKeyType="done"
                     onSubmitEditing={handleRenameFolder}
                   />
-                  <View style={{ flex: 1, flexDirection: "row" }}>
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: "#A18CD1",
-                          paddingVertical: 12,
-                          borderRadius: 8,
-                          alignItems: "center",
-                          flex: 1,
-                          marginRight: 5,
-                        }}
-                        onPress={handleRenameFolder}
-                      >
-                        <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: "rgb(209 140 140)",
-                          paddingVertical: 12,
-                          borderRadius: 8,
-                          alignItems: "center",
-                          flex: 1,
-                          marginLeft: 5,
-                        }}
-                        onPress={handleRemoveFolder}
-                      >
-                        <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
-                      </TouchableOpacity>
+
+                  <View style={{ flexDirection: "row" }}>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#A18CD1",
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        alignItems: "center",
+                        flex: 1,
+                        marginRight: 5,
+                      }}
+                      onPress={handleRenameFolder}
+                    >
+                      <Text style={{ color: "white", fontSize: 16 }}>변경</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#B0B0B0",
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        alignItems: "center",
+                        flex: 1,
+                        marginLeft: 5,
+                      }}
+                      onPress={handleRemoveFolder}
+                    >
+                      <Text style={{ color: "white", fontSize: 16 }}>삭제</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </TouchableWithoutFeedback>

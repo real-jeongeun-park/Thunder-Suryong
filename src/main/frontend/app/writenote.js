@@ -64,6 +64,17 @@ export default function WriteNote() {
   const [noteTitle, setNoteTitle] = useState("");
   const [totalLines, setTotalLines] = useState(0);
 
+  const [isSaved, setIsSaved] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState("");
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 1500); // 1.5초 후 사라짐
+  };
+
+
+
+
   useEffect(() => {
     async function checkLogin(){
         try{
@@ -179,7 +190,7 @@ export default function WriteNote() {
       }
     }
     else{
-        alert("채팅을 입력하세요.");
+        showToast("질문을 입력하세요.");
         return;
     }
   };
@@ -205,7 +216,8 @@ export default function WriteNote() {
                 title: noteTitle,
                 content: noteContent,
             });
-            alert("저장되었습니다.");
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 1000);
         } catch(err){
             console.log(err);
         }
@@ -317,22 +329,42 @@ export default function WriteNote() {
                 )}
               </ScrollView>
 
-              <View style={{ paddingBottom: 5 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 4, paddingBottom: 5 }}>
                 {selectedTexts && (
-                  <View style={{ marginBottom: 6 }}>
-                    <Text style={{ fontSize: 12, color: "#555", marginBottom: 2}}>{selectedTexts}</Text>
-                  </View>
+                  <Text
+                    style={{ fontSize: 12, color: "#555", flex: 1, marginRight: 8 }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {selectedTexts}
+                  </Text>
                 )}
                 <TouchableOpacity
                   onPress={() => {
                     toggleChatSheet(); // 시트 닫기
                     setIsSelecting(true); // 드래그 모드 진입
                   }}
-                  style={{ alignSelf: "flex-end", marginBottom: 4 }}
                 >
                   <Text style={{ color: "#BA94CC", fontSize: 12 }}>내용 불러오기</Text>
                 </TouchableOpacity>
               </View>
+
+      {toastMessage !== "" && (
+        <View style={{
+          position: "absolute",
+          bottom: 130,
+          alignSelf: "center",
+          backgroundColor: "rgba(60, 60, 60, 0.6)",
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 20,
+          zIndex: 10,
+          alignItems: "center",
+        }}>
+          <Text style={{ color: "white" }}>{toastMessage}</Text>
+        </View>
+      )}
+
               <View style={styles.chatInputContainer}>
                 <TextInput
                   style={styles.chatTextInput}
@@ -350,11 +382,20 @@ export default function WriteNote() {
             </View>
           </Animated.View>
           {/* 저장 버튼 */}
-          {!isSheetOpen && <View style={styles.saveButtonWrapper}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleNoteSave}>
-              <Text style={styles.saveButtonText}>노트 저장</Text>
-            </TouchableOpacity>
-          </View>}
+          {!isSheetOpen && (
+            <View style={styles.saveButtonWrapper}>
+              {isSaved ? (
+                <View style={[styles.saveButton, { justifyContent: 'center', alignItems: 'center' }]}>
+                  <Feather name="check" size={24} color="#3C3C3C" />
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.saveButton} onPress={handleNoteSave}>
+                  <Text style={styles.saveButtonText}>노트 저장</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -539,6 +580,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   saveButton: {
+    height: 44,
     borderRadius: 15,
     backgroundColor: '#E6D6F3', // 연한 보라색
     paddingVertical: 12,

@@ -171,6 +171,7 @@ export default function CreateQuizSelectNote() {
           <TextInput
             style={styles.input}
             placeholder="내용을 입력하세요..."
+            placeholderTextColor="#717171"
             multiline
             scrollEnabled={true}
             value={inputText}

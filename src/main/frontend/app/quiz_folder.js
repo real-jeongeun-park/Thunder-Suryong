@@ -212,18 +212,25 @@ export default function quizFolder() {
               <View style={styles.modalOverlay}>
                 <TouchableWithoutFeedback>
                   <View style={styles.modalContent}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-                        퀴즈 설정
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, position: "relative", }}>
+                      <Text
+                        style={{
+                          flex: 1,
+                          fontWeight: "bold",
+                          fontSize: 18,
+                          textAlign: "center",
+                        }}
+                      >
+                        퀴즈 편집
                       </Text>
-                      <TouchableOpacity onPress={() => setMoreModalVisible(false)}>
+                      <TouchableOpacity
+                        onPress={() => setMoreModalVisible(false)}
+                        style={{
+                          position: "absolute",
+                          right: 0,
+                          padding: 5,
+                        }}
+                      >
                         <Feather name="x" size={24} color="#333" />
                       </TouchableOpacity>
                     </View>
@@ -239,12 +246,12 @@ export default function quizFolder() {
                         marginBottom: 15,
                         fontSize: 16,
                       }}
-                      placeholder="새로운 퀴즈 이름"
+                      placeholder="새로운 퀴즈 이름을 작성해주세요."
                       returnKeyType="done"
                       onSubmitEditing={handleRenameQuiz}
                     />
 
-                    <View style={{ flex: 1, flexDirection: "row" }}>
+                    <View style={{ flexDirection: "row" }}>
                       <TouchableOpacity
                         style={{
                           backgroundColor: "#A18CD1",
@@ -260,7 +267,7 @@ export default function quizFolder() {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={{
-                          backgroundColor: "rgb(209 140 140)",
+                          backgroundColor: "#B0B0B0",
                           paddingVertical: 12,
                           borderRadius: 8,
                           alignItems: "center",
