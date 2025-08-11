@@ -183,7 +183,7 @@ export default function ExamInfoInput() {
     } catch (err) {
       console.log(err);
     } finally {
-      setLoading(false);
+      //setLoading(false);
     }
   };
 
@@ -213,7 +213,7 @@ export default function ExamInfoInput() {
     } catch (e) {
       console.log(e);
     } finally {
-      setLoading(false);
+      //setLoading(false);
     }
   };
 
@@ -225,6 +225,7 @@ export default function ExamInfoInput() {
           request,
         });
         setSubjects((prev) => [...prev, ...res.data]);
+        setLoading(false);
       } catch (err) {
         console.log(err);
       }
@@ -295,7 +296,7 @@ export default function ExamInfoInput() {
               style={styles.character}
               resizeMode="contain"
             />
-              <Text style={styles.loadingText}>로딩 중입니다....</Text>
+            <Text style={styles.loadingText}>로딩 중입니다....</Text>
           </View>
         )}
         <Portal.Host>
@@ -401,9 +402,7 @@ export default function ExamInfoInput() {
                     renderItem={({ item, index }) => (
                       <View style={styles.subjectItemRow}>
                         <Text style={styles.subjectItemText}>{item}</Text>
-                        <TouchableOpacity
-                          onPress={() => openDatePicker(index)}
-                        >
+                        <TouchableOpacity onPress={() => openDatePicker(index)}>
                           <Text style={styles.dateSelectText}>
                             {selectedDates[index]
                               ? format(parseISO(selectedDates[index]), "M/d")
@@ -551,7 +550,10 @@ export default function ExamInfoInput() {
                     </Dialog>
                   </Portal>
                 </View>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  onPress={handleSubmit}
+                >
                   <Text style={styles.submitBtnText}>입력 완료</Text>
                 </TouchableOpacity>
               </View>
@@ -666,21 +668,22 @@ const styles = StyleSheet.create({
   dateSelectText: {
     padding: 8,
     borderRadius: 12,
-    border: '1px solid #d0c4db',   /* 밝은 보라 계열 테두리 */
-    color: '#5e3e8c',              /* 좀 더 진한 보라 컬러로 텍스트 강조 */
-    backgroundColor: '#f8f6fb',    /* 밝은 배경색으로 고급스러움 추가 */
-    fontWeight: '500',             /* 글씨 두께로 가독성 개선 */
+    border: "1px solid #d0c4db" /* 밝은 보라 계열 테두리 */,
+    color: "#5e3e8c" /* 좀 더 진한 보라 컬러로 텍스트 강조 */,
+    backgroundColor: "#f8f6fb" /* 밝은 배경색으로 고급스러움 추가 */,
+    fontWeight: "500" /* 글씨 두께로 가독성 개선 */,
     fontSize: 14,
-    appearance: 'none',            /* 브라우저 기본 화살표 제거 */
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,<svg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M0 0l5 6 5-6z\' fill=\'%235e3e8c\'/></svg>")',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: '10px 6px',
+    appearance: "none" /* 브라우저 기본 화살표 제거 */,
+    WebkitAppearance: "none",
+    MozAppearance: "none",
+    backgroundImage:
+      "url(\"data:image/svg+xml;charset=UTF-8,<svg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'><path d='M0 0l5 6 5-6z' fill='%235e3e8c'/></svg>\")",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "10px 6px",
     marginRight: 10,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',  /* 부드러운 그림자 */
-    cursor: 'pointer',             /* 마우스 오버 시 포인터 변경 */
-    transition: 'border-color 0.3s, box-shadow 0.3s',
+    boxShadow: "0 1px 2px rgba(0,0,0,0.1)" /* 부드러운 그림자 */,
+    cursor: "pointer" /* 마우스 오버 시 포인터 변경 */,
+    transition: "border-color 0.3s, box-shadow 0.3s",
   },
   inputContainer: {
     flex: 1,
@@ -977,14 +980,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#5e43c2',
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#5e43c2",
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
   },
   editButtonText: {
-    color: '#5e43c2',
+    color: "#5e43c2",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
