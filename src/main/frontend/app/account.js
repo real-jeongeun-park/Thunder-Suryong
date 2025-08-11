@@ -52,6 +52,15 @@ export default function AccountScreen() {
     })();
   }, []);
 
+  // 플랫폼별 alert 함수 정의
+  const showAlert = (title, message) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n${message}`);
+    } else {
+      showAlert(title, message);
+    }
+  };
+
   // 로그아웃
   const handleLogout = async () => {
     try {
@@ -60,46 +69,82 @@ export default function AccountScreen() {
       router.replace("/");
     } catch (e) {
       console.log(e);
-      Alert.alert("오류", "로그아웃 중 문제가 발생했습니다.");
+      showAlert("오류", "로그아웃 중 문제가 발생했습니다.");
     }
   };
 
   // 비밀번호 변경
   const handleChangePassword = async () => {
     if (!currentPw || !newPw || !newPw2) {
-      Alert.alert("안내", "모든 항목을 입력해주세요.");
+      showAlert("안내", "모든 항목을 입력해주세요.");
       return;
     }
     if (newPw !== newPw2) {
-      Alert.alert("안내", "새 비밀번호가 일치하지 않습니다.");
+      showAlert("안내", "새 비밀번호가 일치하지 않습니다.");
       return;
     }
+
     try {
-      await axios.post(`${API_BASE_URL}/api/user/changePassword`, {
-        currentPw,
-        newPw,
-      });
-      Alert.alert("완료", "비밀번호가 변경되었습니다.");
-      setShowPwModal(false);
-      setCurrentPw(""); setNewPw(""); setNewPw2("");
+        // JWT 토큰 가져오기
+        const token = Platform.OS === "web"
+          ? localStorage.getItem("accessToken")
+          : await SecureStore.getItemAsync("accessToken");
+
+        // 백엔드에 POST 요청 보내기
+        await axios.post(`${API_BASE_URL}/api/member/changePassword`, {
+          currentPassword: currentPw,
+          newPassword: newPw,
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // 성공 시 모달 닫기 + 메시지 출력
+        setTimeout(() => {
+          showAlert("완료", "비밀번호가 변경되었습니다.");
+          setShowPwModal(false);
+          setCurrentPw("");
+          setNewPw("");
+          setNewPw2("");
+        }, 100);
     } catch (e) {
+      showAlert("오류", e.response.data);
       console.log(e);
-      Alert.alert("오류", "비밀번호 변경에 실패했습니다.");
     }
   };
 
   // 회원 탈퇴
   const handleWithdraw = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/user/${userInfo?.nickname}`);
-      if (Platform.OS === "web") localStorage.removeItem("accessToken");
-      else await SecureStore.deleteItemAsync("accessToken");
-      router.replace("/");
-    } catch (e) {
-      console.log(e);
-      Alert.alert("오류", "회원 탈퇴에 실패했습니다.");
-    }
-  };
+      // JWT 토큰 가져오기
+      const token = Platform.OS === "web"
+        ? localStorage.getItem("accessToken")
+        : await SecureStore.getItemAsync("accessToken");
+
+      // 백엔드에 DELETE 요청
+      await axios.delete(`${API_BASE_URL}/api/member/withdraw`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // 탈퇴 성공 시 토큰 삭제 + 메인화면 이동
+      if (Platform.OS === "web") {
+        localStorage.removeItem("accessToken");
+      } else {
+        await SecureStore.deleteItemAsync("accessToken");
+      }
+
+      setShowWithdrawModal(false);
+
+      setTimeout(() => {
+        showAlert("탈퇴 완료", "회원 탈퇴가 정상적으로 처리되었습니다.");
+        router.replace("/");
+      }, 100);
+
+        } catch (e) {
+          console.log(e);
+          showAlert("오류", "회원 탈퇴에 실패했습니다.");
+        }
+      };
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -117,7 +162,7 @@ export default function AccountScreen() {
           <Text style={styles.label}>이메일</Text>
           <View style={styles.inputDisabled}>
             <Text style={styles.inputDisabledText}>
-              {userInfo?.email || "현재 사용자의 이메일"}
+              {userInfo?.email || "@현재 사용자의 이메일"}
             </Text>
           </View>
           <Text style={styles.helperTextDanger}>
@@ -162,21 +207,21 @@ export default function AccountScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="현재 사용자의 비밀번호를 입력해주세요."
+              placeholder="@현재 사용자의 비밀번호를 입력해주세요."
               secureTextEntry
               value={currentPw}
               onChangeText={setCurrentPw}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="새로운 비밀번호를 입력해주세요."
+              placeholder="@새로운 비밀번호를 입력해주세요."
               secureTextEntry
               value={newPw}
               onChangeText={setNewPw}
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="동일한 비밀번호를 입력해주세요."
+              placeholder="@동일한 비밀번호를 입력해주세요."
               secureTextEntry
               value={newPw2}
               onChangeText={setNewPw2}
