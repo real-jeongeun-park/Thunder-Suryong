@@ -16,9 +16,9 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from "@expo/vector-icons";
 
-const tabs = ["Study time", "Planner", "Completion rate"];
+const tabs = ["Study time", "Planner"];
 const studyTags = [
   { text: "0-3h", bgColor: "rgb(228, 215, 245)", textColor: "#6D7582" },
   { text: "3-6h", bgColor: "rgb(191, 161, 226)", textColor: "#F3EEFB" },
@@ -50,7 +50,7 @@ export default function CalendarTimetableScreen() {
   const formatTimeToKorean = (time) => {
     const [hh, mm, ss] = time.split(":");
     return `${hh}시 ${mm}분 ${ss}초`;
-  }
+  };
 
   useEffect(() => {
     async function checkLogin() {
@@ -180,10 +180,17 @@ export default function CalendarTimetableScreen() {
           return (
             time !== "00:00:00" && (
               <View key={subject.id || idx} style={styles.subjectRow}>
-                <MaterialIcons name="schedule" size={20} color="#6b4d9a" style={{ marginRight: 8 }} />
+                <MaterialIcons
+                  name="schedule"
+                  size={20}
+                  color="#6b4d9a"
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.subjectText}>
-                    <Text>{subject.name}: </Text>
-                    <Text style={{ fontWeight: "600", }}>{formatTimeToKorean(time)}</Text>
+                  <Text>{subject.name}: </Text>
+                  <Text style={{ fontWeight: "600" }}>
+                    {formatTimeToKorean(time)}
+                  </Text>
                 </Text>
               </View>
             )
@@ -191,7 +198,7 @@ export default function CalendarTimetableScreen() {
         })}
       </View>
     );
-  }
+  };
 
   const getColorFromTime = (timeString) => {
     if (!timeString) return undefined;
@@ -269,9 +276,7 @@ export default function CalendarTimetableScreen() {
     if (isLoading) {
       return (
         <View style={styles.card}>
-          <Text style={styles.loadingText}>
-            계획 불러오는 중...
-          </Text>
+          <Text style={styles.loadingText}>계획 불러오는 중...</Text>
         </View>
       );
     }
@@ -279,9 +284,7 @@ export default function CalendarTimetableScreen() {
     if (!plans || plans.length === 0) {
       return (
         <View style={styles.card}>
-          <Text style={styles.loadingText}>
-            등록된 계획이 없습니다.
-          </Text>
+          <Text style={styles.loadingText}>등록된 계획이 없습니다.</Text>
         </View>
       );
     }
@@ -424,7 +427,6 @@ export default function CalendarTimetableScreen() {
               {renderPlans()}
             </ScrollView>
           )}
-          {activeTab === "Completion rate" && <Text>완성도 내용</Text>}
         </View>
       </View>
     </SafeAreaWrapper>
@@ -622,5 +624,5 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     textAlign: "center",
-  }
+  },
 });
