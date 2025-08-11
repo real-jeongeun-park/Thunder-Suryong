@@ -39,7 +39,7 @@ export default function HomeScreen() {
   const [selectedExam, setSelectedExam] = useState(null);
   const { height: screenHeight } = Dimensions.get("window");
   const { width: screenWidth } = Dimensions.get("window");
-  const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.4));
+  const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.35));
   const [rewardOpen, setRewardOpen] = useState(false);
   const rewardFiredRef = useRef(false);
 
@@ -249,7 +249,7 @@ export default function HomeScreen() {
       "내 노력이 빛나는 날! 응원해요.",
       "모든 준비는 끝났어요, 이제 날개를 펼칠 시간입니다.",
       "마지막 한 걸음도 힘차게 내디뎌요.",
-      "누적된 노력이 같이 응원하고 있어요. 수룡이가 함께 응원합니다!",
+      "수룡이가 응원해요! 이번 시험도, 앞으로의 미래도요!",
       "결과도 중요하지만 과정이 더 의미 있으니까요.",
       "마무리하는 지금이 가장 자랑스러운 순간이에요.",
       "여기까지 온 것만으로도 이미 멋져요.",
@@ -454,7 +454,7 @@ export default function HomeScreen() {
 
   const toggleSheet = () => {
     const toValue = isExpanded
-      ? screenHeight * 0.4
+      ? screenHeight * 0.35
       : screenHeight * 0.87 - insets.bottom; // safe area bottom 제외
     Animated.timing(sheetHeight, {
       toValue,
@@ -1451,7 +1451,7 @@ const styles = StyleSheet.create({
   subTodoWeek: {
     fontSize: 14,
     color: "#333",
-    fontWeight: 500,
+    fontWeight: "500",
     flexShrink: 0,
   },
   subTodoText: {
