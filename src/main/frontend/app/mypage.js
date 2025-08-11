@@ -43,11 +43,16 @@ export default function MyPageScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const collectedDragons = [
-    require("../assets/images/rainbow-dragon.png"),
-    require("../assets/images/grass-dragon.png"),
-    require("../assets/images/study-dragon.png"),
+    require("../assets/images/dragon/33_water2.png"),
+    require("../assets/images/dragon/33_grass1.png"),
+    require("../assets/images/dragon/33_thunder2.png"),
+    require("../assets/images/dragon/66_water1.png"),
+    require("../assets/images/dragon/66_grass1.png"),
+    require("../assets/images/dragon/66_thunder2.png"),
+    require("../assets/images/dragon/100_water1.png"),
+    require("../assets/images/dragon/100_grass1.png"),
+    require("../assets/images/dragon/100_thunder2.png"),
   ];
-  const missingDragon = require("../assets/images/missing-dragon.png");
 
   useEffect(() => {
     async function checkLogin() {
@@ -216,7 +221,7 @@ export default function MyPageScreen() {
             </View>
 
             <View style={styles.sectionHeader}>
-  <Text style={styles.subtitle}>수집한 수룡이</Text>
+  <Text style={styles.subtitle}>수룡이 도감</Text>
   <TouchableOpacity
     onPress={() => setModalVisible(true)}
     style={styles.viewAllButtonWrapper}
@@ -226,7 +231,7 @@ export default function MyPageScreen() {
 </View>
 
 <View style={styles.collectedRow}>
-  {collectedDragons.map((img, idx) => (
+  {collectedDragons.slice(0, 3).map((img, idx) => (
     <View key={idx} style={styles.suryongCard}>
       <Image source={img} style={styles.suryongImageGrid} />
     </View>
@@ -236,20 +241,15 @@ export default function MyPageScreen() {
 <Modal visible={modalVisible} transparent animationType="slide">
   <View style={styles.modalOverlay}>
     <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>수집한 수룡이 전체 보기</Text>
+      <Text style={styles.modalTitle}>수룡이 도감 전체 보기</Text>
 
       <ScrollView contentContainerStyle={styles.modalScroll}>
-        <View style={styles.gridWrapper}>
-          {Array.from({ length: 9 }).map((_, idx) => {
-            const isCollected = idx < collectedDragons.length;
-            const source = isCollected ? collectedDragons[idx] : missingDragon;
-
-            return (
-              <View key={idx} style={styles.suryongCard}>
-                <Image source={source} style={styles.suryongImageGrid} />
-              </View>
-            );
-          })}
+       <View style={styles.gridWrapper}>
+  {collectedDragons.map((img, idx) => (
+    <View key={idx} style={styles.suryongCard}>
+      <Image source={img} style={styles.suryongImageGrid} />
+    </View>
+  ))}    
         </View>
       </ScrollView>
 

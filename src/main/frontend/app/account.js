@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Modal,
+  Image,
   TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -32,6 +33,18 @@ export default function AccountScreen() {
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [newPw2, setNewPw2] = useState("");
+
+  //수룡이 타입 선택하기
+  const [selectedType, setSelectedType] = useState(0);
+  const typeNames = ["물 수룡이", "풀 수룡이", "전기 수룡이"];
+  const handleSelectComplete = () => {
+  const msg = `${typeNames[selectedType]}를 선택하셨습니다!`;
+  if (Platform.OS === "web") {
+    window.alert(msg);
+  } else {
+    Alert.alert(msg); 
+  }
+  };
 
   useEffect(() => {
     (async () => {
@@ -190,6 +203,71 @@ export default function AccountScreen() {
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogout}>
           <Text style={styles.primaryBtnText}>로그아웃</Text>
         </TouchableOpacity>
+
+        {/* 수룡이 타입 변경하기 */}
+        <View style={{ marginTop: 40 }}>
+        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 16 }}>
+        수룡이 타입 변경하기
+        </Text>
+
+        {/* 타입 선택 3개 */}
+       <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 24 }}>
+      {[
+        require("../assets/images/water-type.png"),
+        require("../assets/images/grass-type.png"),
+        require("../assets/images/thunder-type.png"),
+        ].map((imgSrc, idx) => (
+      <TouchableOpacity
+        key={idx}
+        onPress={() => setSelectedType(idx)}
+        style={{
+        width: 100,
+        height: 100,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: "#9B73D2",
+        backgroundColor: selectedType === idx ? "#C9A7EB" : "transparent",
+        justifyContent: "center",
+        alignItems: "center",
+        overflow: "hidden", // 이미지를 둥글게 잘라내기
+      }}
+    >
+      <Image
+        source={imgSrc}
+        style={{ width: 40, height: 40, resizeMode: "contain" }}
+      />
+      {selectedType === idx && (
+        <Ionicons
+          name="checkmark-sharp"
+          size={55}
+          color="#fff"
+          style={{
+            position: "absolute",
+          }}
+        />
+      )}
+    </TouchableOpacity>
+  ))}
+</View>
+
+      {/* 선택 완료 버튼 */}
+      <TouchableOpacity
+        style={{
+        backgroundColor: "#9B73D2",
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: "center",
+      }}
+      onPress={handleSelectComplete}
+      >
+      <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+        선택 완료
+       </Text>
+      </TouchableOpacity>
+      </View>
+
+
+
       </ScrollView>
 
       {/* 하단 중앙: 회원 탈퇴하기 */}
