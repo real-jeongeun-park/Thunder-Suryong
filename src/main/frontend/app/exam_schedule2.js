@@ -12,17 +12,8 @@ import {
   Image,
   Modal,
   TextInputBase,
+  Dimensions,
 } from "react-native";
-import Ionicons from "react-native-vector-icons/Ionicons";
-
-import { useData } from "@/context/DataContext";
-
-import axios from "axios";
-import { API_BASE_URL } from "../src/constants";
-import * as SecureStore from "expo-secure-store";
-
-import * as ImagePicker from "expo-image-picker";
-import { parseISO, addDays, format } from "date-fns";
 import {
   Menu,
   Button,
@@ -30,6 +21,14 @@ import {
   Portal,
   Dialog,
 } from "react-native-paper";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useData } from "@/context/DataContext";
+import axios from "axios";
+import { API_BASE_URL } from "../src/constants";
+import * as SecureStore from "expo-secure-store";
+import * as ImagePicker from "expo-image-picker";
+import { parseISO, addDays, format } from "date-fns";
+const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
@@ -289,6 +288,16 @@ export default function ExamInfoInput() {
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+              source={require("../assets/images/main.png")}
+              style={styles.character}
+              resizeMode="contain"
+            />
+              <Text style={styles.loadingText}>로딩 중입니다....</Text>
+          </View>
+        )}
         <Portal.Host>
           <View
             style={{
@@ -296,17 +305,6 @@ export default function ExamInfoInput() {
             }}
           >
             <View style={styles.container}>
-              {loading && (
-                <View style={styles.loadingOverlay}>
-                  <Image
-                    source={require("../assets/images/main.png")}
-                    style={styles.character}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.loadingText}>로딩 중입니다....</Text>
-                </View>
-              )}
-
               {/* 뒤로가기 버튼 */}
               <View style={styles.backButtonContainer}>
                 <TouchableOpacity
@@ -398,7 +396,7 @@ export default function ExamInfoInput() {
                   <FlatList
                     data={subjects}
                     keyExtractor={(item, idx) => item + idx}
-                    style={{ maxHeight: 250 }}
+                    style={{ maxHeight: screenHeight * 0.3 }}
                     showsVerticalScrollIndicator={false}
                     renderItem={({ item, index }) => (
                       <View style={styles.subjectItemRow}>
@@ -553,11 +551,10 @@ export default function ExamInfoInput() {
                     </Dialog>
                   </Portal>
                 </View>
+                <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+                  <Text style={styles.submitBtnText}>입력 완료</Text>
+                </TouchableOpacity>
               </View>
-              {/* 입력 완료 버튼 */}
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-                <Text style={styles.submitBtnText}>입력 완료</Text>
-              </TouchableOpacity>
               {/* 초기화 모달 */}
               <Modal
                 visible={showModal}
@@ -646,7 +643,7 @@ const styles = StyleSheet.create({
     //marginBottom: 30,
     alignItems: "flex-start",
     backgroundColor: "#EFE5FF",
-    height: "24%",
+    height: "20%",
   },
   headerTitle: {
     fontSize: 30,
@@ -662,6 +659,9 @@ const styles = StyleSheet.create({
     color: "#535353",
     fontWeight: "500",
     marginBottom: 10,
+    textAlign: "right",
+    width: "100%",
+    paddingRight: 30,
   },
   dateSelectText: {
     padding: 8,
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     backgroundColor: "#ffffffff",
-    paddingTop: 30,
+    paddingTop: 25,
   },
   inputBox: {
     marginBottom: 14,
@@ -783,10 +783,9 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     fontWeight: "bold",
   },
-
   submitBtn: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
     left: 20,
     right: 20,
     backgroundColor: "#000",

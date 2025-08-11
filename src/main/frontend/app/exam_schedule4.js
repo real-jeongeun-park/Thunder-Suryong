@@ -16,32 +16,30 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
-
 import axios from "axios";
 import { useData } from "@/context/DataContext";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
-
 const { width } = Dimensions.get("window");
+const { height: screenHeight } = Dimensions.get("window");
 
 export default function ExamInfoInput() {
   const router = useRouter();
   const { data, setData } = useData();
-
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-
-  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } =
-    data;
-  const parsedSubjectInfo = JSON.parse(subjectInfo);
-  const newSubjectList = [
-    ...new Set(parsedSubjectInfo.map((item) => item.subject)),
-  ]; // selected 된 것만
-
+  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
+  const [parsedSubjectInfo, setParsedSubjectInfo] = useState([]);
+  const [newSubjectList, setNewSubjectList] = useState([]);
   const [plans, setPlans] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [responseData, setResponseData] = useState(null);
+  const [selectedPlans, setSelectedPlans] = useState([]);
 
   // 로그인 상태 여부 확인
+  // 로그인 상태 여부 확인
+  // 로그인 상태 여부 확인
+
   useEffect(() => {
     const checkLogin = async () => {
       try {
@@ -73,55 +71,37 @@ export default function ExamInfoInput() {
     checkLogin();
   }, []);
 
+  useEffect(() => {
+    const parseSubjectInfo = () => {
+        const info = JSON.parse(subjectInfo);
+        setParsedSubjectInfo(info);
+        setNewSubjectList([...new Set(info.map((item) => item.subject))]);
+    }
+
+    if(userInfo !== null && subjectInfo !== null){
+        parseSubjectInfo();
+    }
+  }, [userInfo, subjectInfo]);
+
+
   // 자동 생성된 계획을 받아옴
+  // 자동 생성된 계획을 받아옴
+  // 자동 생성된 계획을 받아옴
+
   useEffect(() => {
     const getPlans = async () => {
       setLoading(true);
       try {
         const response = await axios.post(`${API_BASE_URL}/api/ai/plan`, {
           subjectInfo: parsedSubjectInfo,
+          existingSubjectList: newSubjectList,
           nickname: userInfo.nickname,
           endDate,
           subjects: JSON.parse(subjects),
           subjectDates: JSON.parse(subjectDates),
         });
 
-        const { date, subject, week, content } = response.data;
-
-        const newPlanList = date.map((date, index) => ({
-          date,
-          subject: subject[index],
-          week: week[index],
-          content: content[index],
-        }));
-
-        if (Platform.OS !== "web") {
-          const cleanedPlans = newPlanList.map((plan) => ({
-            ...plan,
-            subject: plan.subject ? plan.subject.replace(/^"(.*)"$/, "$1") : "",
-          }));
-
-          setPlans(cleanedPlans);
-
-          if (cleanedPlans.length > 0 && !selectedSubject) {
-            const firstSubject = [
-              ...new Set(cleanedPlans.map((item) => item.subject)),
-            ][0];
-            if (firstSubject) {
-              setSelectedSubject(firstSubject);
-            }
-          }
-        } else {
-          setPlans(newPlanList);
-          if (newPlanList.length > 0 && !selectedSubject) {
-            const firstSubject = [
-              ...new Set(newPlanList.map((item) => item.subject)),
-            ][0];
-            if (firstSubject) {
-              setSelectedSubject(firstSubject);
-            }
-          }
-        }
+        setResponseData(response.data);
       } catch (e) {
         console.log(e);
       } finally {
@@ -129,29 +109,65 @@ export default function ExamInfoInput() {
       }
     };
 
-    if (userInfo) {
+    if (userInfo !== null && parsedSubjectInfo && parsedSubjectInfo.length > 0 && newSubjectList && newSubjectList.length > 0) {
       getPlans();
     }
-  }, [userInfo]);
+  }, [userInfo, parsedSubjectInfo, newSubjectList]);
 
-  // 선택된 과목의 계획들만 필터링
-  const getSelectedPlans = () => {
-    if (!selectedSubject || !plans || plans.length === 0) {
-      return [];
+  // 데이터 모두 분해
+  // 데이터 모두 분해
+  // 데이터 모두 분해
+
+  useEffect(() => {
+    const parseResponseData = () => {
+        const { date, subject, week, content } = responseData;
+        const planList = date.map((date, idx) => ({
+            date,
+            subject: subject[idx],
+            week: week[idx],
+            content: content[idx],
+        }));
+
+        setPlans(planList);
+    }
+    if(userInfo && responseData){
+        parseResponseData();
+    }
+  }, [userInfo, responseData]);
+
+  // 디폴트 selected subject 정하기
+  // 디폴트 selected subject 정하기
+  // 디폴트 selected subject 정하기
+
+  useEffect(() => {
+    const setDefaultSelectedSubject = () => {
+        setSelectedSubject(newSubjectList[0]);
     }
 
-    return plans.filter((plan) => {
-      if (!plan || !plan.subject) return false;
-      return plan.subject.trim() === selectedSubject.trim();
-    });
-  };
+    if(userInfo !== null && newSubjectList !== null && newSubjectList.length > 0){
+        setDefaultSelectedSubject();
+    }
+  }, [userInfo, newSubjectList])
 
-  const selectedPlans = getSelectedPlans();
+  // 선택된 과목의 계획들만 필터링
+  // 선택된 과목의 계획들만 필터링
+  // 선택된 과목의 계획들만 필터링
 
-  // 디버깅용 로그 (필요시 사용)
-  console.log("현재 선택된 과목:", selectedSubject);
-  console.log("전체 계획 수:", plans.length);
-  console.log("필터된 계획 수:", selectedPlans.length);
+  useEffect(() => {
+    const getSelectedPlans = () => {
+        const filteredPlans = plans.filter(
+          (plan) =>
+            plan.subject &&
+            plan.subject.trim() === selectedSubject.trim()
+        );
+        setSelectedPlans(filteredPlans);
+    }
+
+    if(userInfo !== null && selectedSubject !== "" && plans && plans.length > 0){
+        getSelectedPlans();
+    }
+  }, [userInfo, selectedSubject, plans])
+
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -266,22 +282,22 @@ export default function ExamInfoInput() {
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <Image
+            source={require("../assets/images/main.png")}
+            style={styles.character}
+            resizeMode="contain"
+          />
+            <Text style={styles.loadingText}>생성 중입니다....</Text>
+        </View>
+      )}
         <View style={styles.container}>
           <View
             style={{
               flex: 1,
             }}
           >
-            {loading && (
-              <View style={styles.loadingOverlay}>
-                <Image
-                  source={require("../assets/images/main.png")}
-                  style={styles.character}
-                  resizeMode="contain"
-                />
-                <Text style={styles.loadingText}>로딩 중입니다....</Text>
-              </View>
-            )}
             {/* 뒤로가기 버튼 */}
             <View style={styles.backButtonContainer}>
               <TouchableOpacity onPress={() => router.back()}>
@@ -292,13 +308,13 @@ export default function ExamInfoInput() {
             <View style={styles.headerContainer}>
               <Text style={styles.headerTitle}>계획을 등록해주세요.</Text>
               <Text style={styles.subHeaderText}>
-                생성된 계획을 확인하고 등록해주세요!
+                생성된 계획을 확인하세요!
               </Text>
             </View>
             <View style={styles.inputContainer}>
               <View style={styles.formBox}>
-                {/* 기간 */}
-                <Text style={styles.inputText}>기간</Text>
+                {/* 시험 기간 */}
+                <Text style={styles.inputText}>시험 기간</Text>
                 <Text style={styles.periodText}>
                   {startDate} ~ {endDate}
                 </Text>
@@ -332,13 +348,8 @@ export default function ExamInfoInput() {
                     ))}
                   </ScrollView>
                 </View>
-
-                <View style={styles.scheduleListContainer}>
-                  {loading ? (
-                    <Text style={styles.noScheduleText}>
-                      일정을 불러오는 중입니다...
-                    </Text>
-                  ) : selectedPlans.length === 0 ? (
+                {selectedPlans && (
+                  selectedPlans.length === 0 ? (
                     <Text style={styles.noScheduleText}>
                       선택한 과목의 일정이 없습니다.
                     </Text>
@@ -385,11 +396,7 @@ export default function ExamInfoInput() {
                                   marginLeft: 10,
                                 },
                               ]}
-                              onPress={() => {
-                                //if (confirm("정말 삭제하시겠습니까?")) {
-                                handleDeletePlan(idx);
-                                //}
-                              }}
+                              onPress={() => handleDeletePlan(idx)}
                             >
                               <Text
                                 style={{
@@ -405,8 +412,8 @@ export default function ExamInfoInput() {
                         </View>
                       ))}
                     </ScrollView>
-                  )}
-                </View>
+                   )
+                )}
               </View>
             </View>
             <Modal
@@ -469,7 +476,7 @@ export default function ExamInfoInput() {
             </Modal>
             {/* 입력 완료 버튼 */}
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-              <Text style={styles.submitBtnText}>입력 완료</Text>
+              <Text style={styles.submitBtnText}>계획 등록</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -516,7 +523,7 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
     alignItems: "flex-start",
     backgroundColor: "#EFE5FF",
-    height: "24%",
+    height: "15%",
   },
   headerTitle: {
     fontSize: 30,
@@ -534,7 +541,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#535353",
     fontWeight: "450",
-    marginBottom: 20,
+    marginBottom: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -639,7 +646,7 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
     left: 20,
     right: 20,
     backgroundColor: "#000",
@@ -653,8 +660,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   subjectScrollContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 20,
+    paddingHorizontal: 10,
     backgroundColor: "#fff",
   },
   subjectBadgeSelected: {
@@ -673,12 +681,16 @@ const styles = StyleSheet.create({
     color: "#999",
     fontSize: 14,
     fontStyle: "italic",
+    marginLeft: 20,
+    marginTop: 5,
   },
   scheduleItem: {
     backgroundColor: "#E5DFF5",
     borderRadius: 8,
-    padding: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     marginBottom: 10,
+    marginHorizontal: 10,
   },
   scheduleWeek: {
     fontWeight: "bold",

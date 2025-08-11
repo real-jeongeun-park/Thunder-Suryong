@@ -45,17 +45,12 @@ export default function ExamInfoInput() {
   }
 
   const examPeriod = `${startDate} ~ ${endDate}`;
-
-  // 입력 상태
   const [selectedSubject, setSelectedSubject] = useState(subjectList[0] || "");
   const [week, setWeek] = useState("");
   const [content, setContent] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
-
-  // 저장 배열
   const [subjectInfo, setSubjectInfo] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
@@ -99,7 +94,7 @@ export default function ExamInfoInput() {
         subject: selectedSubject,
         week,
         content,
-        important: false,
+        important: "false",
       },
     ]);
     setWeek("");
@@ -203,7 +198,7 @@ export default function ExamInfoInput() {
           subject: selectedSubject,
           week,
           content: contentList[index],
-          important: false,
+          important: "false",
         }));
 
         setSubjectInfo([...subjectInfo, ...newSubjectInfoList]);
@@ -271,7 +266,7 @@ export default function ExamInfoInput() {
           ...newArr[editIndex],
           week: editWeek,
           content: editContent,
-          important: false,
+          important: "false",
         };
       }
       return newArr;
@@ -317,27 +312,29 @@ export default function ExamInfoInput() {
       const newArr = [...prev];
       newArr[realIndex] = {
         ...newArr[realIndex],
-        important: !newArr[realIndex].important, // 토글
+        important:
+          newArr[realIndex].important === "false" ? "true" : "false",
       };
       return newArr;
     });
+
+    console.log(subjectInfo);
   };
 
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+              source={require("../assets/images/main.png")}
+              style={styles.character}
+              resizeMode="contain"
+            />
+            <Text style={styles.loadingText}>로딩 중입니다....</Text>
+          </View>
+        )}
         <View style={styles.container}>
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <Image
-                source={require("../assets/images/main.png")}
-                style={styles.character}
-                resizeMode="contain"
-              />
-              <Text style={styles.loadingText}>로딩 중입니다....</Text>
-            </View>
-          )}
-
           {/* 뒤로가기 버튼 */}
           <View style={styles.backButtonContainer}>
             <TouchableOpacity onPress={() => router.back()}>
@@ -442,7 +439,7 @@ export default function ExamInfoInput() {
 
               {/* 저장된 데이터 확인 */}
               <ScrollView
-                style={{ marginTop: 20, maxHeight: screenHeight * 0.25 }}
+                style={styles.subjectListContainer}
                 showsVerticalScrollIndicator={false}
               >
                 {filteredSubjectInfo.map((info, idx) => (
@@ -469,9 +466,9 @@ export default function ExamInfoInput() {
                           style={{ marginRight: 6 }} // 여유
                         >
                           <Ionicons
-                            name={info.important ? "star" : "star-outline"}
+                            name={info.important === "true" ? "star" : "star-outline"}
                             size={22}
-                            color={info.important ? "#ffc23dff" : "#BDBDBD"}
+                            color={info.important === "true" ? "#ffc23dff" : "#BDBDBD"}
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -707,7 +704,7 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
     left: 20,
     right: 20,
     backgroundColor: "#000",
@@ -845,4 +842,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+
+  subjectListContainer: {
+     marginTop: 20,
+     maxHeight: screenHeight * 0.3,
+  }
 });

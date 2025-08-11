@@ -86,110 +86,11 @@ public class AiService {
     }
 
     public SubjectInfoList usePlansAi(Map<String, Object> body){
-        List<Map<String, String>> subjectInfo = (List<Map<String, String>>)body.get("subjectInfo");
-        String nickname = (String)body.get("nickname");
-        String startDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String endDate = (String)body.get("endDate");
-        String request;
-
-        // 존재하는 subject names
-        Set<String> existingSubjectNamesSet = new HashSet<>();
-        for(Map<String, String> element : subjectInfo){
-            String subject = element.get("subject");
-            existingSubjectNamesSet.add(subject);
-        }
-
-        List<String> existingSubjectNames = new ArrayList<>(existingSubjectNamesSet);
-
-        List<String> subjectNames = (List<String>)body.get("subjects");
-        List<String> subjectDates = (List<String>)body.get("subjectDates");
-
-        // key가 subjectNames, value가 subjectDates
-        Map<String, String> subjectMap = new HashMap<>();
-        for(int i = 0; i < subjectNames.size(); i++){
-            subjectMap.put(subjectNames.get(i), subjectDates.get(i));
-        }
-
-        Map<String, String> styleInfo = getStyleInfo(nickname); // 스타일 가져옴. studyTime, studySubject, studystyle
-
-        StringBuilder stringBuilder = new StringBuilder();
-        for(Map<String, String> info : subjectInfo){
-            for(String value : info.values()){
-                stringBuilder.append(value + " ");
-            }
-            stringBuilder.append("\n");
-        }
-
-        String chunkText;
-        String fullText = stringBuilder.toString();
-        int length = fullText.length();
-        int chunkSize = 1000; // 한 번에 1000자까지만 ok
-
-        StringBuilder chunkedTextBuilder = new StringBuilder();
-        for(int i = 0; i < length; i += chunkSize){
-            chunkText = fullText.substring(i, Math.min(length, i + chunkSize));
-            chunkedTextBuilder.append("이어서 계속:\n").append(chunkText).append("\n");
-        }
-
-        System.out.println("텍스트 길이 (char 수): " + chunkedTextBuilder.length());
-
-        StringBuilder endDates = new StringBuilder();
-        for(int i = 0; i < existingSubjectNames.size(); i++){
-            String name = existingSubjectNames.get(i);
-            endDates.append(name + "의 종료일: ");
-            endDates.append(subjectMap.get(name) + "\n");
-        }
-
-        System.out.println(endDates.toString());
-
-        if(styleInfo != null && !styleInfo.isEmpty()){
-            request = "너는 똑똑한 AI 공부 도우미야. 아래를 모두 고려하여 **학습 플래너, 계획표**를 세워줘.\n" +
-                    "[요구사항]\n" +
-                    "1. 공부 시작일부터 종료일까지 **하루도 빠짐없이** 계획표에 포함시켜.\n" +
-                    "2. 하루에 여러 과목이 적절히 분배되도록 구성해줘.\n" +
-                    "3. 출력은 꼭 아래 형식만 써야 해. **앞 뒤로, 혹은 중간에 다른 설명, 요약, 문장 없이** 형식대로만 출력해.\n" +
-                    "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
-                    "5. **다음은 각 과목의 시험 종료일이야. 계획을 짤 때, 각 과목에 대해 종료일 이후의 계획은 있으면 안 돼. 예를 들어 AI융합개론의 종료일이 2025-07-31이면, 2025-07-31 이후의 계획에 AI융합개론 과목과 주차는 포함되면 안 돼.**\n" +
-                    endDates.toString() +
-                    "\n" +
-                    "[계획표 예시]\n" +
-                    "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
-                    "2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n" +
-                    "2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n" +
-                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
-                    "\n" +
-                    "[계획표에 대한 정보]\n" +
-                    "- 공부 시작일: " + startDate + "\n" +
-                    "- 공부 종료일: " + endDate + "\n" +
-                    "- 하루에 공부할 과목 수: " + styleInfo.get("studySubject") + "\n" +
-                    "- 하루 총 공부 시간: " + styleInfo.get("studyTime") + "\n" +
-                    "- 학습 스타일: " + styleInfo.get("studyStyle") + "\n" +
-                    "- 학습할 각 과목 명, 주차 명, 분량/내용: " + chunkedTextBuilder.toString() + "\n\n";
-        } else {
-            // 스타일 정보가 없음
-            request = "너는 똑똑한 AI 공부 도우미야. 아래를 모두 고려하여 **학습 플래너, 계획표**를 세워줘.\n" +
-                    "[요구사항]\n" +
-                    "1. 공부 시작일부터 종료일까지 **하루도 빠짐없이** 계획표에 포함시켜.\n" +
-                    "2. 하루에 여러 과목이 적절히 분배되도록 구성해줘.\n" +
-                    "3. 출력은 꼭 아래 형식만 써야 해. **앞 뒤로, 혹은 중간에 다른 설명, 요약, 문장 없이** 형식대로만 출력해.\n" +
-                    "4. **날짜를 빠뜨려선 안 돼. 날짜가 없는 응답은 잘못된 응답이야.** 날짜는 YYYY-MM-DD 형태로 매 줄의 항상 가장 앞에 위치해. \n" +
-                    "5. **다음은 각 과목의 시험 종료일이야. 계획을 짤 때, 각 과목에 대해 종료일 이후의 계획은 있으면 안 돼. 예를 들어 AI융합개론의 종료일이 2025-07-31이면, 2025-07-31 이후의 계획에 AI융합개론 과목과 주차는 포함되면 안 돼.**\n" +
-                    endDates.toString() +
-                    "\n" +
-                    "[계획표 예시]\n" +
-                    "2025-07-18, AI융합개론, 1주, 강의 개요\n" +
-                    "2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n" +
-                    "2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n" +
-                    "2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n" +
-                    "\n" +
-                    "[계획표에 대한 정보]\n" +
-                    "- 공부 시작일: " + startDate + "\n" +
-                    "- 공부 종료일: " + endDate + "\n" +
-                    "- 학습할 각 과목 명, 주차 명, 분량/내용: " + chunkedTextBuilder.toString() + "\n\n";
-        }
+        String prompt = buildPrompt(body);
 
         try{
-            String response = ai.requestAnswer(request).getResponse();
+            String response = ai.requestAnswer(prompt).getResponse();
+            System.out.println(response);
 
             List<String> resultList = Arrays.stream(response.split("\n"))
                     .map(String::trim)
@@ -201,6 +102,10 @@ public class AiService {
             List<String> contentList = new ArrayList<>();
 
             for(String element : resultList){
+                int bracketsIndex = element.indexOf("(");
+                if(bracketsIndex == 0){
+                    element = element.substring(1, element.length()-1);
+                }
                 int index = element.indexOf(",");
                 int secondIndex = element.indexOf(",", index+1);
                 int thirdIndex = element.indexOf(",", secondIndex+1);
@@ -231,18 +136,113 @@ public class AiService {
         }
     }
 
-    public Map<String, String> getStyleInfo(String nickname){
+    private String getStyleInfo(String nickname){
         List<Style> styleList = styleRepository.findByNickname(nickname);
-        if(styleList == null || styleList.isEmpty()) return null;
+        if(styleList.isEmpty()) return "";
 
         Style style = styleList.get(0);
+        StringBuilder sb = new StringBuilder();
 
-        Map<String, String> styleInfo = new HashMap<>();
-        styleInfo.put("studyTime", style.getStudyTime());
-        styleInfo.put("studySubject", style.getStudySubject());
-        styleInfo.put("studyStyle", style.getStudyStyle());
+        sb.append("하루에 공부할 과목의 수: ").append(style.getStudySubject()).append("\n");
+        sb.append("하루에 총 공부 시간: ").append(style.getStudyTime()).append("\n");
+        sb.append("학습 방식: ").append(style.getStudyStyle()).append("\n");
 
-        return styleInfo;
+        return sb.toString();
+    }
+
+    private String buildPrompt(Map<String, Object> body){
+        List<Map<String, String>> subjectInfo = (List<Map<String, String>>)body.get("subjectInfo");
+        List<String> existingSubjectNames = (List<String>)body.get("existingSubjectList");
+        String nickname = (String)body.get("nickname");
+        String startDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String endDate = (String)body.get("endDate");
+        List<String> subjectNames = (List<String>)body.get("subjects");
+        List<String> subjectDates = (List<String>)body.get("subjectDates");
+
+        // 1. 각 subject의 endDate을 가져옴
+        // key가 subjectNames, value가 subjectDates
+
+        Map<String, String> subjectEndDateMap = new HashMap<>();
+        for(int i = 0; i < subjectNames.size(); i++){
+            subjectEndDateMap.put(subjectNames.get(i), subjectDates.get(i));
+        }
+
+        subjectEndDateMap.entrySet().removeIf(
+                entry -> !existingSubjectNames.contains(entry.getKey())
+        );
+
+        StringBuilder endDatesSb = new StringBuilder();
+        for(String name : existingSubjectNames){
+            endDatesSb.append(name).append("의 시험 종료일은 ").append(subjectEndDateMap.get(name)).append("이야. ");
+        }
+
+        // 2. 사용자의 학습 스타일을 가져옴
+        // studyTime, studySubject, studyStyle
+        String style = getStyleInfo(nickname);
+
+        // 3. 사용자가 입력한 계획 정보를 가져옴
+        // subject, week, content, important
+
+        StringBuilder subjectSb = new StringBuilder();
+        for(Map<String, String> info : subjectInfo){
+            for(String value : info.values()){
+                subjectSb.append(value).append(", ");
+            }
+            subjectSb.append("\n");
+        }
+
+        System.out.println("텍스트 길이 (char 수): " + subjectSb.length());
+
+        StringBuilder sb = new StringBuilder();
+
+        if(!style.equals("")){
+            sb.append("너는 똑똑한 AI 공부 도우미야. 요구사항에 따라 학습 계획표를 세워줘.\n");
+            sb.append("[요구사항]\n");
+            sb.append("❗ 1. 공부 시작일 ").append(startDate).append("일부터 ").append("종료일 ").append(endDate).append("일 중 하나라도 계획이 없는 날이 있어선 안 돼.");
+            sb.append("❗ 2. 하루에 여러 과목이 적절히 분배되도록 매일의 계획을 세워줘.");
+            sb.append("❗ 3. **출력/응답 시 반드시 (YYYY-MM-DD, 과목 이름, 공부 분량) 이라는 형식을 지켜. 형식을 지키지 않으면 계획표는 저장되지 않아.** **앞뒤로, 혹은 중간에 다른 설명, 요약, 문장은 절대 포함 시키지마.**");
+            sb.append("❗ 4. 매일의 계획에 날짜를 빠뜨리지마. 날짜가 없는 응답은 무조건 잘못된 출력이야.");
+            sb.append("❗ 5. ").append(endDatesSb.toString()).append(" 참고하여 계획을 짤 때 반드시 시험 종료일 전까지의 계획만 짜줘. ");
+            sb.append("예를 들어 과목 AI융합개론의 시험 종료일이 2025-07-31일이고, 클라우딩컴퓨팅AI의 시험 종료일이 2025-08-03일이면, 2025-07-30일 이후 계획에 AI융합개론 공부 분량이 포함되면 안 돼. 마찬가지로, 2025-08-02일 이후에 클라우딩컴퓨팅AI 공부 분량이 포함되면 안 돼.");
+            sb.append("❗ 6. 계획을 짤 때는 사용자의 학습 정보 또한 고려해야 해. ").append(style);
+
+            sb.append("[계획표 예시]").append("\n");
+            sb.append("2025-07-18, AI융합개론, 1주, 강의 개요\n");
+            sb.append("2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n");
+            sb.append("2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n");
+            sb.append("2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n");
+
+            sb.append("[계획표 생성에 필요한 정보]").append("\n");
+            sb.append("여러 줄의 (학습 해야 하는 과목명, 주차명, 공부 분량/내용, 중요 여부)로 구성돼 있어. 반드시 이 정보를 바탕으로 계획을 세워줘.").append("\n");
+            sb.append("❗ 단, **각 줄에서 중요 여부에 해당하는 마지막 값이 true일 경우 반드시 공부 분량을 이틀로 잡아야 해.** ").append("\n");
+            sb.append("예를 들어서 (클라우딩컴퓨팅AI, 1주/1회차, 클라우딩 컴퓨팅이란, true)이 있으면, 중요 여부가 false 일 때 2025-08-01일에 생성하려고 했다면, true일 때는 2025-08-01일, 2025-08-02일처럼 이틀에 걸쳐서 계획표에 들어가야 해.");
+            sb.append(subjectSb.toString());
+            sb.append("❗ 주의: 다시 한 번 말하지만, **출력/응답 시 반드시 (YYYY-MM-DD, 과목 이름, 공부 분량) 이라는 형식을 지켜. 형식을 지키지 않으면 계획표는 저장되지 않아.** **앞뒤로, 혹은 중간에 다른 설명, 요약, 문장은 절대 포함 시키지마.**");
+        } else {
+            sb.append("너는 똑똑한 AI 공부 도우미야. 요구사항에 따라 학습 계획표를 세워줘.\n");
+            sb.append("[요구사항]\n");
+            sb.append("❗ 1. 공부 시작일 ").append(startDate).append("일부터 ").append("종료일 ").append(endDate).append("일 중 하나라도 계획이 없는 날이 있어선 안 돼.");
+            sb.append("❗ 2. 하루에 여러 과목이 적절히 분배되도록 매일의 계획을 세워줘.");
+            sb.append("❗ 3. **출력/응답 시 반드시 (YYYY-MM-DD, 과목 이름, 공부 분량) 이라는 형식을 지켜. 형식을 지키지 않으면 계획표는 저장되지 않아.** **앞뒤로, 혹은 중간에 다른 설명, 요약, 문장은 절대 포함 시키지마.**");
+            sb.append("❗ 4. 매일의 계획에 날짜를 빠뜨리지마. 날짜가 없는 응답은 무조건 잘못된 출력이야.");
+            sb.append("❗ 5. ").append(endDatesSb.toString()).append(" 참고하여 계획을 짤 때 반드시 시험 종료일 전까지의 계획만 짜줘. ");
+            sb.append("예를 들어 과목 AI융합개론의 시험 종료일이 2025-07-31일이고, 클라우딩컴퓨팅AI의 시험 종료일이 2025-08-03일이면, 2025-07-30일 이후 계획에 AI융합개론 공부 분량이 포함되면 안 돼. 마찬가지로, 2025-08-02일 이후에 클라우딩컴퓨팅AI 공부 분량이 포함되면 안 돼.");
+
+            sb.append("[계획표 예시]").append("\n");
+            sb.append("2025-07-18, AI융합개론, 1주, 강의 개요\n");
+            sb.append("2025-07-18, 고급파이썬프로그래밍, 1주, 수업 개요 & 파이썬 설치 및 사용법\n");
+            sb.append("2025-07-19, AI융합개론, 2주, 지능의 예시와 정의\n");
+            sb.append("2025-07-19, 고급파이썬프로그래밍, 2주, 파이썬 개념 리뷰 - 명령어 & 집합, 리 스트, 튜플, 딕셔너리 - 프로그램 흐름제어\n");
+
+            sb.append("[계획표 생성에 필요한 정보]").append("\n");
+            sb.append("여러 줄의 (학습 해야 하는 과목명, 주차명, 공부 분량/내용, 중요 여부)로 구성돼 있어. 반드시 이 정보를 바탕으로 계획을 세워줘.").append("\n");
+            sb.append("❗ 단, **각 줄에서 중요 여부에 해당하는 마지막 값이 true일 경우 반드시 공부 분량을 이틀로 잡아야 해.** ").append("\n");
+            sb.append("예를 들어서 (클라우딩컴퓨팅AI, 1주/1회차, 클라우딩 컴퓨팅이란, true)이 있으면, 중요 여부가 false 일 때 2025-08-01일에 생성하려고 했다면, true일 때는 2025-08-01일, 2025-08-02일처럼 이틀에 걸쳐서 계획표에 들어가야 해.");
+            sb.append(subjectSb.toString());
+            sb.append("❗ 주의: 다시 한 번 말하지만, **출력/응답 시 반드시 (YYYY-MM-DD, 과목 이름, 공부 분량) 이라는 형식을 지켜. 형식을 지키지 않으면 계획표는 저장되지 않아.** **앞뒤로, 혹은 중간에 다른 설명, 요약, 문장은 절대 포함 시키지마.**");
+        }
+
+        return sb.toString();
     }
 
     public String getChatInput(Map<String, String> body) throws IOException, InterruptedException {

@@ -316,9 +316,8 @@ const styles = StyleSheet.create({
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 30,
-    marginRight: 10,
     marginBottom: 10,
+    marginHorizontal: 30,
   },
   dayText: {
     flex: 1,
@@ -354,7 +353,7 @@ const styles = StyleSheet.create({
   },
   button: {
     position: "absolute",
-    bottom: 30,
+    bottom: 10,
     left: 20,
     right: 20,
     backgroundColor: "#000",
