@@ -100,7 +100,7 @@ export default function HomeScreen() {
   };
   const saveEdit = async () => {
     try {
-      if(!editForm.title.trim() || !editForm.week.trim()){
+      if (!editForm.title.trim() || !editForm.week.trim()) {
         alert("입력되지 않은 항목이 존재합니다.");
         return;
       }
@@ -171,7 +171,7 @@ export default function HomeScreen() {
         week: addForm.week,
         content: addForm.title,
         date: format(date, "yyyy-MM-dd"),
-      })
+      });
 
       await fetchPlans();
     } catch (e) {
@@ -421,22 +421,22 @@ export default function HomeScreen() {
       }
     }
 
-    const fetchEntireSubjects = async() => {
-        try{
-            const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
-                nickname: userInfo.nickname,
-            });
+    const fetchEntireSubjects = async () => {
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
+          nickname: userInfo.nickname,
+        });
 
-            const subjects = res.data.subjectNameList.map((name, idx) => ({
-                name: name,
-                id: res.data.subjectIdList[idx],
-            }));
+        const subjects = res.data.subjectNameList.map((name, idx) => ({
+          name: name,
+          id: res.data.subjectIdList[idx],
+        }));
 
-            setEntireSubjects(subjects);
-        } catch(e){
-            console.log("failed to load entire subjects ", e);
-        }
-    }
+        setEntireSubjects(subjects);
+      } catch (e) {
+        console.log("failed to load entire subjects ", e);
+      }
+    };
 
     if (userInfo !== null && userInfo.nickname) {
       fetchDefaultExam();
@@ -455,7 +455,7 @@ export default function HomeScreen() {
   const toggleSheet = () => {
     const toValue = isExpanded
       ? screenHeight * 0.4
-      : screenHeight * 0.95 - insets.bottom; // safe area bottom 제외
+      : screenHeight * 0.87 - insets.bottom; // safe area bottom 제외
     Animated.timing(sheetHeight, {
       toValue,
       duration: 300,
@@ -653,7 +653,9 @@ export default function HomeScreen() {
         </LinearGradient>
 
         {/* 드래그 가능한 시트: 높이 애니메이션, 안에 일정 및 달력 UI 포함 */}
-        <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
+        <Animated.View
+          style={[styles.sheet, { height: sheetHeight, bottom: 65 }]}
+        >
           <TouchableOpacity onPress={toggleSheet}>
             <View style={styles.handleBar} />
           </TouchableOpacity>
@@ -674,7 +676,7 @@ export default function HomeScreen() {
           </View>
 
           {/* 오늘의 계획 카드 영역 */}
-          <View style={styles.card}>
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.card}>
             <Text style={styles.toDoTitle}>오늘의 계획</Text>
 
             {isLoading ? (
@@ -774,7 +776,7 @@ export default function HomeScreen() {
                 추가+
               </Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
 
           <Modal visible={calendarVisible} transparent animationType="none">
             <View style={styles.modalBackground}>
@@ -886,7 +888,9 @@ export default function HomeScreen() {
                 style={[styles.menuItem, { borderBottomWidth: 0 }]}
                 onPress={onMove}
               >
-                <Text style={[styles.menuText, { color: "rebeccapurple" }]}>다른 날에 하기</Text>
+                <Text style={[styles.menuText, { color: "rebeccapurple" }]}>
+                  다른 날에 하기
+                </Text>
               </TouchableOpacity>
             </View>
           </Modal>
