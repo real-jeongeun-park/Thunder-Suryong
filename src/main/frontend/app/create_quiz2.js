@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../src/constants";
 import { useData } from "@/context/DataContext";
 import { KeyboardAvoidingView } from "react-native";
@@ -44,71 +44,72 @@ export default function CreateQuizSelectType() {
 
   // 로그인 여부 체크
   useEffect(() => {
-      async function checkLogin() {
-        try {
-          let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-          if (Platform.OS === "web") {
-            token = localStorage.getItem("accessToken");
-          } else {
-            token = await SecureStore.getItemAsync("accessToken");
-          }
-
-          if (!token) throw new Error("Token not found");
-          const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          setUserInfo(res.data);
-        } catch (err) {
-          console.log(err);
-          setUserInfo(null);
-          router.push("/");
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
         }
-      }
 
-      checkLogin();
-    }, []);
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
 
   // notes parse
   useEffect(() => {
-        const parseNotes = () => {
-            try{
-                if(selectedNotes){
-                    setParsedSelectedNotes(JSON.parse(selectedNotes));
-                }
-                else{
-                    setParsedSelectedNotes([]);
-                }
-            } catch(e){
-                console.log("failed to parse selected notes ", e);
-                setParsedSelectedNotes([]);
-            }
-        };
-
-        if(userInfo !== null){
-            parseNotes();
+    const parseNotes = () => {
+      try {
+        if (selectedNotes) {
+          setParsedSelectedNotes(JSON.parse(selectedNotes));
+        } else {
+          setParsedSelectedNotes([]);
         }
-  }, [userInfo, selectedNotes])
+      } catch (e) {
+        console.log("failed to parse selected notes ", e);
+        setParsedSelectedNotes([]);
+      }
+    };
+
+    if (userInfo !== null) {
+      parseNotes();
+    }
+  }, [userInfo, selectedNotes]);
 
   // inputText 설정
   useEffect(() => {
     const setRealText = () => {
-        if(inputText && inputText !== ""){
-            setRealInputText(inputText);
-        } else{
-            setRealInputText("");
-        }
+      if (inputText && inputText !== "") {
+        setRealInputText(inputText);
+      } else {
+        setRealInputText("");
+      }
+    };
+    if (userInfo !== null) {
+      setRealText();
     }
-    if(userInfo !== null){
-        setRealText();
-    }
-  }, [userInfo, inputText])
+  }, [userInfo, inputText]);
 
   const handleRemoveNote = (noteId) => {
-        setParsedSelectedNotes((prev) => prev.filter((note) => note.noteId !== noteId));
+    setParsedSelectedNotes((prev) =>
+      prev.filter((note) => note.noteId !== noteId)
+    );
   };
 
   const handleRemoveText = () => setRealInputText("");
@@ -121,66 +122,69 @@ export default function CreateQuizSelectType() {
 
   // 퀴즈 생성 버튼 클릭 시
   const handleGenerateQuiz = async () => {
-    if(!questionName.trim()){
-        setModalRealText("문제지 이름을 입력해 주세요!");
-        setShowModal(true);
-        return;
+    if (!questionName.trim()) {
+      setModalRealText("문제지 이름을 입력해 주세요!");
+      setShowModal(true);
+      return;
     }
 
-    if(selectedTypes.length === 0) {
-        setModalRealText("적어도 하나의 문제 유형을 선택해 주세요!");
-        setShowModal(true);
-        return;
+    if (selectedTypes.length === 0) {
+      setModalRealText("적어도 하나의 문제 유형을 선택해 주세요!");
+      setShowModal(true);
+      return;
     }
 
-    if(!questionCount || parseInt(questionCount) <= 0){
-        setModalRealText("문제 수를 정확히 입력하세요.");
-        setShowModal(true);
-        return;
+    if (!questionCount || parseInt(questionCount) <= 0) {
+      setModalRealText("문제 수를 정확히 입력하세요.");
+      setShowModal(true);
+      return;
     }
 
-    if(parsedSelectedNotes.length > 0){
-        setIsLoading(true);
+    if (parsedSelectedNotes.length > 0) {
+      setIsLoading(true);
 
-        const selectedTypeNames = selectedTypes.map((id) => {
-            const found = questionTypeOptions.find((t) => t.id === id);
-            return found?.name;
-        });
-        const noteIds = parsedSelectedNotes.map((note) => {
-            return note.noteId;
-        });
+      const selectedTypeNames = selectedTypes.map((id) => {
+        const found = questionTypeOptions.find((t) => t.id === id);
+        return found?.name;
+      });
+      const noteIds = parsedSelectedNotes.map((note) => {
+        return note.noteId;
+      });
 
-        const infoForQuestion = {
-            noteIds,
-            quizTitle: questionName.trim(),
-            problemTypes: selectedTypeNames,
-            problemCount: parseInt(questionCount),
-            nickname: userInfo.nickname,
-            inputText: realInputText,
-            folderId,
-        }
+      const infoForQuestion = {
+        noteIds,
+        quizTitle: questionName.trim(),
+        problemTypes: selectedTypeNames,
+        problemCount: parseInt(questionCount),
+        nickname: userInfo.nickname,
+        inputText: realInputText,
+        folderId,
+      };
 
-        try{
-            const res = await axios.post(`${API_BASE_URL}/api/quiz/create`, infoForQuestion);
+      try {
+        const res = await axios.post(
+          `${API_BASE_URL}/api/quiz/create`,
+          infoForQuestion
+        );
 
-            setData((prev) => ({
-                ...prev,
-                questionName,
-                questionCount,
-                quizId: res.data,
-            }));
+        setData((prev) => ({
+          ...prev,
+          questionName,
+          questionCount,
+          quizId: res.data,
+        }));
 
-            setIsLoading(false);
-            router.push("/quiz");
-        } catch(e){
-            console.log("failed to generate quiz ", e);
-        }
+        setIsLoading(false);
+        router.push("/quiz");
+      } catch (e) {
+        console.log("failed to generate quiz ", e);
+      }
     }
   };
 
   return (
     <>
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()}>
@@ -189,20 +193,33 @@ export default function CreateQuizSelectType() {
             <Text style={styles.headerText}>문제 유형 선택</Text>
           </View>
 
-
           <View style={styles.scrollContent}>
-            { parsedSelectedNotes.length > 0 && (
+            {parsedSelectedNotes.length > 0 && (
               <View>
                 <Text style={styles.subHeader}>선택된 노트</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                  {parsedSelectedNotes.length > 0 && parsedSelectedNotes.map((note, idx) => (
-                    <View key={idx} style={styles.selectedNoteBox}>
-                      <Text style={styles.selectedNoteText}>{note.folderName} - {note.noteTitle}</Text>
-                      <TouchableOpacity onPress={() => handleRemoveNote(note.noteId)}>
-                        <Ionicons name="close-circle" size={18} color="#fff" style={{ marginLeft: 5 }} />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginTop: 10 }}
+                >
+                  {parsedSelectedNotes.length > 0 &&
+                    parsedSelectedNotes.map((note, idx) => (
+                      <View key={idx} style={styles.selectedNoteBox}>
+                        <Text style={styles.selectedNoteText}>
+                          {note.folderName} - {note.noteTitle}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => handleRemoveNote(note.noteId)}
+                        >
+                          <Ionicons
+                            name="close-circle"
+                            size={18}
+                            color="#fff"
+                            style={{ marginLeft: 5 }}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
                 </ScrollView>
               </View>
             )}
@@ -212,7 +229,7 @@ export default function CreateQuizSelectType() {
                 <View style={styles.customInputBox}>
                   <Text style={styles.subHeader}>직접 입력한 내용</Text>
                   <TouchableOpacity onPress={handleRemoveText}>
-                    <Ionicons name="close-circle" size={18} color="#BA94CC"/>
+                    <Ionicons name="close-circle" size={18} color="#BA94CC" />
                   </TouchableOpacity>
                 </View>
                 <TextInput
@@ -224,27 +241,38 @@ export default function CreateQuizSelectType() {
               </View>
             )}
             <View>
-                <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제지 이름</Text>
-                <TextInput
-                  style={styles.input}
-                  value={questionName}
-                  onChangeText={setQuestionName}
-                  placeholder="문제지 이름을 입력해 주세요."
-                  placeholderTextColor={Platform.OS === 'ios' ? '#8A8A8A' : '#717171'}
-                  maxLength={20}
-                />
-                <Text style={styles.charCount}>{questionName.length} / 20</Text>
+              <Text style={[styles.subHeader, { marginTop: 30 }]}>
+                문제지 이름
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={questionName}
+                onChangeText={setQuestionName}
+                placeholder="문제지 이름을 입력해 주세요."
+                placeholderTextColor={
+                  Platform.OS === "ios" ? "#8A8A8A" : "#717171"
+                }
+                maxLength={20}
+              />
+              <Text style={styles.charCount}>{questionName.length} / 20</Text>
             </View>
-            <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 유형</Text>
+            <Text style={[styles.subHeader, { marginTop: 30 }]}>문제 유형</Text>
             <View style={styles.typesWrap}>
               {questionTypeOptions.map((type) => (
                 <TouchableOpacity
                   key={type.id}
-                  style={[styles.typeBtn, selectedTypes.includes(type.id) && styles.typeBtnSelected]}
+                  style={[
+                    styles.typeBtn,
+                    selectedTypes.includes(type.id) && styles.typeBtnSelected,
+                  ]}
                   onPress={() => toggleType(type.id)}
                 >
                   <Text
-                    style={[styles.typeText, selectedTypes.includes(type.id) && styles.typeTextSelected]}
+                    style={[
+                      styles.typeText,
+                      selectedTypes.includes(type.id) &&
+                        styles.typeTextSelected,
+                    ]}
                   >
                     {type.name}
                   </Text>
@@ -252,20 +280,25 @@ export default function CreateQuizSelectType() {
               ))}
             </View>
             <View>
-                <Text style={[styles.subHeader, { marginTop: 30, } ]}>문제 수</Text>
-                <TextInput
-                  style={styles.input}
-                  value={questionCount}
-                  onChangeText={setQuestionCount}
-                  placeholder="생성할 문제 수를 입력해 주세요."
-                  placeholderTextColor={Platform.OS === 'ios' ? '#8A8A8A' : '#717171'}
-                  keyboardType="numeric"
-                />
+              <Text style={[styles.subHeader, { marginTop: 30 }]}>문제 수</Text>
+              <TextInput
+                style={styles.input}
+                value={questionCount}
+                onChangeText={setQuestionCount}
+                placeholder="생성할 문제 수를 입력해 주세요."
+                placeholderTextColor={
+                  Platform.OS === "ios" ? "#8A8A8A" : "#717171"
+                }
+                keyboardType="numeric"
+              />
             </View>
           </View>
 
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.selectButton} onPress={handleGenerateQuiz}>
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={handleGenerateQuiz}
+            >
               <Text style={styles.selectButtonText}>퀴즈 생성</Text>
             </TouchableOpacity>
           </View>
@@ -273,31 +306,34 @@ export default function CreateQuizSelectType() {
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <Image
-                  source={require("../assets/images/main.png")}
-                  style={styles.character}
-                  resizeMode="contain"
+                source={require("../assets/images/loading.png")}
+                style={styles.character}
+                resizeMode="contain"
               />
               <Text style={styles.loadingText}>생성 중입니다....</Text>
             </View>
           )}
 
-        <Modal
-          transparent
-          animationType="fade"
-          visible={showModal}
-          onRequestClose={() => setShowModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color="#000" />
-              </TouchableOpacity>
-              <Text style={styles.modalText}>{modalRealText}</Text>
+          <Modal
+            transparent
+            animationType="fade"
+            visible={showModal}
+            onRequestClose={() => setShowModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <TouchableOpacity
+                  style={styles.modalCloseBtn}
+                  onPress={() => setShowModal(false)}
+                >
+                  <Ionicons name="close" size={24} color="#000" />
+                </TouchableOpacity>
+                <Text style={styles.modalText}>{modalRealText}</Text>
+              </View>
             </View>
-          </View>
-        </Modal>
-      </View>
-    </TouchableWithoutFeedback>
+          </Modal>
+        </View>
+      </TouchableWithoutFeedback>
     </>
   );
 }
@@ -311,7 +347,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   scrollContent: {
-    paddingBottom: 20,  // 스크롤 안쪽 여백
+    paddingBottom: 20, // 스크롤 안쪽 여백
   },
   footer: {
     paddingVertical: 10,

@@ -125,7 +125,7 @@ export default function StudyTimeScreen() {
               <TouchableOpacity
                 onPress={() => {
                   console.log("건너뛰기");
-                  router.push("/main");
+                  router.push("/question4");
                 }}
               >
                 <Text style={styles.skipText}>나중에 하기</Text>

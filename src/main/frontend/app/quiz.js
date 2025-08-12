@@ -63,40 +63,38 @@ export default function CreatedQuizScreen() {
 
   // quiz 불러옴
   useEffect(() => {
-    const getQuizzes = async() => {
-        try{
-            const response = await axios.post(`${API_BASE_URL}/api/quiz/get`, {
-                quizId,
-                currentQuestionIndex,
-                isResultPage: "false",
-            });
+    const getQuizzes = async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/quiz/get`, {
+          quizId,
+          currentQuestionIndex,
+          isResultPage: "false",
+        });
 
-            setQuestion(response.data);
-            setQuestionParseComplete(false);
-        } catch(err){
-            console.log("failed to load quiz ", err);
-        }
-    }
+        setQuestion(response.data);
+        setQuestionParseComplete(false);
+      } catch (err) {
+        console.log("failed to load quiz ", err);
+      }
+    };
 
-    if(userInfo && userInfo !== ""){
-        getQuizzes();
+    if (userInfo && userInfo !== "") {
+      getQuizzes();
     }
   }, [userInfo, quizId, currentQuestionIndex]);
-
 
   // 객관식 부분 parse
   useEffect(() => {
     if (
-      (question?.type === "objective" ||
-      question?.type === "ox") &&
-      (!questionParseComplete &&
+      (question?.type === "objective" || question?.type === "ox") &&
+      !questionParseComplete &&
       typeof question.question === "string" &&
-      question.question.includes("@@"))
+      question.question.includes("@@")
     ) {
       const [newQuestion, afterSplitStr] = question.question.split("@@");
       const newOptions = afterSplitStr.split("|");
 
-      setQuestion(prev => ({
+      setQuestion((prev) => ({
         ...prev,
         question: newQuestion,
         options: newOptions,
@@ -107,16 +105,18 @@ export default function CreatedQuizScreen() {
   }, [question?.type, question?.question, questionParseComplete]);
 
   const selectOption = (option) => {
-    if(selectedOption === option){
-        setSelectedOption(null);
-    } else{
-        setSelectedOption(option);
+    if (selectedOption === option) {
+      setSelectedOption(null);
+    } else {
+      setSelectedOption(option);
     }
   };
 
   // 문제 이동
   useEffect(() => {
-    const item = userAnswers.find(item => item.index === currentQuestionIndex);
+    const item = userAnswers.find(
+      (item) => item.index === currentQuestionIndex
+    );
     if (question?.type === "subjective") {
       setSubjectiveAnswer(item ? item.answer : "");
     } else {
@@ -130,7 +130,9 @@ export default function CreatedQuizScreen() {
     const nextIndex = newIndex != null ? newIndex : currentQuestionIndex + 1;
 
     setUserAnswers((prev) => {
-      const filtered = prev.filter(item => item.index !== currentQuestionIndex);
+      const filtered = prev.filter(
+        (item) => item.index !== currentQuestionIndex
+      );
       return [...filtered, { index: currentQuestionIndex, answer }];
     });
 
@@ -140,25 +142,26 @@ export default function CreatedQuizScreen() {
   // 제출
   useEffect(() => {
     const handleSubmitAnswer = async () => {
-      const answer = question.type === "subjective" ? subjectiveAnswer : selectedOption;
+      const answer =
+        question.type === "subjective" ? subjectiveAnswer : selectedOption;
 
       // 현재 문제 답 덮어쓰기
       const updatedAnswers = [
-        ...userAnswers.filter(item => item.index !== currentQuestionIndex),
-        { index: currentQuestionIndex, answer }
+        ...userAnswers.filter((item) => item.index !== currentQuestionIndex),
+        { index: currentQuestionIndex, answer },
       ];
 
-      try{
+      try {
         const response = await axios.post(`${API_BASE_URL}/api/quiz/score`, {
-            userAnswers: updatedAnswers,
-            quizId,
+          userAnswers: updatedAnswers,
+          quizId,
         });
 
         router.push({
-            pathname: '/quiz_result',
-            params: { quizId, },
-        })
-      } catch(err){
+          pathname: "/quiz_result",
+          params: { quizId },
+        });
+      } catch (err) {
         console.log("failed to get answers ", err);
       }
     };
@@ -173,7 +176,9 @@ export default function CreatedQuizScreen() {
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
-          {questionName && <Text style={styles.headerTitle}>{questionName}</Text>}
+          {questionName && (
+            <Text style={styles.headerTitle}>{questionName}</Text>
+          )}
         </View>
 
         {question && (
@@ -184,35 +189,38 @@ export default function CreatedQuizScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.questionNavContainer}
               >
-                {Array.from({ length: parseInt(questionCount)}, (_, i) => (
-                   <TouchableOpacity
-                     key={i}
-                     style={{
-                       ...styles.questionNavBox,
-                        backgroundColor:
-                          currentQuestionIndex === i ? "#EDE1FF" : "#FAF8FD",
-                        borderColor:
-                          currentQuestionIndex === i ? "#7A4EC6" : "#B493C3",
-                     }}
-                     onPress={() => { handleMoveQuestion(i) }}
-                   >
-                     <Text
-                       style={{
-                         ...styles.questionNavText,
-                         ...(currentQuestionIndex === i &&
-                         styles.questionNavTextActive)
-                       }}
-                     >
-                        {i + 1}
-                     </Text>
-                   </TouchableOpacity>
+                {Array.from({ length: parseInt(questionCount) }, (_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={{
+                      ...styles.questionNavBox,
+                      backgroundColor:
+                        currentQuestionIndex === i ? "#EDE1FF" : "#FAF8FD",
+                      borderColor:
+                        currentQuestionIndex === i ? "#7A4EC6" : "#B493C3",
+                    }}
+                    onPress={() => {
+                      handleMoveQuestion(i);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        ...styles.questionNavText,
+                        ...(currentQuestionIndex === i &&
+                          styles.questionNavTextActive),
+                      }}
+                    >
+                      {i + 1}
+                    </Text>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
 
             <ScrollView style={styles.questionContentContainer}>
               <Text style={styles.questionText}>
-                {currentQuestionIndex+1}{". "}
+                {currentQuestionIndex + 1}
+                {". "}
                 {question.question}
                 {question.type === "subjective"
                   ? " (주관식)"
@@ -221,22 +229,23 @@ export default function CreatedQuizScreen() {
                   : " (O/X)"}
               </Text>
 
-              {question.type !== "subjective"  && questionParseComplete ? (
+              {question.type !== "subjective" && questionParseComplete ? (
                 question.options.map((option, idx) => (
                   <TouchableOpacity
                     key={idx}
                     style={{
                       borderWidth: 0.6,
                       borderColor: "#B493C3",
-                      backgroundColor: selectedOption === option
-                        ? "#EDE1FF"
-                        : "#FAF8FD",
+                      backgroundColor:
+                        selectedOption === option ? "#EDE1FF" : "#FAF8FD",
                       borderRadius: 5,
                       paddingVertical: 12,
                       paddingHorizontal: 15,
-                      marginBottom: 10
+                      marginBottom: 10,
                     }}
-                    onPress={() => {selectOption(option)}}
+                    onPress={() => {
+                      selectOption(option);
+                    }}
                   >
                     <Text style={styles.optionText}>{option}</Text>
                   </TouchableOpacity>
@@ -262,27 +271,25 @@ export default function CreatedQuizScreen() {
         )}
 
         <View style={styles.bottomButtonGroup}>
-         { currentQuestionIndex === questionCount-1 ? (
-          <TouchableOpacity
-            style={{ ...styles.bottomButton, flex: 1, marginRight: 10 }}
-            onPress={() => {setIsSubmitted(true)}}
-          >
-            <Text style={styles.bottomButtonText}>
-             정답 확인
-            </Text>
-          </TouchableOpacity>
-         ) : (
-          <TouchableOpacity
-            style={{ ...styles.bottomButton, flex: 1, marginRight: 10 }}
-            onPress={() => { handleMoveQuestion() }}
-          >
-            <Text style={styles.bottomButtonText}>
-             다음
-            </Text>
-          </TouchableOpacity>
-         )
-         }
-
+          {currentQuestionIndex === questionCount - 1 ? (
+            <TouchableOpacity
+              style={{ ...styles.bottomButton, flex: 1, marginRight: 10 }}
+              onPress={() => {
+                setIsSubmitted(true);
+              }}
+            >
+              <Text style={styles.bottomButtonText}>정답 확인</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={{ ...styles.bottomButton, flex: 1, marginRight: 10 }}
+              onPress={() => {
+                handleMoveQuestion();
+              }}
+            >
+              <Text style={styles.bottomButtonText}>다음</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -294,7 +301,7 @@ export default function CreatedQuizScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
@@ -308,21 +315,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    paddingRight: 10
+    paddingRight: 10,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "600",
-    color: "#3C3C3C"
+    color: "#3C3C3C",
   },
   questionNavWrapper: {
     height: 53,
-    marginBottom: 10
+    marginBottom: 10,
   },
   questionNavContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 5
+    paddingVertical: 5,
   },
   questionNavBox: {
     width: 43,
@@ -333,19 +340,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     backgroundColor: "#FAF8FD",
     borderWidth: 0.6,
-    borderColor: "#B493C3"
+    borderColor: "#B493C3",
   },
   questionNavText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#3C3C3C"
+    color: "#3C3C3C",
   },
   questionNavTextActive: {
     fontSize: 17,
-    fontWeight: "400"
+    fontWeight: "400",
   },
   questionContentContainer: {
-    flex: 1
+    flex: 1,
   },
   questionText: {
     fontSize: 20,
@@ -361,24 +368,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     marginBottom: 10,
-    backgroundColor: "#FAF8FD"
+    backgroundColor: "#FAF8FD",
   },
   optionText: {
     fontSize: 16,
     fontWeight: "400",
-    color: "#3C3C3C"
+    color: "#3C3C3C",
   },
   bottomButton: {
     backgroundColor: "#262626",
     borderRadius: 10,
     height: 53,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   bottomButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "400"
+    fontWeight: "400",
   },
   bottomButtonGroup: {
     flexDirection: "row",
@@ -387,6 +394,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     left: 20,
-    right: 20
-  }
+    right: 20,
+  },
 });
