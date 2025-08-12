@@ -5,5 +5,6 @@ create table member (
   nickname varchar(30),
   email varchar(50),
   password varchar(30),
+  suryong varchar(10),
   primary key (id)
 );

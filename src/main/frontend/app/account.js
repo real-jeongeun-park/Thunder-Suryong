@@ -22,7 +22,6 @@ import { API_BASE_URL } from "../src/constants";
 export default function AccountScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
   const [userInfo, setUserInfo] = useState(null);
 
   // 모달 상태
@@ -35,16 +34,113 @@ export default function AccountScreen() {
   const [newPw2, setNewPw2] = useState("");
 
   //수룡이 타입 선택하기
-  const [selectedType, setSelectedType] = useState(0);
+  const [selectedType, setSelectedType] = useState(null);
+  const [originalType, setOriginalType] = useState(null);
   const typeNames = ["물 수룡이", "풀 수룡이", "전기 수룡이"];
-  const handleSelectComplete = () => {
-  const msg = `${typeNames[selectedType]}를 선택하셨습니다!`;
-  if (Platform.OS === "web") {
-    window.alert(msg);
-  } else {
-    Alert.alert(msg); 
-  }
+  const speciesCodes = ["water", "grass", "thunder"];
+
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
+
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+        }
+
+        if (!token) throw new Error("Token not found");
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        setUserInfo(null);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
+
+  useEffect(() => {
+    async function fetchSuryongType() {
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/member/getSuryong`, {
+          nickname: userInfo.nickname,
+        });
+        const idx = speciesCodes.indexOf(res.data);
+        setSelectedType(idx);
+        setOriginalType(idx);
+      } catch (e) {
+        console.log("failed to load suryong", e);
+      }
+    }
+    if(userInfo !== null){
+        fetchSuryongType();
+    }
+  }, [userInfo]);
+
+  const handleSelectComplete = async () => {
+    // 변경 사항 없을 때
+    if (selectedType === null || selectedType === originalType) {
+      return;
+    }
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/member/changeSuryong`, {
+        nickname: userInfo.nickname,
+        suryong: speciesCodes[selectedType],
+      });
+      setOriginalType(selectedType); // 변경 반영
+      showAlert("완료", "수룡이 타입이 변경되었습니다.");
+    } catch (e) {
+      console.log(e);
+      showAlert("오류", "수룡이 타입 변경에 실패했어요.");
+    }
   };
+
+  // 수룡이 타입 변경 시 타겟이 될 '현재 기본 시험'
+  const [selectedExam, setSelectedExam] = useState(null);
+
+  useEffect(() => {
+    if (!userInfo?.nickname) return;
+
+    (async () => {
+      const token = Platform.OS === "web"
+        ? localStorage.getItem("accessToken")
+        : await SecureStore.getItemAsync("accessToken");
+
+      const res = await axios.post(
+        `${API_BASE_URL}/api/exam/get`,
+        { nickname: userInfo.nickname },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const data = res.data;
+      const idx = data.defaultExams.findIndex(v => v === true);
+
+      if (idx !== -1) {
+        setSelectedExam({
+          examId: data.examIds[idx],
+          examName: data.examNames[idx],
+          startDate: data.startDates?.[idx] ?? null,
+        });
+      } else {
+        setSelectedExam(null);
+      }
+    })();
+  }, [userInfo?.nickname]);
+
+
+
+
+
 
   useEffect(() => {
     (async () => {
@@ -65,14 +161,23 @@ export default function AccountScreen() {
     })();
   }, []);
 
-  // 플랫폼별 alert 함수 정의
+
+
+
+  // 1. null
+
+  // 플랫폼별 alert (재귀 버그 수정)
   const showAlert = (title, message) => {
     if (Platform.OS === "web") {
       window.alert(`${title}\n${message}`);
     } else {
-      showAlert(title, message);
+      Alert.alert(title, message);
     }
   };
+
+
+
+
 
   // 로그아웃
   const handleLogout = async () => {
@@ -212,43 +317,50 @@ export default function AccountScreen() {
 
         {/* 타입 선택 3개 */}
        <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 24 }}>
-      {[
-        require("../assets/images/water-type.png"),
-        require("../assets/images/grass-type.png"),
-        require("../assets/images/thunder-type.png"),
-        ].map((imgSrc, idx) => (
-      <TouchableOpacity
-        key={idx}
-        onPress={() => setSelectedType(idx)}
-        style={{
-        width: 100,
-        height: 100,
-        borderRadius: 60,
-        borderWidth: 2,
-        borderColor: "#9B73D2",
-        backgroundColor: selectedType === idx ? "#C9A7EB" : "transparent",
-        justifyContent: "center",
-        alignItems: "center",
-        overflow: "hidden", // 이미지를 둥글게 잘라내기
-      }}
-    >
-      <Image
-        source={imgSrc}
-        style={{ width: 40, height: 40, resizeMode: "contain" }}
-      />
-      {selectedType === idx && (
-        <Ionicons
-          name="checkmark-sharp"
-          size={55}
-          color="#fff"
-          style={{
-            position: "absolute",
-          }}
-        />
-      )}
-    </TouchableOpacity>
-  ))}
-</View>
+         {[
+           require("../assets/images/water-type.png"),
+           require("../assets/images/grass-type.png"),
+           require("../assets/images/thunder-type.png"),
+         ].map((imgSrc, idx) => {
+           const isActive =
+             selectedType === null
+               ? idx === originalType // 아직 선택 안 했으면 originalType 강조
+               : idx === selectedType; // 선택했으면 selectedType 강조
+
+           return (
+             <TouchableOpacity
+               key={idx}
+               onPress={() => setSelectedType(idx)}
+               style={{
+                 width: 100,
+                 height: 100,
+                 borderRadius: 60,
+                 borderWidth: 2,
+                 borderColor: "#9B73D2",
+                 backgroundColor: isActive ? "#C9A7EB" : "transparent",
+                 justifyContent: "center",
+                 alignItems: "center",
+                 overflow: "hidden", // 이미지를 둥글게 잘라내기
+               }}
+             >
+               <Image
+                 source={imgSrc}
+                 style={{ width: 40, height: 40, resizeMode: "contain" }}
+               />
+               {isActive && (
+                 <Ionicons
+                   name="checkmark-sharp"
+                   size={55}
+                   color="#fff"
+                   style={{
+                     position: "absolute",
+                   }}
+                 />
+               )}
+             </TouchableOpacity>
+           );
+         })}
+       </View>
 
       {/* 선택 완료 버튼 */}
       <TouchableOpacity

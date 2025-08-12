@@ -40,9 +40,6 @@ export default function HomeScreen() {
   const { height: screenHeight } = Dimensions.get("window");
   const { width: screenWidth } = Dimensions.get("window");
   const [sheetHeight] = useState(new Animated.Value(screenHeight * 0.35));
-  const [rewardOpen, setRewardOpen] = useState(false);
-  const rewardFiredRef = useRef(false);
-
   const [addOpen, setAddOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -50,9 +47,6 @@ export default function HomeScreen() {
     week: "",
     title: "",
   });
-
-  // 컴포넌트 내부(상태)
-  const menuAnchorRef = useRef(null);
   const [menuState, setMenuState] = useState({ visible: false, x: 0, y: 0 });
   const anchorRefs = useRef({});
   const [menuTargetId, setMenuTargetId] = useState(null);
@@ -62,140 +56,20 @@ export default function HomeScreen() {
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveDate, setMoveDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [moving, setMoving] = useState(false);
+  const [bubbleText, setBubbleText] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+  const [rate, setRate] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [entireSubjects, setEntireSubjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [suryongName, setSuryongName] = useState("");
+  const [finalSuryong, setFinalSuryong] = useState(null);
+  const [isDefaultExamExecuted, setIsDefaultExamExecuted] = useState(false);
+  const [totalRate, setTotalRate] = useState(null);
 
-  const openMenu = (id) => {
-    // 아이콘 위치 측정 후 그 아래에 메뉴 오픈
-    const ref = anchorRefs.current[id];
-    ref?.measureInWindow((x, y, width, height) => {
-      const menuWidth = 180; // 아래 스타일 width와 맞추세요
-      setMenuState({
-        visible: true,
-        x: x + width - menuWidth, // 아이콘 오른쪽 정렬
-        y: y + height + 8, // 아이콘 아래 약간 띄움
-      });
-      setMenuTargetId(id);
-    });
-  };
-
-  const closeMenu = () => setMenuState((s) => ({ ...s, visible: false }));
-
-  const onEdit = () => {
-    // 메뉴가 열린 대상(todo)을 plans에서 찾기
-    const current = (() => {
-      for (const g of plans) {
-        const t = g.todos.find((x) => x.id === menuTargetId);
-        if (t) return t;
-      }
-      return null;
-    })();
-
-    if (current) {
-      setEditForm({
-        title: current.title ?? "",
-        week: String(current.week ?? ""),
-      });
-      setEditOpen(true);
-    }
-    closeMenu();
-  };
-  const saveEdit = async () => {
-    try {
-      if (!editForm.title.trim() || !editForm.week.trim()) {
-        alert("입력되지 않은 항목이 존재합니다.");
-        return;
-      }
-
-      const res = axios.post(`${API_BASE_URL}/api/plan/changePlan`, {
-        planId: menuTargetId,
-        week: editForm.week,
-        content: editForm.title,
-      });
-
-      await fetchPlans();
-      setEditOpen(false);
-    } catch (e) {
-      console.log("수정 실패", e);
-    } finally {
-    }
-  };
-
-  const onDelete = () => {
-    setConfirmOpen(true);
-    closeMenu(); /* TODO: 삭제 로직 */
-  };
-  const onMove = () => {
-    // 기본값: 현재 화면의 date로 초기화
-    setMoveDate(format(date, "yyyy-MM-dd"));
-    closeMenu();
-    setMoveOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    try {
-      const res = await axios.post(`${API_BASE_URL}/api/plan/deleteByPlanId`, {
-        planId: menuTargetId,
-      });
-
-      await fetchPlans();
-    } catch (e) {
-      console.log("삭제 실패", e);
-    } finally {
-      setConfirmOpen(false);
-    }
-  };
-
-  const confirmMove = async () => {
-    setMoving(true);
-    try {
-      const res = await axios.post(`${API_BASE_URL}/api/plan/changeDate`, {
-        date: moveDate,
-        planId: menuTargetId,
-      });
-
-      await fetchPlans();
-    } catch (e) {
-      console.log("이동 실패", e);
-    } finally {
-      setMoving(false);
-      setMoveOpen(false);
-    }
-  };
-
-  const confirmAdd = async () => {
-    setAdding(true);
-    try {
-      if (!addForm.subjectId || !addForm.title.trim()) return;
-
-      const res = await axios.post(`${API_BASE_URL}/api/plan/createOne`, {
-        subjectId: addForm.subjectId,
-        week: addForm.week,
-        content: addForm.title,
-        date: format(date, "yyyy-MM-dd"),
-      });
-
-      await fetchPlans();
-    } catch (e) {
-      console.log("추가 실패", e);
-    } finally {
-      setAdding(false);
-      setAddOpen(false);
-    }
-  };
-
-  const encouragementMessages = [
-    "열심히 공부하고 있군요! \n오늘의 작은 노력이 내일의 큰 변화를 만듭니다.",
-    "집중력이 대단하네요! \n당신이 쌓는 시간은 절대 사라지지 않습니다.",
-    "꾸준함이 너무 멋져요! \n느려도 멈추지 않는 걸음이 가장 멀리 갑니다.",
-    "포기하지 않는 모습이 아름다워요! \n그 마음이 결국 당신을 빛나게 합니다.",
-    "차분하게 나아가고 있네요! \n한 페이지 한 페이지가 당신의 이야기를 써 내려갑니다.",
-    "노력이 눈에 보이는 것 같아요! \n지금의 땀방울은 언젠가 자랑스러운 추억이 됩니다.",
-    "성실함이 돋보여요! \n작은 성취들이 모여 당신을 원하는 곳으로 이끌어 갑니다.",
-    "집념이 느껴지네요! \n오늘의 선택이 내일의 당신을 만듭니다.",
-    "몰입하는 모습이 멋져요! \n노력은 언젠가 가장 따뜻한 보답으로 돌아옵니다.",
-    "꾸준한 걸음이 빛난다고 해요! \n지금의 당신은 어제보다 더 단단해지고 있습니다.",
-  ];
-  const [encouragementText, setEncouragementText] = useState("");
-
+  // 남은 날짜에 따른 수룡이 말풍선 메시지
+  // 남은 날짜에 따른 수룡이 말풍선 메시지
+  // 남은 날짜에 따른 수룡이 말풍선 메시지
   const bubbleMessages = {
     relaxed: [
       "차분히 시작하는 오늘, 정말 멋져요.",
@@ -257,55 +131,58 @@ export default function HomeScreen() {
     ],
   };
 
-  const [bubbleText, setBubbleText] = useState("");
+  const suryongImages = {
+    water33: [
+      require("../assets/images/dragon/33_water1.png"),
+      require("../assets/images/dragon/33_water2.png"),
+    ],
+    thunder33: [
+      require("../assets/images/dragon/33_thunder1.png"),
+      require("../assets/images/dragon/33_thunder2.png"),
+    ],
+    grass33: [require("../assets/images/dragon/33_grass1.png")],
 
-  // 사용자 로그인 여부 확인
-  const [userInfo, setUserInfo] = useState(null);
-  // 성취률
-  const [rate, setRate] = useState(null);
+    water66: [require("../assets/images/dragon/66_water1.png")],
+    thunder66: [
+      require("../assets/images/dragon/66_thunder1.png"),
+      require("../assets/images/dragon/66_thunder2.png"),
+      require("../assets/images/dragon/66_thunder3.png"),
+    ],
+    grass66: [
+      require("../assets/images/dragon/66_grass1.png"),
+      require("../assets/images/dragon/66_grass2.png"),
+    ],
 
-  const tabs = [
-    { name: "홈", label: "홈" },
-    { name: "노트", label: "노트" },
-    { name: "퀴즈", label: "퀴즈" },
-    { name: "마이페이지", label: "마이페이지" },
-  ];
+    water100: [require("../assets/images/dragon/100_water1.png")],
+    thunder100: [
+      require("../assets/images/dragon/100_thunder1.png"),
+      require("../assets/images/dragon/100_thunder2.png"),
+    ],
+    grass100: [require("../assets/images/dragon/100_grass1.png")],
+  };
 
-  const [plans, setPlans] = useState([]);
-  const [entireSubjects, setEntireSubjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const floatAnim = useRef(new Animated.Value(0)).current;
 
-  // 랜덤 수룡이 획득 메시지
   useEffect(() => {
-    // TODO: 여기에 조건을 넣으세요 예) if (rate === 100) { ... }
-    if (Number(rate) === 50) {
-      rewardFiredRef.current = true;
-      const randomIndex = Math.floor(
-        Math.random() * encouragementMessages.length
-      );
-      setEncouragementText(encouragementMessages[randomIndex]);
-      setRewardOpen(true);
-    }
-  }, [rate]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: -10, // 위로 이동
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0, // 원래 위치
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatAnim]);
 
-  // 랜덤 메인 수룡이 메시지
-  useEffect(() => {
-    if (!selectedExam || !selectedExam.startDate) return;
-
-    const diff = differenceInDays(parseISO(selectedExam.startDate), new Date());
-
-    let group;
-    if (diff >= 7) group = "relaxed";
-    else if (diff >= 3) group = "focus";
-    else if (diff >= 1) group = "urgent";
-    else group = "final";
-
-    const messages = bubbleMessages[group];
-    const randomIndex = Math.floor(Math.random() * messages.length);
-    setBubbleText(messages[randomIndex]);
-  }, [selectedExam]);
-
-  // 로그인 여부 확인
+  // 로그인 체크
+  // 로그인 체크
+  // 로그인 체크
   useEffect(() => {
     async function checkLogin() {
       try {
@@ -335,13 +212,51 @@ export default function HomeScreen() {
     checkLogin();
   }, []);
 
-  // 페이지에 대응되는 날짜의 계획 불러오기
+  // 남은 날짜에 따른 응원 메시지 설정
+  // 남은 날짜에 따른 응원 메시지 설정
+  // 남은 날짜에 따른 응원 메시지 설정
+  useEffect(() => {
+    const getBubbleText = async () => {
+      if (!selectedExam) {
+        setBubbleText(
+          "'새로운 시험 생성' 버튼을 눌러 먼저 시험 정보를 입력해 보세요!"
+        );
+      } else {
+        if (!selectedExam || !selectedExam.startDate) return;
+
+        const diff = differenceInDays(
+          parseISO(selectedExam.startDate),
+          new Date()
+        );
+
+        let group;
+        if (diff >= 7) group = "relaxed";
+        else if (diff >= 3) group = "focus";
+        else if (diff >= 1) group = "urgent";
+        else group = "final";
+
+        const messages = bubbleMessages[group];
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        setBubbleText(messages[randomIndex]);
+      }
+    };
+    if (isDefaultExamExecuted) {
+      getBubbleText();
+    }
+  }, [isDefaultExamExecuted]);
+
+  // 날짜 바꿀 때마다 plans 다시 받아오기
+  // 날짜 바꿀 때마다 plans 다시 받아오기
+  // 날짜 바꿀 때마다 plans 다시 받아오기
   useEffect(() => {
     if (userInfo !== null) {
       fetchPlans();
     }
   }, [userInfo, date]); // date가 변경될 때마다 계획 다시 불러오기
 
+  // plans 받기
+  // plans 받기
+  // plans 받기
   async function fetchPlans() {
     try {
       setIsLoading(true);
@@ -377,11 +292,12 @@ export default function HomeScreen() {
     }
   }
 
+  // 기본 시험 가져오기
+  // 기본 시험 가져오기
+  // 기본 시험 가져오기
   useEffect(() => {
     async function fetchDefaultExam() {
       try {
-        setIsLoading(true);
-
         let token;
         if (Platform.OS === "web") {
           token = localStorage.getItem("accessToken");
@@ -410,39 +326,290 @@ export default function HomeScreen() {
         } else {
           setSelectedExam(null);
         }
+        setIsDefaultExamExecuted(true);
       } catch (err) {
         console.log(
           "기본 시험 정보 불러오기 실패!",
           err.response || err.message || err
         );
         setSelectedExam(null);
-      } finally {
-        setIsLoading(false);
       }
     }
-
-    const fetchEntireSubjects = async () => {
-      try {
-        const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
-          nickname: userInfo.nickname,
-        });
-
-        const subjects = res.data.subjectNameList.map((name, idx) => ({
-          name: name,
-          id: res.data.subjectIdList[idx],
-        }));
-
-        setEntireSubjects(subjects);
-      } catch (e) {
-        console.log("failed to load entire subjects ", e);
-      }
-    };
 
     if (userInfo !== null && userInfo.nickname) {
       fetchDefaultExam();
       fetchEntireSubjects();
     }
   }, [userInfo]);
+
+  // 전체 과목 이름 받아옴
+  // 전체 과목 이름 받아옴
+  // 전체 과목 이름 받아옴
+  const fetchEntireSubjects = async () => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/subject/get`, {
+        nickname: userInfo.nickname,
+      });
+
+      const subjects = res.data.subjectNameList.map((name, idx) => ({
+        name: name,
+        id: res.data.subjectIdList[idx],
+      }));
+
+      setEntireSubjects(subjects);
+    } catch (e) {
+      console.log("failed to load entire subjects ", e);
+    }
+  };
+
+  // 수룡이 종류 불러오기
+  // 수룡이 종류 불러오기
+  // 수룡이 종류 불러오기
+  useEffect(() => {
+    const getSuryongName = async () => {
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/member/getSuryong`, {
+          nickname: userInfo.nickname,
+        });
+        setSuryongName(res.data);
+      } catch (e) {
+        console.log("failed to load suryong name", e);
+        setSuryongName("");
+      }
+    };
+    if (userInfo !== null) {
+      getSuryongName();
+    }
+  }, [userInfo]);
+
+  // 달성률에 따른 이미지 이름 설정
+  // 달성률에 따른 이미지 이름 설정
+  // 달성률에 따른 이미지 이름 설정
+  useEffect(() => {
+    const getFinalSuryong = async (item) => {
+      const name = suryongName + item;
+      const count = suryongImages[name].length;
+      const randomIndex = Math.floor(Math.random() * count);
+      setFinalSuryong({
+        name: name,
+        index: randomIndex,
+      });
+
+      console.log(name);
+      console.log(count);
+      console.log(randomIndex);
+    };
+
+    if (suryongName && isDefaultExamExecuted) {
+      let rate = null;
+
+      if (!selectedExam && !totalRate) {
+        rate = 33;
+      } else if (selectedExam && totalRate) {
+        rate = totalRate;
+      }
+
+      if (rate !== null) {
+        getFinalSuryong(rate);
+      }
+    }
+  }, [suryongName, isDefaultExamExecuted, totalRate]);
+
+  // 전체 계획 달성률 계산
+  // 전체 계획 달성률 계산
+  // 전체 계획 달성률 계산
+  const getTotalRate = async () => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/plan/getTotalRate`, {
+        nickname: userInfo.nickname,
+      });
+      const data = res.data.toFixed(0);
+
+      let rate;
+      if (data < 33) {
+        rate = 33;
+      } else if (data < 66) {
+        rate = 66;
+      } else if (data < 100) {
+        rate = 100;
+      } else {
+        rate = 100; // 100 이상일 경우
+      }
+
+      setTotalRate(rate);
+    } catch (e) {
+      console.log("failed to load total achievement rate", e);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedExam) {
+      getTotalRate();
+    }
+  }, [selectedExam]);
+
+  // 오늘의 계획 달성률 계산
+  // 오늘의 계획 달성률 계산
+  // 오늘의 계획 달성률 계산
+  const getAchievementRate = async () => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/plan/achievement`,
+        {
+          nickname: userInfo.nickname,
+          today: format(new Date(), "yyyy-MM-dd"),
+        }
+      );
+      setRate(response.data.toFixed(0)); // 소수점 표기 x
+    } catch (err) {
+      console.log("달성률 계산 실패\n", err);
+    }
+  };
+
+  useEffect(() => {
+    if (userInfo !== null) {
+      getAchievementRate();
+    }
+  }, [userInfo]);
+
+  // 메뉴 위치 계산 및 오픈
+  // 메뉴 위치 계산 및 오픈
+  // 메뉴 위치 계산 및 오픈
+  const openMenu = (id) => {
+    const ref = anchorRefs.current[id];
+    ref?.measureInWindow((x, y, width, height) => {
+      const menuWidth = 180; // 아래 스타일 width와 맞추세요
+      setMenuState({
+        visible: true,
+        x: x + width - menuWidth, // 아이콘 오른쪽 정렬
+        y: y + height + 8, // 아이콘 아래 약간 띄움
+      });
+      setMenuTargetId(id);
+    });
+  };
+
+  // 메뉴 닫기
+  const closeMenu = () => setMenuState((s) => ({ ...s, visible: false }));
+
+  // 수정 모달 보여줌
+  // 수정 모달 보여줌
+  // 수정 모달 보여줌
+  const onEdit = () => {
+    // 메뉴가 열린 대상(todo)을 plans에서 찾기
+    const current = (() => {
+      for (const g of plans) {
+        const t = g.todos.find((x) => x.id === menuTargetId);
+        if (t) return t;
+      }
+      return null;
+    })();
+
+    if (current) {
+      setEditForm({
+        title: current.title ?? "",
+        week: String(current.week ?? ""),
+      });
+      setEditOpen(true);
+    }
+    closeMenu();
+  };
+
+  // 과목 수정 내용 저장
+  // 과목 수정 내용 저장
+  // 과목 수정 내용 저장
+  const saveEdit = async () => {
+    try {
+      if (!editForm.title.trim() || !editForm.week.trim()) {
+        alert("입력되지 않은 항목이 존재합니다.");
+        return;
+      }
+
+      const res = axios.post(`${API_BASE_URL}/api/plan/changePlan`, {
+        planId: menuTargetId,
+        week: editForm.week,
+        content: editForm.title,
+      });
+
+      await fetchPlans();
+      setEditOpen(false);
+    } catch (e) {
+      console.log("수정 실패", e);
+    } finally {
+    }
+  };
+
+  // 삭제 모달 보여줌
+  // 삭제 모달 보여줌
+  // 삭제 모달 보여줌
+  const onDelete = () => {
+    closeMenu();
+    setConfirmOpen(true);
+  };
+
+  // 화면 모달 보여줌
+  // 화면 모달 보여줌
+  // 화면 모달 보여줌
+  const onMove = () => {
+    // 기본값: 현재 화면의 date로 초기화
+    setMoveDate(format(date, "yyyy-MM-dd"));
+    closeMenu();
+    setMoveOpen(true);
+  };
+
+  // 계획 삭제
+  // 계획 삭제
+  // 계획 삭제
+  const confirmDelete = async () => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/plan/deleteByPlanId`, {
+        planId: menuTargetId,
+      });
+
+      await fetchPlans();
+    } catch (e) {
+      console.log("삭제 실패", e);
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
+
+  const confirmMove = async () => {
+    setMoving(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/plan/changeDate`, {
+        date: moveDate,
+        planId: menuTargetId,
+      });
+
+      await fetchPlans();
+    } catch (e) {
+      console.log("이동 실패", e);
+    } finally {
+      setMoving(false);
+      setMoveOpen(false);
+    }
+  };
+
+  const confirmAdd = async () => {
+    setAdding(true);
+    try {
+      if (!addForm.subjectId || !addForm.title.trim()) return;
+
+      const res = await axios.post(`${API_BASE_URL}/api/plan/createOne`, {
+        subjectId: addForm.subjectId,
+        week: addForm.week,
+        content: addForm.title,
+        date: format(date, "yyyy-MM-dd"),
+      });
+
+      await fetchPlans();
+    } catch (e) {
+      console.log("추가 실패", e);
+    } finally {
+      setAdding(false);
+      setAddOpen(false);
+    }
+  };
 
   const toggleExpand = (id) => {
     setPlans((prev) =>
@@ -465,13 +632,14 @@ export default function HomeScreen() {
   };
 
   // 체크 변경 함수
+  // 체크 변경 함수
+  // 체크 변경 함수
   const handleCheckboxChange = async (planGroupId, todoId, newValue) => {
     try {
       await axios.patch(`${API_BASE_URL}/api/plan/${todoId}/learned`, {
         learned: newValue,
         nickname: userInfo.nickname,
       });
-
       // 프론트 상태도 업데이트
       setPlans((prevPlans) =>
         prevPlans.map((plan) =>
@@ -485,34 +653,13 @@ export default function HomeScreen() {
             : plan
         )
       );
-
       getAchievementRate();
+      getTotalRate();
     } catch (err) {
       console.error("체크박스 상태 변경 실패\n", err);
     }
   };
 
-  // 달성률 계산
-  const getAchievementRate = async () => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/plan/achievement`,
-        {
-          nickname: userInfo.nickname,
-          today: format(new Date(), "yyyy-MM-dd"),
-        }
-      );
-      setRate(response.data.toFixed(0)); // 소수점 표기 x
-    } catch (err) {
-      console.log("달성률 계산 실패\n", err);
-    }
-  };
-
-  useEffect(() => {
-    if (userInfo !== null) {
-      getAchievementRate();
-    }
-  }, [userInfo]);
   return (
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View
@@ -607,12 +754,6 @@ export default function HomeScreen() {
                   >
                     <TouchableOpacity
                       style={styles.actionButton}
-                      onPress={() => router.push("/schedule_list")}
-                    >
-                      <Text style={styles.buttonText}>시험 불러오기</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
                       onPress={() => {
                         router.push("/exam_schedule");
                       }}
@@ -632,23 +773,32 @@ export default function HomeScreen() {
                   <Ionicons name="time-outline" size={30} color="#B491DD" />
                   <Text style={styles.timerText}>Timer</Text>
                 </TouchableOpacity>
-
-                <Image
-                  source={require("../assets/images/main.png")}
-                  style={[
-                    styles.character,
-                    { width: screenWidth * 0.6, height: screenHeight * 0.3 },
-                  ]}
-                  resizeMode="contain"
-                />
+                {finalSuryong && (
+                  <Animated.Image
+                    source={
+                      suryongImages[finalSuryong.name][finalSuryong.index]
+                    }
+                    style={[
+                      styles.character,
+                      {
+                        width: screenWidth * 0.65,
+                        height: screenHeight * 0.35,
+                        transform: [{ translateY: floatAnim }],
+                      },
+                    ]}
+                    resizeMode="contain"
+                  />
+                )}
               </View>
             </View>
             {/* 말풍선 */}
-            <View style={styles.speechContainer}>
-              <View style={styles.bubble}>
-                <Text style={styles.bubbleText}>{bubbleText}</Text>
+            {bubbleText && (
+              <View style={styles.speechContainer}>
+                <View style={styles.bubble}>
+                  <Text style={styles.bubbleText}>{bubbleText}</Text>
+                </View>
               </View>
-            </View>
+            )}
           </View>
         </LinearGradient>
 
@@ -802,60 +952,6 @@ export default function HomeScreen() {
                     }}
                   >
                     닫기
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            visible={rewardOpen}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setRewardOpen(false)}
-          >
-            <View style={styles.modalBackground}>
-              <View
-                style={[styles.calendarContainer, { alignItems: "center" }]}
-              >
-                <Image
-                  source={require("../assets/images/dragon_0.png")}
-                  style={{ width: 300, height: 400 }}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={{
-                    marginTop: 12,
-                    fontSize: 18,
-                    fontWeight: "700",
-                    color: "#333",
-                  }}
-                >
-                  새로운 수룡이를 획득했습니다!
-                </Text>
-                <Text
-                  style={{
-                    marginTop: 6,
-                    fontSize: 14,
-                    color: "#555",
-                    textAlign: "center",
-                  }}
-                >
-                  {encouragementText}
-                </Text>
-
-                <TouchableOpacity
-                  onPress={() => setRewardOpen(false)}
-                  style={{
-                    marginTop: 16,
-                    backgroundColor: "#E7DDF3",
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 10,
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={{ color: "#4A3B73", fontWeight: "bold" }}>
-                    확인
                   </Text>
                 </TouchableOpacity>
               </View>

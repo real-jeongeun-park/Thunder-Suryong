@@ -40,19 +40,6 @@ export default function MyPageScreen() {
   const [userInfo, setUserInfo] = useState(false);
   const [examInfo, setExamInfo] = useState(null);
   const [dailyTotalTimes, setDailyTotalTimes] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const collectedDragons = [
-    require("../assets/images/dragon/33_water2.png"),
-    require("../assets/images/dragon/33_grass1.png"),
-    require("../assets/images/dragon/33_thunder2.png"),
-    require("../assets/images/dragon/66_water1.png"),
-    require("../assets/images/dragon/66_grass1.png"),
-    require("../assets/images/dragon/66_thunder2.png"),
-    require("../assets/images/dragon/100_water1.png"),
-    require("../assets/images/dragon/100_grass1.png"),
-    require("../assets/images/dragon/100_thunder2.png"),
-  ];
 
   useEffect(() => {
     async function checkLogin() {
@@ -148,10 +135,7 @@ export default function MyPageScreen() {
     <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
       <View style={{ flex: 1 }}>
         <LinearGradient colors={["#EFE5FF", "#FFFFFF"]} style={styles.gradient}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
+          <View style={styles.scrollContent}>
             <View style={styles.titleRow}>
               <Text style={styles.title}>마이페이지</Text>
               <TouchableOpacity
@@ -238,55 +222,7 @@ export default function MyPageScreen() {
                 ))}
               </View>
             </View>
-
-            <View style={styles.sectionHeader}>
-              <Text style={styles.subtitle}>수룡이 도감</Text>
-              <TouchableOpacity
-                onPress={() => setModalVisible(true)}
-                style={styles.viewAllButtonWrapper}
-              >
-                <Text style={styles.listButtonText}>전체 보기 &gt;</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.collectedRow}>
-              {collectedDragons.slice(0, 3).map((img, idx) => (
-                <View key={idx} style={styles.suryongCard}>
-                  <Image source={img} style={styles.suryongImageGrid} />
-                </View>
-              ))}
-            </View>
-
-            <Modal visible={modalVisible} transparent animationType="slide">
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>수룡이 도감 전체 보기</Text>
-
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.modalScroll}
-                  >
-                    <View style={styles.gridWrapper}>
-                      {collectedDragons.map((img, idx) => (
-                        <View key={idx} style={styles.suryongCard}>
-                          <Image source={img} style={styles.suryongImageGrid} />
-                        </View>
-                      ))}
-                    </View>
-                  </ScrollView>
-
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <Text style={{ color: "#663399", fontWeight: "bold" }}>
-                      닫기
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
-          </ScrollView>
+          </View>
         </LinearGradient>
         <BottomNavigation />
       </View>
@@ -299,7 +235,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontFamily: "Abhaya Libre ExtraBold",
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "800",
     color: "#3C3C3C",
     marginLeft: 3,
@@ -314,8 +250,8 @@ const styles = StyleSheet.create({
   },
 
   subtitle: { fontSize: 24, fontWeight: "bold" },
-  extraTopSpace: { marginTop: 28 },
-  extraBottomSpace: { marginBottom: 20 },
+  extraTopSpace: { marginTop: 10 },
+  extraBottomSpace: { marginBottom: 10 },
 
   iconButton: {
     width: 36,

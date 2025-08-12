@@ -187,4 +187,29 @@ public class PlanService {
 
         planRepository.save(newPlan);
     }
+
+    public double getTotalRate(Map<String, String> body){
+        String nickname = body.get("nickname");
+
+        List<Exam> exam = examRepository.findByNicknameAndDefaultExam(nickname, true);
+        if(exam.isEmpty()) {
+            return 0;
+        }
+        String examId = exam.get(0).getExamId(); // 현재 exam Id
+
+        List<String> subjectIds = subjectRepository.findByExamId(examId)
+                .stream()
+                .map(Subject::getSubjectId)
+                .collect(Collectors.toList());
+
+        List<Plan> plans = planRepository.findBySubjectIdIn(subjectIds);
+        if(plans.isEmpty()) return 0;
+
+        int total = plans.size();
+        double learned = (double)plans.stream()
+                .filter(Plan::isLearned)
+                .count();
+
+        return learned/total * 100;
+    }
 }
