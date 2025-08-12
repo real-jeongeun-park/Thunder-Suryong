@@ -1429,7 +1429,7 @@ const styles = StyleSheet.create({
   speechContainer: {
     position: "absolute",
     left: 20, // 왼쪽으로 붙이기
-    bottom: 40, // 수룡이 위쪽으로 당기기
+    bottom: 60, // 수룡이 위쪽으로 당기기
     flexDirection: "row",
     alignItems: "center",
     zIndex: 10, // 수룡이 위에 보이도록
