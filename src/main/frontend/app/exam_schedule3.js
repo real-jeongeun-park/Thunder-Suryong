@@ -326,7 +326,7 @@ export default function ExamInfoInput() {
         {loading && (
           <View style={styles.loadingOverlay}>
             <Image
-              source={require("../assets/images/main.png")}
+              source={require("../assets/images/loading.png")}
               style={styles.character}
               resizeMode="contain"
             />

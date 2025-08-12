@@ -28,7 +28,8 @@ export default function ExamInfoInput() {
   const { data, setData } = useData();
   const [loading, setLoading] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } = data;
+  const { startDate, endDate, examName, subjects, subjectInfo, subjectDates } =
+    data;
   const [parsedSubjectInfo, setParsedSubjectInfo] = useState([]);
   const [newSubjectList, setNewSubjectList] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -73,16 +74,15 @@ export default function ExamInfoInput() {
 
   useEffect(() => {
     const parseSubjectInfo = () => {
-        const info = JSON.parse(subjectInfo);
-        setParsedSubjectInfo(info);
-        setNewSubjectList([...new Set(info.map((item) => item.subject))]);
-    }
+      const info = JSON.parse(subjectInfo);
+      setParsedSubjectInfo(info);
+      setNewSubjectList([...new Set(info.map((item) => item.subject))]);
+    };
 
-    if(userInfo !== null && subjectInfo !== null){
-        parseSubjectInfo();
+    if (userInfo !== null && subjectInfo !== null) {
+      parseSubjectInfo();
     }
   }, [userInfo, subjectInfo]);
-
 
   // 자동 생성된 계획을 받아옴
   // 자동 생성된 계획을 받아옴
@@ -109,7 +109,13 @@ export default function ExamInfoInput() {
       }
     };
 
-    if (userInfo !== null && parsedSubjectInfo && parsedSubjectInfo.length > 0 && newSubjectList && newSubjectList.length > 0) {
+    if (
+      userInfo !== null &&
+      parsedSubjectInfo &&
+      parsedSubjectInfo.length > 0 &&
+      newSubjectList &&
+      newSubjectList.length > 0
+    ) {
       getPlans();
     }
   }, [userInfo, parsedSubjectInfo, newSubjectList]);
@@ -120,18 +126,18 @@ export default function ExamInfoInput() {
 
   useEffect(() => {
     const parseResponseData = () => {
-        const { date, subject, week, content } = responseData;
-        const planList = date.map((date, idx) => ({
-            date,
-            subject: subject[idx],
-            week: week[idx],
-            content: content[idx],
-        }));
+      const { date, subject, week, content } = responseData;
+      const planList = date.map((date, idx) => ({
+        date,
+        subject: subject[idx],
+        week: week[idx],
+        content: content[idx],
+      }));
 
-        setPlans(planList);
-    }
-    if(userInfo && responseData){
-        parseResponseData();
+      setPlans(planList);
+    };
+    if (userInfo && responseData) {
+      parseResponseData();
     }
   }, [userInfo, responseData]);
 
@@ -141,13 +147,17 @@ export default function ExamInfoInput() {
 
   useEffect(() => {
     const setDefaultSelectedSubject = () => {
-        setSelectedSubject(newSubjectList[0]);
-    }
+      setSelectedSubject(newSubjectList[0]);
+    };
 
-    if(userInfo !== null && newSubjectList !== null && newSubjectList.length > 0){
-        setDefaultSelectedSubject();
+    if (
+      userInfo !== null &&
+      newSubjectList !== null &&
+      newSubjectList.length > 0
+    ) {
+      setDefaultSelectedSubject();
     }
-  }, [userInfo, newSubjectList])
+  }, [userInfo, newSubjectList]);
 
   // 선택된 과목의 계획들만 필터링
   // 선택된 과목의 계획들만 필터링
@@ -155,19 +165,21 @@ export default function ExamInfoInput() {
 
   useEffect(() => {
     const getSelectedPlans = () => {
-        const filteredPlans = plans.filter(
-          (plan) =>
-            plan.subject &&
-            plan.subject.trim() === selectedSubject.trim()
-        );
-        setSelectedPlans(filteredPlans);
-    }
+      const filteredPlans = plans.filter(
+        (plan) => plan.subject && plan.subject.trim() === selectedSubject.trim()
+      );
+      setSelectedPlans(filteredPlans);
+    };
 
-    if(userInfo !== null && selectedSubject !== "" && plans && plans.length > 0){
-        getSelectedPlans();
+    if (
+      userInfo !== null &&
+      selectedSubject !== "" &&
+      plans &&
+      plans.length > 0
+    ) {
+      getSelectedPlans();
     }
-  }, [userInfo, selectedSubject, plans])
-
+  }, [userInfo, selectedSubject, plans]);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
@@ -282,16 +294,16 @@ export default function ExamInfoInput() {
   return (
     <PaperProvider>
       <SafeAreaWrapper backgroundTop="#EFE5FF" backgroundBottom="#ffffffff">
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <Image
-            source={require("../assets/images/main.png")}
-            style={styles.character}
-            resizeMode="contain"
-          />
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <Image
+              source={require("../assets/images/loading.png")}
+              style={styles.character}
+              resizeMode="contain"
+            />
             <Text style={styles.loadingText}>생성 중입니다....</Text>
-        </View>
-      )}
+          </View>
+        )}
         <View style={styles.container}>
           <View
             style={{
@@ -348,8 +360,8 @@ export default function ExamInfoInput() {
                     ))}
                   </ScrollView>
                 </View>
-                {selectedPlans && (
-                  selectedPlans.length === 0 ? (
+                {selectedPlans &&
+                  (selectedPlans.length === 0 ? (
                     <Text style={styles.noScheduleText}>
                       선택한 과목의 일정이 없습니다.
                     </Text>
@@ -412,8 +424,7 @@ export default function ExamInfoInput() {
                         </View>
                       ))}
                     </ScrollView>
-                   )
-                )}
+                  ))}
               </View>
             </View>
             <Modal

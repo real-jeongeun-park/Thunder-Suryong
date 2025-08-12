@@ -46,7 +46,10 @@ export default function WriteNote() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState([
-    { type: "bot", text: "안녕하세요! 학습한 내용에 대해 궁금한 점을 물어보세요." },
+    {
+      type: "bot",
+      text: "안녕하세요! 학습한 내용에 대해 궁금한 점을 물어보세요.",
+    },
   ]);
   const [isBotTyping, setIsBotTyping] = useState(false);
 
@@ -72,73 +75,93 @@ export default function WriteNote() {
     setTimeout(() => setToastMessage(""), 1500); // 1.5초 후 사라짐
   };
 
-
-
-
   useEffect(() => {
-    async function checkLogin(){
-        try{
-            let token;
+    async function checkLogin() {
+      try {
+        let token;
 
-            if(Platform.OS === 'web'){
-                token = localStorage.getItem("accessToken");
-            } else{
-                token = await SecureStore.getItemAsync("accessToken");
-            }
-            if(!token) throw new Error("token not found");
-
-            const response = await axios.get(`${API_BASE_URL}/api/validation`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            setUserInfo(response.data.nickname);
-        } catch(err){
-            console.log(err);
-            router.push("/");
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
         }
+        if (!token) throw new Error("token not found");
+
+        const response = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(response.data.nickname);
+      } catch (err) {
+        console.log(err);
+        router.push("/");
+      }
     }
 
     checkLogin();
-  }, [])
+  }, []);
 
   useEffect(() => {
     // title과 content 가져오기
-    async function getOneNote(){
-        try{
-            const response = await axios.post(`${API_BASE_URL}/api/note/getOne`, {
-                noteId
-            });
-            const note = response.data;
+    async function getOneNote() {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/note/getOne`, {
+          noteId,
+        });
+        const note = response.data;
 
-            setNoteTitle(note.title);
-            if(note.content !== null){
-                setNoteContent(note.content);
-                setTotalLines(Math.max(noteContent.split("\n"), MIN_LINES));
-            }
-            else{
-                setTotalLines(MIN_LINES);
-            }
-        } catch(err){
-            console.log(err);
+        setNoteTitle(note.title);
+        if (note.content !== null) {
+          setNoteContent(note.content);
+          setTotalLines(Math.max(noteContent.split("\n"), MIN_LINES));
+        } else {
+          setTotalLines(MIN_LINES);
         }
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     getOneNote();
-  }, [userInfo])
+  }, [userInfo]);
 
   useEffect(() => {
     if (isBotTyping) {
       const animateDots = () => {
         Animated.sequence([
-          Animated.timing(dotOpacity1, { toValue: 1, duration: 200, useNativeDriver: true }),
-          Animated.timing(dotOpacity2, { toValue: 1, duration: 200, useNativeDriver: true }),
-          Animated.timing(dotOpacity3, { toValue: 1, duration: 200, useNativeDriver: true }),
+          Animated.timing(dotOpacity1, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity2, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity3, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
           Animated.delay(400),
-          Animated.timing(dotOpacity3, { toValue: 0, duration: 200, useNativeDriver: true }),
-          Animated.timing(dotOpacity2, { toValue: 0, duration: 200, useNativeDriver: true }),
-          Animated.timing(dotOpacity1, { toValue: 0, duration: 200, useNativeDriver: true }),
+          Animated.timing(dotOpacity3, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity2, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity1, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
         ]).start(() => {
           if (isBotTyping) animateDots();
         });
@@ -161,37 +184,36 @@ export default function WriteNote() {
 
   const handleSendMessage = async () => {
     if (chatInput.trim()) {
-      try{
-         const newUserChatMessage = {
-            type: "user",
-            text: chatInput,
-         }
-         setChatInput("");
-         setChatMessages(prev => [...prev, newUserChatMessage]);
-         setIsBotTyping(true);
+      try {
+        const newUserChatMessage = {
+          type: "user",
+          text: chatInput,
+        };
+        setChatInput("");
+        setChatMessages((prev) => [...prev, newUserChatMessage]);
+        setIsBotTyping(true);
 
-         const response = await axios.post(`${API_BASE_URL}/api/ai/chatInput`, {
-            content: selectedTexts || noteContent,
-            chatInput: newUserChatMessage.text,
-         });
+        const response = await axios.post(`${API_BASE_URL}/api/ai/chatInput`, {
+          content: selectedTexts || noteContent,
+          chatInput: newUserChatMessage.text,
+        });
 
-         setSelectedTexts(null);
+        setSelectedTexts(null);
 
-         const newBotChatMessage = {
-            type: "bot",
-            text: response.data,
-         };
+        const newBotChatMessage = {
+          type: "bot",
+          text: response.data,
+        };
 
-         setChatMessages(prev => [...prev, newBotChatMessage]);
-      } catch(err){
+        setChatMessages((prev) => [...prev, newBotChatMessage]);
+      } catch (err) {
         console.log(err);
-      } finally{
+      } finally {
         setIsBotTyping(false);
       }
-    }
-    else{
-        showToast("질문을 입력하세요.");
-        return;
+    } else {
+      showToast("질문을 입력하세요.");
+      return;
     }
   };
 
@@ -209,31 +231,40 @@ export default function WriteNote() {
   };
 
   const handleNoteSave = async () => {
-    if(noteTitle.trim() && noteContent.trim()){
-        try{
-            const response = await axios.post(`${API_BASE_URL}/api/note/update`, {
-                noteId,
-                title: noteTitle,
-                content: noteContent,
-            });
-            setIsSaved(true);
-            setTimeout(() => setIsSaved(false), 1000);
-        } catch(err){
-            console.log(err);
-        }
+    if (noteTitle.trim() && noteContent.trim()) {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/note/update`, {
+          noteId,
+          title: noteTitle,
+          content: noteContent,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 1000);
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      return;
     }
-    else{
-        return;
-    }
-  }
+  };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <TouchableWithoutFeedback onPress={() => { if(Platform.OS !== 'web') Keyboard.dismiss(); }}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback
+        onPress={() => {
+          if (Platform.OS !== "web") Keyboard.dismiss();
+        }}
+      >
         <View style={{ flex: 1 }}>
           {/* 헤더 */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8 }}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginRight: 8 }}
+            >
               <Ionicons name="chevron-back-outline" size={24} color="black" />
             </TouchableOpacity>
             <Feather name="file" size={24} color="#717171" />
@@ -248,7 +279,7 @@ export default function WriteNote() {
           </View>
 
           {/* 노트 내용 */}
-          <ScrollView
+          <View
             ref={scrollRef}
             style={styles.contentContainer}
             contentContainerStyle={{ paddingBottom: 100 }}
@@ -262,14 +293,19 @@ export default function WriteNote() {
           >
             <TextInput
               ref={inputRef}
-              style={[styles.contentInput, { minHeight: totalLines * lineHeight }]}
+              style={[
+                styles.contentInput,
+                { minHeight: totalLines * lineHeight },
+              ]}
               multiline
               placeholder="노트 내용을 입력하세요."
               placeholderTextColor="#555555"
               value={noteContent}
               onChangeText={setNoteContent}
-              onSelectionChange={({ nativeEvent }) => setSelection(nativeEvent.selection)}
-              scrollEnabled={false}
+              onSelectionChange={({ nativeEvent }) =>
+                setSelection(nativeEvent.selection)
+              }
+              scrollEnabled={true}
               textAlignVertical="top"
               selection={selection}
               spellCheck={false}
@@ -277,62 +313,127 @@ export default function WriteNote() {
               autoFocus={false}
               pointerEvents={isScrolling ? "none" : "auto"}
             />
-          </ScrollView>
+          </View>
 
           {/* 플로팅 버튼 */}
-          {!isSheetOpen && <TouchableOpacity
-            style={styles.floatingButton}
-            onPress={isSelecting ? handleSelectContent : toggleChatSheet}
-          >
-            {isSelecting ? (
-              <MaterialIcons name="done" size={32} color="#BA94CC" />
-            ) : (
-              <Image source={require("../assets/images/chatsu.png")} style={styles.floatingButtonImage} />
-            )}
-          </TouchableOpacity>}
+          {!isSheetOpen && (
+            <TouchableOpacity
+              style={styles.floatingButton}
+              onPress={isSelecting ? handleSelectContent : toggleChatSheet}
+            >
+              {isSelecting ? (
+                <MaterialIcons name="done" size={32} color="#BA94CC" />
+              ) : (
+                <Image
+                  source={require("../assets/images/chatsu.png")}
+                  style={styles.floatingButtonImage}
+                />
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* 챗봇 시트 */}
-          <Animated.View style={[styles.chatSheet, { transform: [{ translateY: sheetTranslateY }] }]}>
+          <Animated.View
+            style={[
+              styles.chatSheet,
+              { transform: [{ translateY: sheetTranslateY }] },
+            ]}
+          >
             <View style={styles.chatSheetHeader}>
               <Text style={styles.chatbotTitle}>AI 수룡이 챗봇</Text>
-              <TouchableOpacity onPress={toggleChatSheet} style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={toggleChatSheet}
+                style={styles.closeButton}
+              >
                 <Feather name="x" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.contentContainerChatbot}>
-              <ScrollView style={styles.chatMessagesContainer} contentContainerStyle={{ paddingBottom: 10 }}>
+              <ScrollView
+                style={styles.chatMessagesContainer}
+                contentContainerStyle={{ paddingBottom: 10 }}
+              >
                 {chatMessages.map((msg, i) => (
                   <View
                     key={i}
-                    style={[styles.chatMessageRow, msg.type === 'user' ? styles.userMessageRow : styles.botMessageRow]}
+                    style={[
+                      styles.chatMessageRow,
+                      msg.type === "user"
+                        ? styles.userMessageRow
+                        : styles.botMessageRow,
+                    ]}
                   >
-                    {msg.type === 'bot' && (
-                      <Image source={require("../assets/images/chatsu.png")} style={styles.chatsuAvatar} />
+                    {msg.type === "bot" && (
+                      <Image
+                        source={require("../assets/images/chatsu.png")}
+                        style={styles.chatsuAvatar}
+                      />
                     )}
-                    <View style={[styles.chatBubble, msg.type === 'user' ? styles.userBubble : styles.botBubble]}>
-                      <Text style={msg.type === 'user' ? styles.userText : styles.botText}>{msg.text}</Text>
+                    <View
+                      style={[
+                        styles.chatBubble,
+                        msg.type === "user"
+                          ? styles.userBubble
+                          : styles.botBubble,
+                      ]}
+                    >
+                      <Text
+                        style={
+                          msg.type === "user" ? styles.userText : styles.botText
+                        }
+                      >
+                        {msg.text}
+                      </Text>
                     </View>
                   </View>
                 ))}
                 {isBotTyping && (
                   <View style={[styles.chatMessageRow, styles.botMessageRow]}>
-                    <Image source={require("../assets/images/chatsu.png")} style={styles.chatsuAvatar} />
+                    <Image
+                      source={require("../assets/images/chatsu.png")}
+                      style={styles.chatsuAvatar}
+                    />
                     <View style={[styles.botBubble, { borderRadius: 15 }]}>
                       <Text style={styles.loadingDotsContainer}>
-                        <Animated.Text style={[styles.dot, { opacity: dotOpacity1 }]}>.</Animated.Text>
-                        <Animated.Text style={[styles.dot, { opacity: dotOpacity2 }]}>.</Animated.Text>
-                        <Animated.Text style={[styles.dot, { opacity: dotOpacity3 }]}>.</Animated.Text>
+                        <Animated.Text
+                          style={[styles.dot, { opacity: dotOpacity1 }]}
+                        >
+                          .
+                        </Animated.Text>
+                        <Animated.Text
+                          style={[styles.dot, { opacity: dotOpacity2 }]}
+                        >
+                          .
+                        </Animated.Text>
+                        <Animated.Text
+                          style={[styles.dot, { opacity: dotOpacity3 }]}
+                        >
+                          .
+                        </Animated.Text>
                       </Text>
                     </View>
                   </View>
                 )}
               </ScrollView>
 
-              <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 4, paddingBottom: 5 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  paddingBottom: 5,
+                }}
+              >
                 {selectedTexts && (
                   <Text
-                    style={{ fontSize: 12, color: "#555", flex: 1, marginRight: 8 }}
+                    style={{
+                      fontSize: 12,
+                      color: "#555",
+                      flex: 1,
+                      marginRight: 8,
+                    }}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -345,25 +446,29 @@ export default function WriteNote() {
                     setIsSelecting(true); // 드래그 모드 진입
                   }}
                 >
-                  <Text style={{ color: "#BA94CC", fontSize: 12 }}>내용 불러오기</Text>
+                  <Text style={{ color: "#BA94CC", fontSize: 12 }}>
+                    내용 불러오기
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-      {toastMessage !== "" && (
-        <View style={{
-          position: "absolute",
-          bottom: 130,
-          alignSelf: "center",
-          backgroundColor: "rgba(60, 60, 60, 0.6)",
-          paddingHorizontal: 20,
-          paddingVertical: 10,
-          borderRadius: 20,
-          zIndex: 10,
-          alignItems: "center",
-        }}>
-          <Text style={{ color: "white" }}>{toastMessage}</Text>
-        </View>
-      )}
+              {toastMessage !== "" && (
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 130,
+                    alignSelf: "center",
+                    backgroundColor: "rgba(60, 60, 60, 0.6)",
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    zIndex: 10,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white" }}>{toastMessage}</Text>
+                </View>
+              )}
 
               <View style={styles.chatInputContainer}>
                 <TextInput
@@ -375,7 +480,10 @@ export default function WriteNote() {
                   returnKeyType="send"
                   onSubmitEditing={handleSendMessage}
                 />
-                <TouchableOpacity onPress={handleSendMessage} style={styles.sendButton}>
+                <TouchableOpacity
+                  onPress={handleSendMessage}
+                  style={styles.sendButton}
+                >
                   <Feather name="send" size={20} color="#BA94CC" />
                 </TouchableOpacity>
               </View>
@@ -385,17 +493,24 @@ export default function WriteNote() {
           {!isSheetOpen && (
             <View style={styles.saveButtonWrapper}>
               {isSaved ? (
-                <View style={[styles.saveButton, { justifyContent: 'center', alignItems: 'center' }]}>
+                <View
+                  style={[
+                    styles.saveButton,
+                    { justifyContent: "center", alignItems: "center" },
+                  ]}
+                >
                   <Feather name="check" size={24} color="#3C3C3C" />
                 </View>
               ) : (
-                <TouchableOpacity style={styles.saveButton} onPress={handleNoteSave}>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleNoteSave}
+                >
                   <Text style={styles.saveButtonText}>노트 저장</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
-
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -403,7 +518,12 @@ export default function WriteNote() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 70, paddingHorizontal: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingTop: 70,
+    paddingHorizontal: 20,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -438,7 +558,6 @@ const styles = StyleSheet.create({
     color: "#2F2F2F",
     lineHeight: 22,
     minHeight: 660,
-    zIndex: 1,
     padding: 0,
     margin: 0,
     textAlignVertical: "top",
@@ -446,18 +565,18 @@ const styles = StyleSheet.create({
     paddingRight: 15,
   },
   floatingButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 85,
     right: -5,
     zIndex: 10,
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -468,33 +587,34 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   chatSheet: {
-    position: 'absolute',
+    position: "absolute",
     left: -19,
     right: -19,
     bottom: 0,
     height: screenHeight - 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    elevation: 10,
-    shadowColor: '#000',
+    zIndex: 1000,
+    elevation: 30,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -5 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
   },
   chatSheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 5,
   },
   chatbotTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   closeButton: {
     padding: 5,
@@ -509,94 +629,94 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   chatMessageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     marginBottom: 8,
   },
-  userMessageRow: { justifyContent: 'flex-end' },
-  botMessageRow: { justifyContent: 'flex-start' },
+  userMessageRow: { justifyContent: "flex-end" },
+  botMessageRow: { justifyContent: "flex-start" },
   chatsuAvatar: {
     width: 30,
     height: 30,
     borderRadius: 15,
     marginRight: 8,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   chatBubble: {
     padding: 10,
     borderRadius: 15,
-    maxWidth: '80%',
+    maxWidth: "80%",
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
   },
-  userBubble: { backgroundColor: '#E6E6FA' },
-  botBubble: { backgroundColor: '#F5F5F5' },
-  userText: { color: '#3C3C3C' },
-  botText: { color: '#3C3C3C' },
+  userBubble: { backgroundColor: "#E6E6FA" },
+  botBubble: { backgroundColor: "#F5F5F5" },
+  userText: { color: "#3C3C3C" },
+  botText: { color: "#3C3C3C" },
   loadingDotsContainer: {
     fontSize: 20,
     lineHeight: 15,
     padding: 10,
-    fontWeight: 'bold',
-    color: '#3C3C3C',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    fontWeight: "bold",
+    color: "#3C3C3C",
+    flexDirection: "row",
+    justifyContent: "flex-start",
   },
   dot: {
     fontSize: 25,
     width: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   chatInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#fff',
+    borderColor: "#eee",
+    backgroundColor: "#fff",
   },
   chatTextInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    paddingVertical: Platform.OS === "ios" ? 12 : 8,
     marginRight: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     fontSize: 16,
   },
   sendButton: {
     padding: 10,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   saveButtonWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   saveButton: {
     height: 44,
     borderRadius: 15,
-    backgroundColor: '#E6D6F3', // 연한 보라색
+    backgroundColor: "#E6D6F3", // 연한 보라색
     paddingVertical: 12,
     paddingHorizontal: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
     marginBottom: 25,
-    width: '100%',
+    width: "100%",
   },
   saveButtonText: {
-    color: '#3C3C3C',
+    color: "#3C3C3C",
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
