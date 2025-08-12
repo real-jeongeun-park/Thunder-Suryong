@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 public class Member implements UserDetails {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String nickname;
     private String email;
     private String password;
+    private String suryong;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

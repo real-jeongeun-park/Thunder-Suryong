@@ -115,5 +115,15 @@ public class PlanController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
+    @PostMapping("/getTotalRate")
+    public ResponseEntity<?> getTotalRate(@RequestBody Map<String, String> body){
+        try{
+            return ResponseEntity.ok(planService.getTotalRate(body));
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -13,101 +13,81 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+import { API_BASE_URL } from "../src/constants";
 
-const router = useRouter();
-
-const DATA = [
-  {
-    id: "1",
-    source: require("../assets/images/index_water.png"),
-    title: "물의 수룡",
-    description:
-      "물의 수룡이는 바다 깊은 곳에서 조용히 살았습니다. 누구보다 물길을 잘 타고 파도와 장난치는 걸 좋아했지만, 세상 밖은 두려웠죠. 그러나 마음속 깊은 호기심이 그를 파도 위로 이끌었습니다. 처음 맞이한 햇살과 바람, 부서지는 물방울 속에서 물의 수룡이는 깨달았습니다. 바다는 넓지만, 세상은 그보다 훨씬 더 넓고 아름답다는 것을요.",
-  },
-  {
-    id: "2",
-    source: require("../assets/images/index_thunder.png"),
-    title: "전기의 수룡",
-    description:
-      "전기의 수룡이는 구름과 번개의 아이였습니다. 먹구름이 몰려올 때마다 그는 하늘로 뛰어올라 번개를 품고 놀았죠. 번쩍이는 빛 속에서 새로운 아이디어와 용기가 피어났습니다. 세상을 바꾸는 순간은 언제나 번개처럼 빠르고 강렬하다는 걸, 전기의 수룡이는 누구보다 잘 압니다. 오늘도 그는 번쩍이며 앞으로 나아갑니다.",
-  },
-  {
-    id: "3",
-    source: require("../assets/images/index_grass.png"),
-    title: "풀의 수룡",
-    description:
-      "풀의 수룡이는 푸른 들판 속에서 하루하루를 성실히 보냈습니다. 새벽 햇살과 함께 눈을 뜨고, 바람 따라 흔들리는 풀잎을 가꾸는 것이 일상이었죠. 작은 뿌리가 모여 숲이 되듯, 꾸준함이 세상을 바꾼다는 걸 풀의 수룡이는 알고 있습니다. 오늘도 그는 한 걸음씩, 초록빛 길을 만들어갑니다.",
-  },
-];
-
-export default function SuryongiAdoption() {
+export default function SuryongAdoption() {
+  const router = useRouter();
   const [selected, setSelected] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
-  const Header = () => (
-    <View style={styles.headerBox}>
-      <Text style={styles.headerText}>
-        인연이 느껴지는 수룡이를 입양해주세요!
-      </Text>
-    </View>
-  );
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        let token;
 
-  const Grid = () => (
-    <View style={styles.gridContainer}>
-      <FlatList
-        data={DATA}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        columnWrapperStyle={styles.row}
-        ListHeaderComponent={<Header />}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => setSelected(item)}
-            style={({ pressed }) => [
-              styles.card,
-              pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <Image
-              source={item.source}
-              style={styles.thumb}
-              resizeMode="cover"
-            />
-          </Pressable>
-        )}
-      />
+        if (Platform.OS === "web") token = localStorage.getItem("accessToken");
+        else token = await SecureStore.getItemAsync("accessToken");
 
-      {/* 오버레이 (선택했을 때 표시) */}
-      {selected && (
-        <View style={styles.overlay}>
-          {/* 배경 클릭 시 닫기 */}
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={() => setSelected(null)}
-          />
+        if (!token) throw new Error("Token not found");
 
-          <View style={styles.overlayContent}>
-            <Image
-              source={selected.source}
-              style={styles.hero}
-              resizeMode="cover"
-            />
-            <Text style={styles.title}>{selected.title}</Text>
-            <Text style={styles.desc}>{selected.description}</Text>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={() => {
-                setSelected(null);
-                router.push("/main");
-              }}
-            >
-              <Text style={styles.confirmText}>입양하기</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </View>
-  );
+        const res = await axios.get(`${API_BASE_URL}/api/validation`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUserInfo(res.data);
+      } catch (err) {
+        console.log(err);
+        router.push("/");
+      }
+    }
+
+    checkLogin();
+  }, []);
+
+  const handleSelect = async(name) => {
+    if(!name || name.trim() === null) return;
+
+    try{
+        const res = await axios.post(`${API_BASE_URL}/api/member/selectSuryong`, {
+            nickname: userInfo.nickname,
+            suryongName: name,
+        });
+
+        router.push("/main");
+    } catch(e){
+        console.log("failed to save suryong", e);
+        setSelected(null);
+    }
+  };
+
+  const description = [
+    {
+      name: "water",
+      source: require("../assets/images/index_water.png"),
+      title: "물의 수룡",
+      description:
+        "물의 수룡이는 바다 깊은 곳에서 조용히 살았습니다. 누구보다 물길을 잘 타고 파도와 장난치는 걸 좋아했지만, 세상 밖은 두려웠죠. 그러나 마음속 깊은 호기심이 그를 파도 위로 이끌었습니다. 처음 맞이한 햇살과 바람, 부서지는 물방울 속에서 물의 수룡이는 깨달았습니다. 바다는 넓지만, 세상은 그보다 훨씬 더 넓고 아름답다는 것을요.",
+    },
+    {
+      name: "thunder",
+      source: require("../assets/images/index_thunder.png"),
+      title: "전기의 수룡",
+      description:
+        "전기의 수룡이는 구름과 번개의 아이였습니다. 먹구름이 몰려올 때마다 그는 하늘로 뛰어올라 번개를 품고 놀았죠. 번쩍이는 빛 속에서 새로운 아이디어와 용기가 피어났습니다. 세상을 바꾸는 순간은 언제나 번개처럼 빠르고 강렬하다는 걸, 전기의 수룡이는 누구보다 잘 압니다. 오늘도 그는 번쩍이며 앞으로 나아갑니다.",
+    },
+    {
+      name: "grass",
+      source: require("../assets/images/index_grass.png"),
+      title: "풀의 수룡",
+      description:
+        "풀의 수룡이는 푸른 들판 속에서 하루하루를 성실히 보냈습니다. 새벽 햇살과 함께 눈을 뜨고, 바람 따라 흔들리는 풀잎을 가꾸는 것이 일상이었죠. 작은 뿌리가 모여 숲이 되듯, 꾸준함이 세상을 바꾼다는 걸 풀의 수룡이는 알고 있습니다. 오늘도 그는 한 걸음씩, 초록빛 길을 만들어갑니다.",
+    },
+  ];
 
   return (
     <SafeAreaWrapper
@@ -115,7 +95,63 @@ export default function SuryongiAdoption() {
       backgroundBottom={selected ? "rgba(0,0,0,0.58)" : "#ffffffff"}
     >
       <StatusBar barStyle="dark-content" />
-      <Grid />
+
+      <View style={styles.gridContainer}>
+        <FlatList
+          data={description}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          columnWrapperStyle={styles.row}
+          ListHeaderComponent={
+            <View style={styles.headerBox}>
+              <Text style={styles.headerText}>
+                인연이 느껴지는 수룡이를 입양해주세요!
+              </Text>
+            </View>
+          }
+          contentContainerStyle={{ paddingBottom: 24 }}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => setSelected(item)}
+              style={({ pressed }) => [
+                styles.card,
+                pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+              ]}
+            >
+              <Image
+                source={item.source}
+                style={styles.thumb}
+                resizeMode="cover"
+              />
+            </Pressable>
+          )}
+        />
+
+        {/* 선택 시 오버레이 */}
+        {selected && (
+          <View style={styles.overlay}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setSelected(null)}
+            />
+            <View style={styles.overlayContent}>
+              <Image
+                source={selected.source}
+                style={styles.hero}
+                resizeMode="cover"
+              />
+              <Text style={styles.title}>{selected.title}</Text>
+              <Text style={styles.desc}>{selected.description}</Text>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => { handleSelect(selected.name)}}
+              >
+                <Text style={styles.confirmText}>입양하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
     </SafeAreaWrapper>
   );
 }

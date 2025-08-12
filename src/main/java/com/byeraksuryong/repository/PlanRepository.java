@@ -15,5 +15,10 @@ public interface PlanRepository {
     Optional<Plan> findById(Long id);
     List<Plan> findBySubjectIdInAndDate(List<String> subjectId, LocalDate date);
     void deleteById(Long id);
+    int countTotalByExamAll(String examId, String nickname);
+    int countLearnedByExamUpTo(String examId, String nickname, LocalDate date);
+    int countTotalByNicknameAll(String nickname);
+    int countLearnedByNicknameUpTo(String nickname, LocalDate date);
+    List<Plan> findBySubjectIdIn(List<String> subjectId);
 }
 
