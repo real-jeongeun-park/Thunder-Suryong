@@ -136,9 +136,9 @@ public class AiService {
         }
     }
 
-    private String getStyleInfo(String nickname){
+    private List<String> getStyleInfo(String nickname){
         List<Style> styleList = styleRepository.findByNickname(nickname);
-        if(styleList.isEmpty()) return "";
+        if(styleList.isEmpty()) return null;
 
         Style style = styleList.get(0);
         StringBuilder sb = new StringBuilder();
@@ -147,7 +147,11 @@ public class AiService {
         sb.append("하루에 총 공부 시간: ").append(style.getStudyTime()).append("\n");
         sb.append("학습 방식: ").append(style.getStudyStyle()).append("\n");
 
-        return sb.toString();
+        List<String> result = new ArrayList<>();
+        result.add(sb.toString());
+        result.add(style.getStudySubject());
+
+        return result;
     }
 
     private String buildPrompt(Map<String, Object> body){
@@ -178,7 +182,14 @@ public class AiService {
 
         // 2. 사용자의 학습 스타일을 가져옴
         // studyTime, studySubject, studyStyle
-        String style = getStyleInfo(nickname);
+        List<String> res = getStyleInfo(nickname);
+        String style = "";
+        String studySubject = "";
+
+        if(res != null){
+            style = res.get(0);
+            studySubject = res.get(1);
+        }
 
         // 3. 사용자가 입력한 계획 정보를 가져옴
         // subject, week, content, important
@@ -205,6 +216,7 @@ public class AiService {
             sb.append("❗ 5. ").append(endDatesSb.toString()).append(" 참고하여 계획을 짤 때 반드시 시험 종료일 전까지의 계획만 짜줘. ");
             sb.append("예를 들어 과목 AI융합개론의 시험 종료일이 2025-07-31일이고, 클라우딩컴퓨팅AI의 시험 종료일이 2025-08-03일이면, 2025-07-30일 이후 계획에 AI융합개론 공부 분량이 포함되면 안 돼. 마찬가지로, 2025-08-02일 이후에 클라우딩컴퓨팅AI 공부 분량이 포함되면 안 돼.");
             sb.append("❗ 6. 계획을 짤 때는 사용자의 학습 정보 또한 고려해야 해. ").append(style);
+            sb.append("❗ 중요! **반드시 각 날짜 별로 공부하는 과목을 ").append(studySubject).append("개로 맞춰서 계획표를 생성해줘. ").append(studySubject).append("는 사용자의 하루 학습할 과목의 수야. 이 기준에 반드시 맞춰.**");
 
             sb.append("[계획표 예시]").append("\n");
             sb.append("2025-07-18, AI융합개론, 1주, 강의 개요\n");
