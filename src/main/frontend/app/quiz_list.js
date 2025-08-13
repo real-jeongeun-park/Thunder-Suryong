@@ -155,7 +155,7 @@ export default function QuizScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <Text style={styles.title}>퀴즈 폴더</Text>
+        <Text style={styles.title}>퀴즈 보관함</Text>
 
         {folders.length === 0 && !isCreatingFolder ? (
           <>

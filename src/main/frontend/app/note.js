@@ -158,7 +158,7 @@ export default function NoteScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <Text style={styles.title}>학습 폴더</Text>
+        <Text style={styles.title}>노트 보관함</Text>
 
         {folders.length === 0 && !isCreatingFolder ? (
           <>
@@ -167,7 +167,7 @@ export default function NoteScreen() {
               style={styles.emptyImage}
               resizeMode="contain"
             />
-            <Text style={styles.emptyMessage}>아직 생성된 폴더가 없어요!</Text>
+            <Text style={styles.emptyMessage}>아직 생성된 노트가 없어요!</Text>
           </>
         ) : (
           <ScrollView style={{ marginHorizontal: 20, marginBottom: 10 }}>
