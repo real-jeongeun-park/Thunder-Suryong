@@ -75,6 +75,31 @@ export default function WriteNote() {
     setTimeout(() => setToastMessage(""), 1500); // 1.5초 후 사라짐
   };
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setIsKeyboardVisible(true);
+      }
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+        setIsKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   useEffect(() => {
     async function checkLogin() {
       try {
@@ -281,7 +306,7 @@ export default function WriteNote() {
           {/* 노트 내용 */}
           <View
             ref={scrollRef}
-            style={styles.contentContainer}
+            style={[styles.contentContainer]}
             contentContainerStyle={{ paddingBottom: 100 }}
             onContentSizeChange={(w, h) => setContentHeight(h)}
             onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
@@ -337,6 +362,9 @@ export default function WriteNote() {
             style={[
               styles.chatSheet,
               { transform: [{ translateY: sheetTranslateY }] },
+              isKeyboardVisible && {
+                height: screenHeight - keyboardHeight - 20,
+              },
             ]}
           >
             <View style={styles.chatSheetHeader}>

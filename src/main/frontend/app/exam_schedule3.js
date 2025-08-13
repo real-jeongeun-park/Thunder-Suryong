@@ -13,6 +13,8 @@ import {
   Image,
   Platform,
   Modal,
+  Keyboard,
+  Pressable,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Menu, Button, Provider as PaperProvider } from "react-native-paper";
@@ -504,7 +506,17 @@ export default function ExamInfoInput() {
                 onRequestClose={() => setEditModalVisible(false)}
               >
                 <View style={styles.modalBackground}>
-                  <View style={styles.modalContainer}>
+                  {/* 바깥 영역 터치 -> 키보드 내리기 */}
+                  <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={Keyboard.dismiss}
+                  />
+
+                  {/* 안쪽 카드 영역은 터치 소비 -> 바깥 onPress 안 타게 */}
+                  <View
+                    style={styles.modalContainer}
+                    onStartShouldSetResponder={() => true}
+                  >
                     <Text style={styles.modalTitle}>수정하기</Text>
 
                     <Text style={styles.modalLabel}>주차/단원</Text>
@@ -514,6 +526,7 @@ export default function ExamInfoInput() {
                       onChangeText={setEditWeek}
                       placeholder="예시: 2주차"
                     />
+
                     <Text style={styles.modalLabel}>내용/분량</Text>
                     <TextInput
                       style={[styles.modalInput, { height: 80 }]}
