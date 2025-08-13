@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   FlatList,
@@ -8,15 +7,18 @@ import {
   Pressable,
   StyleSheet,
   StatusBar,
-  ScrollView,
   TouchableOpacity,
+  Dimensions,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import SafeAreaWrapper from "../components/SafeAreaWrapper";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
 import { API_BASE_URL } from "../src/constants";
+
+const { width: screenWidth } = Dimensions.get("window");
+const { height: screenHeight } = Dimensions.get("window");
 
 export default function SuryongAdoption() {
   const router = useRouter();
@@ -27,16 +29,13 @@ export default function SuryongAdoption() {
     async function checkLogin() {
       try {
         let token;
-
         if (Platform.OS === "web") token = localStorage.getItem("accessToken");
         else token = await SecureStore.getItemAsync("accessToken");
 
         if (!token) throw new Error("Token not found");
 
         const res = await axios.get(`${API_BASE_URL}/api/validation`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         setUserInfo(res.data);
@@ -45,23 +44,20 @@ export default function SuryongAdoption() {
         router.push("/");
       }
     }
-
     checkLogin();
   }, []);
 
-  const handleSelect = async(name) => {
-    if(!name || name.trim() === null) return;
-
-    try{
-        const res = await axios.post(`${API_BASE_URL}/api/member/selectSuryong`, {
-            nickname: userInfo.nickname,
-            suryongName: name,
-        });
-
-        router.push("/main");
-    } catch(e){
-        console.log("failed to save suryong", e);
-        setSelected(null);
+  const handleSelect = async (name) => {
+    if (!name?.trim()) return;
+    try {
+      await axios.post(`${API_BASE_URL}/api/member/selectSuryong`, {
+        nickname: userInfo.nickname,
+        suryongName: name,
+      });
+      router.push("/main");
+    } catch (e) {
+      console.log("failed to save suryong", e);
+      setSelected(null);
     }
   };
 
@@ -89,45 +85,47 @@ export default function SuryongAdoption() {
     },
   ];
 
+  const renderCard = ({ item }) => (
+    <Pressable
+      onPress={() => setSelected(item)}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+      ]}
+    >
+      <Image
+        source={item.source}
+        style={styles.cardImage}
+        resizeMode="cover"
+      />
+      <Text style={styles.cardTitle}>{item.title}</Text>
+    </Pressable>
+  );
+
   return (
     <SafeAreaWrapper
-      backgroundTop={selected ? "rgba(0,0,0,0.58)" : "#ffffffff"}
-      backgroundBottom={selected ? "rgba(0,0,0,0.58)" : "#ffffffff"}
+      backgroundTop={selected ? "rgba(0,0,0,0.58)" : "#fff"}
+      backgroundBottom={selected ? "rgba(0,0,0,0.58)" : "#fff"}
     >
       <StatusBar barStyle="dark-content" />
-
-      <View style={styles.gridContainer}>
+      <View style={styles.container}>
         <FlatList
           data={description}
-          keyExtractor={(item) => item.id}
-          numColumns={3}
-          columnWrapperStyle={styles.row}
+          keyExtractor={(item) => item.name}
           ListHeaderComponent={
-            <View style={styles.headerBox}>
-              <Text style={styles.headerText}>
-                인연이 느껴지는 수룡이를 입양해주세요!
+            <View style={styles.headerWrapper}>
+              <Text style={styles.headerTitle}>
+                인연이 느껴지는 수룡이를 입양해 주세요!
+              </Text>
+              <Text style={styles.subtitle}>
+                언제든지 다른 수룡이로 바꿀 수 있어요.
               </Text>
             </View>
           }
-          contentContainerStyle={{ paddingBottom: 24 }}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => setSelected(item)}
-              style={({ pressed }) => [
-                styles.card,
-                pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-              ]}
-            >
-              <Image
-                source={item.source}
-                style={styles.thumb}
-                resizeMode="cover"
-              />
-            </Pressable>
-          )}
+          contentContainerStyle={styles.listContent}
+          renderItem={renderCard}
         />
 
-        {/* 선택 시 오버레이 */}
         {selected && (
           <View style={styles.overlay}>
             <Pressable
@@ -137,17 +135,30 @@ export default function SuryongAdoption() {
             <View style={styles.overlayContent}>
               <Image
                 source={selected.source}
-                style={styles.hero}
+                style={styles.characterImage}
                 resizeMode="cover"
               />
               <Text style={styles.title}>{selected.title}</Text>
               <Text style={styles.desc}>{selected.description}</Text>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={() => { handleSelect(selected.name)}}
+              <View
+                style={{
+                  flexDirection: "row",
+                  width: "100%",
+                }}
               >
-                <Text style={styles.confirmText}>입양하기</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => handleSelect(selected.name)}
+                  >
+                    <Text style={styles.confirmText}>입양하기</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => setSelected(false)}
+                  >
+                    <Text style={styles.confirmText}>취소</Text>
+                  </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}
@@ -156,102 +167,63 @@ export default function SuryongAdoption() {
   );
 }
 
-const CARD_GAP = 12;
-
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
-    backgroundColor: "#ffffffff",
+    backgroundColor: "#fff",
+    paddingTop: 25,
   },
-  backButton: {
-    position: "absolute",
-    top: 24,
-    left: 16,
+  headerWrapper: {
+    width: "100%",
+    alignItems: "flex-start", // 왼쪽 정렬
+    paddingRight: 16, // 좌측 여백(선택 사항)
   },
-  headerBox: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginHorizontal: 16,
-    marginTop: 200,
-    marginBottom: 8,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 3,
+  headerTitle: {
+    fontSize: 19,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+    textAlign: "left",
   },
-  headerText: {
+  subtitle: {
+    color: "#BFC0C1",
     fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
+    marginBottom: 30,
+    textAlign: "left",
   },
-  gridContainer: {
-    flex: 1,
-    //paddingHorizontal: 24,
-    justifyContent: "center",
-    backgroundColor: "#ffffffff",
-  },
-  row: {
-    gap: CARD_GAP,
-    paddingHorizontal: 16,
-    marginTop: 40,
+  listContent: {
+    paddingBottom: 16,
+    alignItems: "center",
   },
   card: {
-    flex: 1,
-    aspectRatio: 3 / 4,
-    borderRadius: 14,
+    width: screenWidth * 0.65,
+    borderRadius: 16,
     overflow: "hidden",
     backgroundColor: "#FFF",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
+    // Android 그림자
+    padding: 10,
+    marginBottom: 24,
+    alignItems: "center",
+    borderWidth: 1,        // 두께
+    borderColor: "#ddd",  // 색상
   },
-  name: {
-    marginTop: 6,
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#222",
-  },
-  thumb: {
+  cardImage: {
     width: "100%",
-    height: "100%",
-  },
-  detailWrap: {
-    padding: 16,
-  },
-  backBtn: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#ECECF1",
+    height: screenWidth * 0.8,
     borderRadius: 10,
-    marginBottom: 10,
   },
-  backBtnText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  hero: {
-    width: "100%",
-    height: undefined,
-    aspectRatio: 3 / 4,
-    borderRadius: 18,
-    backgroundColor: "#FFF",
-    maxWidth: 300,
-    maxHeight: 500,
-    alignSelf: "center",
-    //marginTop: 50,
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#444",
+    paddingVertical: 10,
   },
   overlay: {
     position: "absolute",
     top: 0,
     left: 0,
-    width: "100%",
-    height: "100%",
+    bottom: 0,
+    right: 0,
     backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
@@ -264,33 +236,41 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     maxWidth: 320,
+    maxHeight: "90%"
   },
   title: {
     fontSize: 18,
     fontWeight: "800",
-    marginVertical: 10,
+    marginTop: 20,
+    marginBottom: 5,
+    textAlign: "center",
   },
   desc: {
     fontSize: 15,
     lineHeight: 21,
     color: "#333",
     marginVertical: 10,
-  },
-  bottomButtons: {
-    paddingBottom: 32,
+    textAlign: "center",
+    paddingHorizontal: 5,
   },
   confirmButton: {
     backgroundColor: "#B491DD",
     paddingVertical: 14,
-    marginHorizontal: 24,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
+    marginHorizontal: 5,
+    flex: 1,
   },
   confirmText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
-    paddingHorizontal: 80,
   },
+  characterImage: {
+    width: "100%",
+    height: screenWidth * 0.75,
+    borderRadius: 10,
+    aspectRatio: 1,
+  }
 });

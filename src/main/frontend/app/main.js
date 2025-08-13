@@ -23,7 +23,6 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { differenceInDays, parseISO } from "date-fns";
-
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -1429,7 +1428,7 @@ const styles = StyleSheet.create({
   speechContainer: {
     position: "absolute",
     left: 20, // 왼쪽으로 붙이기
-    bottom: 60, // 수룡이 위쪽으로 당기기
+    bottom: 80, // 수룡이 위쪽으로 당기기
     flexDirection: "row",
     alignItems: "center",
     zIndex: 10, // 수룡이 위에 보이도록
