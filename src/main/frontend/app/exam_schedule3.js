@@ -580,7 +580,6 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     marginBottom: 20,
-    marginRight: 40,
   },
   container: {
     flex: 1,

@@ -23,7 +23,6 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { differenceInDays, parseISO } from "date-fns";
-
 import { API_BASE_URL } from "../src/constants";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -781,8 +780,8 @@ export default function HomeScreen() {
                     style={[
                       styles.character,
                       {
-                        width: screenWidth * 0.65,
-                        height: screenHeight * 0.35,
+                        width: screenWidth * 0.7,
+                        height: screenHeight * 0.4,
                         transform: [{ translateY: floatAnim }],
                       },
                     ]}

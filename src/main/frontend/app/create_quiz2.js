@@ -371,7 +371,6 @@ const styles = StyleSheet.create({
   character: {
     width: 170,
     height: 170,
-    marginBottom: 20,
     marginRight: 40,
   },
   header: {
